@@ -4,3 +4,8 @@ dist/
 *.local
 .env
 .env.*
+
+# Example/test files
+example-funscripts/
+*.funscript
+motions/
