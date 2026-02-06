@@ -1,13 +1,25 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
 import { VideoLoader } from '@/components/file-loader/VideoLoader';
 import { FunscriptLoader } from '@/components/file-loader/FunscriptLoader';
 import { useVideoFile } from '@/hooks/useVideoFile';
 import { useFunscriptFile } from '@/hooks/useFunscriptFile';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useVideoPlayback } from '@/hooks/useVideoPlayback';
 
 function App() {
   const [showSessionHint, setShowSessionHint] = useState(false);
+
+  // Lifted video playback state - shared between VideoPlayer and Timeline
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const {
+    isPlaying,
+    currentTime,
+    duration,
+    error: playbackError,
+    togglePlayPause,
+    seek,
+  } = useVideoPlayback(videoRef);
 
   const {
     videoFile,
@@ -101,6 +113,13 @@ function App() {
                 onVideoLoad={handleVideoLoad}
                 onVideoClear={handleVideoClear}
                 error={videoError}
+                videoRef={videoRef}
+                isPlaying={isPlaying}
+                currentTime={currentTime}
+                duration={duration}
+                playbackError={playbackError}
+                onTogglePlayPause={togglePlayPause}
+                onSeek={seek}
               />
             </div>
 

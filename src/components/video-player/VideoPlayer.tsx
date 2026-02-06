@@ -1,20 +1,32 @@
-import { useRef, useEffect } from 'react';
-import { useVideoPlayback } from '../../hooks/useVideoPlayback';
+import { useEffect } from 'react';
 import { VideoControls } from './VideoControls';
 
 interface VideoPlayerProps {
   videoUrl: string;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  isPlaying: boolean;
+  currentTime: number;
+  duration: number;
+  error: string | null;
+  onTogglePlayPause: () => void;
+  onSeek: (time: number) => void;
 }
 
 /**
  * Main video player container with custom controls
  * Replaces native browser controls with programmatic player
+ * Accepts external videoRef and playback state for sharing with timeline
  */
-export function VideoPlayer({ videoUrl }: VideoPlayerProps) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const { isPlaying, currentTime, duration, error, togglePlayPause, seek } =
-    useVideoPlayback(videoRef);
-
+export function VideoPlayer({
+  videoUrl,
+  videoRef,
+  isPlaying,
+  currentTime,
+  duration,
+  error,
+  onTogglePlayPause,
+  onSeek,
+}: VideoPlayerProps) {
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -38,15 +50,15 @@ export function VideoPlayer({ videoUrl }: VideoPlayerProps) {
         case ' ': // Space bar
         case 'k': // Common video player shortcut
           e.preventDefault();
-          togglePlayPause();
+          onTogglePlayPause();
           break;
         case 'ArrowLeft':
           e.preventDefault();
-          seek(currentTime - 5);
+          onSeek(currentTime - 5);
           break;
         case 'ArrowRight':
           e.preventDefault();
-          seek(Math.min(duration, currentTime + 5));
+          onSeek(Math.min(duration, currentTime + 5));
           break;
       }
     };
@@ -55,7 +67,7 @@ export function VideoPlayer({ videoUrl }: VideoPlayerProps) {
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [togglePlayPause, seek, currentTime, duration]);
+  }, [onTogglePlayPause, onSeek, currentTime, duration]);
 
   return (
     <div className="rounded-lg overflow-hidden border border-muted">
@@ -72,8 +84,8 @@ export function VideoPlayer({ videoUrl }: VideoPlayerProps) {
         isPlaying={isPlaying}
         currentTime={currentTime}
         duration={duration}
-        onTogglePlayPause={togglePlayPause}
-        onSeek={seek}
+        onTogglePlayPause={onTogglePlayPause}
+        onSeek={onSeek}
         error={error}
       />
     </div>

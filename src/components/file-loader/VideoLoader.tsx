@@ -8,6 +8,13 @@ interface VideoLoaderProps {
   onVideoLoad: (file: File) => void;
   onVideoClear: () => void;
   error: string | null;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
+  isPlaying: boolean;
+  currentTime: number;
+  duration: number;
+  playbackError: string | null;
+  onTogglePlayPause: () => void;
+  onSeek: (time: number) => void;
 }
 
 export function VideoLoader({
@@ -17,6 +24,13 @@ export function VideoLoader({
   onVideoLoad,
   onVideoClear,
   error,
+  videoRef,
+  isPlaying,
+  currentTime,
+  duration,
+  playbackError,
+  onTogglePlayPause,
+  onSeek,
 }: VideoLoaderProps) {
   return (
     <div className="space-y-4">
@@ -47,7 +61,18 @@ export function VideoLoader({
             <p className="font-medium">{videoName}</p>
           </div>
 
-          {videoUrl && <VideoPlayer videoUrl={videoUrl} />}
+          {videoUrl && (
+            <VideoPlayer
+              videoUrl={videoUrl}
+              videoRef={videoRef}
+              isPlaying={isPlaying}
+              currentTime={currentTime}
+              duration={duration}
+              error={playbackError}
+              onTogglePlayPause={onTogglePlayPause}
+              onSeek={onSeek}
+            />
+          )}
         </div>
       )}
     </div>
