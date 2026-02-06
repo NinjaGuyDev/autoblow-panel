@@ -11,6 +11,16 @@ import { useVideoPlayback } from '@/hooks/useVideoPlayback';
 function App() {
   const [showSessionHint, setShowSessionHint] = useState(false);
 
+  // Video file state - must come first as videoUrl is used by playback hook
+  const {
+    videoFile,
+    videoUrl,
+    videoName,
+    loadVideo,
+    clearVideo,
+    error: videoError,
+  } = useVideoFile();
+
   // Lifted video playback state - shared between VideoPlayer and Timeline
   const videoRef = useRef<HTMLVideoElement>(null);
   const {
@@ -21,15 +31,6 @@ function App() {
     togglePlayPause,
     seek,
   } = useVideoPlayback(videoRef, videoUrl);
-
-  const {
-    videoFile,
-    videoUrl,
-    videoName,
-    loadVideo,
-    clearVideo,
-    error: videoError,
-  } = useVideoFile();
 
   const {
     funscriptFile,
