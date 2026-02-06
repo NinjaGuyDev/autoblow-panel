@@ -19,9 +19,15 @@ export function VideoPlayer({ videoUrl }: VideoPlayerProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       // Don't handle keyboard shortcuts when user is typing in input fields
+      // EXCEPT for range inputs (progress bar) - those should allow video shortcuts
       const activeElement = document.activeElement;
+      if (activeElement?.tagName === 'INPUT') {
+        const inputType = (activeElement as HTMLInputElement).type;
+        if (inputType !== 'range') {
+          return; // Block shortcuts for text/email/etc, but allow for range
+        }
+      }
       if (
-        activeElement?.tagName === 'INPUT' ||
         activeElement?.tagName === 'TEXTAREA' ||
         activeElement?.tagName === 'SELECT'
       ) {
@@ -54,7 +60,12 @@ export function VideoPlayer({ videoUrl }: VideoPlayerProps) {
   return (
     <div className="rounded-lg overflow-hidden border border-muted">
       {/* Video element without native controls */}
-      <video ref={videoRef} src={videoUrl} className="w-full block bg-black" />
+      <video
+        ref={videoRef}
+        src={videoUrl}
+        className="w-full block bg-black"
+        disablePictureInPicture
+      />
 
       {/* Custom controls */}
       <VideoControls
