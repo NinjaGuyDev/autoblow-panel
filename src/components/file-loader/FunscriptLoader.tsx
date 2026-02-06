@@ -1,5 +1,6 @@
 import { FileDropzone } from './FileDropzone';
 import type { ZodFunscript } from '@/lib/schemas';
+import type { FunscriptMetadata } from '@/types/funscript';
 
 interface FunscriptLoaderProps {
   funscriptFile: File | null;
@@ -20,6 +21,12 @@ export function FunscriptLoader({
   error,
   isLoading,
 }: FunscriptLoaderProps) {
+  // Type guard to check if funscript has metadata
+  const metadata: FunscriptMetadata | null =
+    funscriptData && 'metadata' in funscriptData && funscriptData.metadata
+      ? (funscriptData.metadata as FunscriptMetadata)
+      : null;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -47,13 +54,34 @@ export function FunscriptLoader({
         <div className="p-4 bg-muted/20 rounded-lg border border-muted space-y-2">
           <div>
             <p className="text-sm text-muted-foreground mb-1">Loaded:</p>
-            <p className="font-medium">{funscriptName}</p>
+            <p className="font-medium">
+              {metadata?.title ?? funscriptName}
+            </p>
           </div>
           {funscriptData && (
-            <div className="pt-2 border-t border-muted">
+            <div className="pt-2 border-t border-muted space-y-1">
               <p className="text-sm text-muted-foreground">
                 {funscriptData.actions.length} actions
               </p>
+              {metadata && (
+                <>
+                  {metadata.performers && metadata.performers.length > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Performers: {metadata.performers.join(', ')}
+                    </p>
+                  )}
+                  {metadata.duration && (
+                    <p className="text-sm text-muted-foreground">
+                      Duration: {Math.floor(metadata.duration / 1000)}s
+                    </p>
+                  )}
+                  {metadata.tags && metadata.tags.length > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      Tags: {metadata.tags.join(', ')}
+                    </p>
+                  )}
+                </>
+              )}
             </div>
           )}
         </div>

@@ -4,10 +4,25 @@ export interface FunscriptAction {
   at: number;   // Time in milliseconds
 }
 
+export interface FunscriptMetadata {
+  title?: string;
+  description?: string;
+  performers?: string[];
+  video_url?: string;
+  tags?: string[];
+  duration?: number;
+  average_speed?: number;
+  creator?: string;
+}
+
 export interface Funscript {
-  version: string;
-  inverted: boolean;
-  range: number;
+  // Original format fields (optional)
+  version?: string;
+  inverted?: boolean;
+  range?: number;
+  // New format field (optional)
+  metadata?: FunscriptMetadata;
+  // Common to both formats
   actions: FunscriptAction[];
 }
 
