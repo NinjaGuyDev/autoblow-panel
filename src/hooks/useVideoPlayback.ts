@@ -38,7 +38,11 @@ export function useVideoPlayback(
     const handlePause = () => setIsPlaying(false);
     const handleEnded = () => setIsPlaying(false);
     const handleTimeUpdate = () => setCurrentTime(video.currentTime);
-    const handleLoadedMetadata = () => setDuration(video.duration);
+    const handleLoadedMetadata = () => {
+      setDuration(video.duration);
+      // Also update currentTime to handle seek before play
+      setCurrentTime(video.currentTime);
+    };
     const handleError = () => {
       const mediaError = video.error;
       if (mediaError) {
@@ -55,6 +59,12 @@ export function useVideoPlayback(
     video.addEventListener('loadedmetadata', handleLoadedMetadata);
     video.addEventListener('error', handleError);
 
+    // Initialize duration if metadata already loaded (for existing video element)
+    if (video.duration && !isNaN(video.duration)) {
+      setDuration(video.duration);
+      setCurrentTime(video.currentTime);
+    }
+
     // Cleanup listeners on unmount or videoRef change
     return () => {
       video.removeEventListener('play', handlePlay);
@@ -64,7 +74,7 @@ export function useVideoPlayback(
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('error', handleError);
     };
-  }, [videoRef]);
+  }, [videoRef.current]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const togglePlayPause = () => {
     const video = videoRef.current;
