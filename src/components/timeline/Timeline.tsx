@@ -75,6 +75,9 @@ export function Timeline({
 
   // Wheel zoom
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     const rect = e.currentTarget.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseXRatio = mouseX / containerWidth;
