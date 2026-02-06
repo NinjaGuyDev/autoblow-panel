@@ -1,4 +1,5 @@
 import { FileDropzone } from './FileDropzone';
+import { VideoPlayer } from '../video-player/VideoPlayer';
 
 interface VideoLoaderProps {
   videoFile: File | null;
@@ -46,15 +47,7 @@ export function VideoLoader({
             <p className="font-medium">{videoName}</p>
           </div>
 
-          {videoUrl && (
-            <div className="rounded-lg overflow-hidden border border-muted">
-              <video
-                src={videoUrl}
-                controls
-                className="w-full"
-              />
-            </div>
-          )}
+          {videoUrl && <VideoPlayer videoUrl={videoUrl} />}
         </div>
       )}
     </div>
