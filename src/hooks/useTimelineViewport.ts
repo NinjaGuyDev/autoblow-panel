@@ -15,6 +15,7 @@ interface UseTimelineViewportReturn {
   handlePanMove: (currentXRatio: number) => void;
   handlePanEnd: () => void;
   setViewStart: (ms: number) => void;
+  setViewportDuration: (ms: number) => void;
 }
 
 /**
@@ -178,5 +179,6 @@ export function useTimelineViewport({
     handlePanMove,
     handlePanEnd,
     setViewStart,
+    setViewportDuration,
   };
 }

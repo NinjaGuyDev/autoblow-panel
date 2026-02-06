@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
 import { VideoLoader } from '@/components/file-loader/VideoLoader';
 import { FunscriptLoader } from '@/components/file-loader/FunscriptLoader';
+import { Timeline } from '@/components/timeline/Timeline';
 import { useVideoFile } from '@/hooks/useVideoFile';
 import { useFunscriptFile } from '@/hooks/useFunscriptFile';
 import { useAutoSave } from '@/hooks/useAutoSave';
@@ -72,9 +73,52 @@ function App() {
     clearFunscript();
   };
 
+  // Helper: extract basename without extension
+  const getBaseName = (filename: string): string => {
+    const lastDotIndex = filename.lastIndexOf('.');
+    return lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
+  };
+
+  // Unified file drop handler for auto-detect
+  const handleFileDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length === 0) return;
+
+    // Separate files by type
+    const videoExtensions = ['.mp4', '.webm', '.ogg'];
+    const videoFiles = files.filter((f) =>
+      videoExtensions.some((ext) => f.name.toLowerCase().endsWith(ext))
+    );
+    const funscriptFiles = files.filter((f) =>
+      f.name.toLowerCase().endsWith('.funscript')
+    );
+
+    // Load video files
+    if (videoFiles.length > 0) {
+      handleVideoLoad(videoFiles[0]); // Use first video
+    }
+
+    // Load funscript files
+    if (funscriptFiles.length > 0) {
+      handleFunscriptLoad(funscriptFiles[0]); // Use first funscript
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   return (
     <ThemeProvider defaultTheme="dark">
-      <div className="min-h-screen bg-background text-foreground">
+      <div
+        className="min-h-screen bg-background text-foreground"
+        onDrop={handleFileDrop}
+        onDragOver={handleDragOver}
+      >
         {/* Top bar */}
         <div className="border-b border-muted">
           <div className="container mx-auto px-4 py-4">
@@ -136,6 +180,19 @@ function App() {
               />
             </div>
           </div>
+
+          {/* Timeline - full width below loaders */}
+          {funscriptData && videoUrl && (
+            <div className="mt-6">
+              <Timeline
+                actions={funscriptData.actions}
+                currentTimeMs={currentTime * 1000}
+                durationMs={duration * 1000}
+                isPlaying={isPlaying}
+                onSeek={seek}
+              />
+            </div>
+          )}
         </div>
       </div>
     </ThemeProvider>
