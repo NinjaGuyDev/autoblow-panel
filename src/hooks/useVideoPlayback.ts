@@ -9,12 +9,18 @@ interface UseVideoPlaybackReturn {
   seek: (time: number) => void;
 }
 
+interface UseVideoPlaybackProps {
+  videoRef: RefObject<HTMLVideoElement | null>;
+  videoUrl: string | null;
+}
+
 /**
  * Hook to manage video playback state and controls
  * Derives state from video element events (video element is source of truth)
  */
 export function useVideoPlayback(
-  videoRef: RefObject<HTMLVideoElement | null>
+  videoRef: RefObject<HTMLVideoElement | null>,
+  videoUrl?: string | null
 ): UseVideoPlaybackReturn {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -65,7 +71,7 @@ export function useVideoPlayback(
       setCurrentTime(video.currentTime);
     }
 
-    // Cleanup listeners on unmount or videoRef change
+    // Cleanup listeners on unmount or when video URL changes
     return () => {
       video.removeEventListener('play', handlePlay);
       video.removeEventListener('pause', handlePause);
@@ -74,7 +80,7 @@ export function useVideoPlayback(
       video.removeEventListener('loadedmetadata', handleLoadedMetadata);
       video.removeEventListener('error', handleError);
     };
-  }, [videoRef.current]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [videoUrl]); // Re-run when videoUrl changes (new video loaded)
 
   const togglePlayPause = () => {
     const video = videoRef.current;

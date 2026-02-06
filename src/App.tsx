@@ -20,7 +20,7 @@ function App() {
     error: playbackError,
     togglePlayPause,
     seek,
-  } = useVideoPlayback(videoRef);
+  } = useVideoPlayback(videoRef, videoUrl);
 
   const {
     videoFile,
