@@ -24,19 +24,17 @@ function createSmoothTransition(
 ): FunscriptAction[] {
   const posDiff = Math.abs(endPos - startPos);
 
-  // 1 point for every 10 units of position difference
-  const numPoints = Math.max(0, Math.floor(posDiff / 10));
-
-  if (numPoints === 0) {
-    return [];
-  }
+  // Always add at least 1 point, or 1 point for every 10 units of position difference
+  const numPoints = Math.max(1, Math.floor(posDiff / 10));
 
   const transitionActions: FunscriptAction[] = [];
   const spacing = 750; // 0.75 seconds between points
 
   for (let i = 1; i <= numPoints; i++) {
-    const t = i / (numPoints + 1); // Distribute evenly between start and end
-    const pos = lerp(startPos, endPos, t);
+    // For the last point, ensure it's exactly at the end position
+    const isLastPoint = i === numPoints;
+    const t = isLastPoint ? 1.0 : i / (numPoints + 1);
+    const pos = isLastPoint ? endPos : lerp(startPos, endPos, t);
     const at = endTime
       ? lerp(startTime, endTime, t)
       : startTime + (i * spacing);
