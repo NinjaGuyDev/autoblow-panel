@@ -22,6 +22,11 @@ function createSmoothTransition(
   startTime: number,
   endTime?: number
 ): FunscriptAction[] {
+  // No smoothing needed if positions are identical
+  if (startPos === endPos) {
+    return [];
+  }
+
   const posDiff = Math.abs(endPos - startPos);
 
   // Always add at least 1 point, or 1 point for every 10 units of position difference
