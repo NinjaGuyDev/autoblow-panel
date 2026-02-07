@@ -55,25 +55,18 @@ export function VideoLoader({
           error={error}
         />
       ) : (
-        <div className="space-y-4">
-          <div className="p-4 bg-muted/20 rounded-lg border border-muted">
-            <p className="text-sm text-muted-foreground mb-1">Loaded:</p>
-            <p className="font-medium">{videoName}</p>
-          </div>
-
-          {videoUrl && (
-            <VideoPlayer
-              videoUrl={videoUrl}
-              videoRef={videoRef}
-              isPlaying={isPlaying}
-              currentTime={currentTime}
-              duration={duration}
-              error={playbackError}
-              onTogglePlayPause={onTogglePlayPause}
-              onSeek={onSeek}
-            />
-          )}
-        </div>
+        videoUrl && (
+          <VideoPlayer
+            videoUrl={videoUrl}
+            videoRef={videoRef}
+            isPlaying={isPlaying}
+            currentTime={currentTime}
+            duration={duration}
+            error={playbackError}
+            onTogglePlayPause={onTogglePlayPause}
+            onSeek={onSeek}
+          />
+        )
       )}
     </div>
   );
