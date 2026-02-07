@@ -73,18 +73,6 @@ export function Timeline({
     onSeek(timeSeconds);
   };
 
-  // Wheel zoom
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left;
-    const mouseXRatio = mouseX / containerWidth;
-
-    viewport.handleWheel(e, mouseXRatio);
-  };
-
   // Pan state
   const panStartRef = useRef<{ x: number; ratio: number } | null>(null);
 
@@ -214,7 +202,6 @@ export function Timeline({
         <div
           className="absolute inset-0 cursor-crosshair"
           onClick={handleCanvasClick}
-          onWheel={handleWheel}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}

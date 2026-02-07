@@ -10,7 +10,6 @@ interface UseTimelineViewportReturn {
   viewStart: number;           // Start of visible window (ms)
   viewEnd: number;             // End of visible window (ms)
   viewportDuration: number;    // Width of visible window (ms)
-  handleWheel: (e: React.WheelEvent, mouseXRatio: number) => void;
   handlePanStart: (startXRatio: number) => void;
   handlePanMove: (currentXRatio: number) => void;
   handlePanEnd: () => void;
@@ -19,12 +18,12 @@ interface UseTimelineViewportReturn {
 }
 
 /**
- * Manages timeline viewport state with cursor-centered zoom, pan, and auto-scroll
+ * Manages timeline viewport state with pan and auto-scroll
  *
  * Features:
- * - Cursor-centered zoom: Zooms toward/away from cursor position
  * - Pan support: Drag to scroll the timeline
  * - Auto-scroll: Keeps playhead centered during playback (with user interaction suppression)
+ * - Programmatic zoom: Via setViewportDuration (used by zoom buttons)
  */
 export function useTimelineViewport({
   durationMs,
@@ -86,38 +85,6 @@ export function useTimelineViewport({
   }, [isPlaying]);
 
   /**
-   * Cursor-centered zoom handler
-   * @param e Wheel event
-   * @param mouseXRatio Cursor position on canvas (0-1, left to right)
-   */
-  const handleWheel = (e: React.WheelEvent, mouseXRatio: number) => {
-    e.preventDefault();
-
-    if (durationMs === 0) return;
-
-    // Calculate the timestamp at cursor position
-    const cursorTime = viewStart + mouseXRatio * viewportDuration;
-
-    // Compute new viewport duration (zoom in or out)
-    const zoomFactor = 1.3;
-    const newDuration = e.deltaY > 0
-      ? viewportDuration * zoomFactor      // Zoom out
-      : viewportDuration / zoomFactor;     // Zoom in
-
-    // Clamp to min 2 seconds, max full duration
-    const clampedDuration = Math.max(2000, Math.min(newDuration, durationMs));
-
-    // Compute new viewStart to keep cursor time at same screen position
-    const newViewStart = cursorTime - mouseXRatio * clampedDuration;
-
-    // Clamp viewStart to valid range
-    const clampedViewStart = Math.max(0, Math.min(newViewStart, durationMs - clampedDuration));
-
-    setViewportDuration(clampedDuration);
-    setViewStart(clampedViewStart);
-  };
-
-  /**
    * Start panning (user pressed mouse down)
    * @param startXRatio Initial cursor position (0-1)
    */
@@ -174,7 +141,6 @@ export function useTimelineViewport({
     viewStart,
     viewEnd,
     viewportDuration,
-    handleWheel,
     handlePanStart,
     handlePanMove,
     handlePanEnd,
