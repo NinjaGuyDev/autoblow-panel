@@ -5,7 +5,7 @@ interface ProgressBarProps {
 }
 
 /**
- * Seekable progress bar using native range input
+ * Seekable progress bar using native range input with custom styling
  * Provides keyboard support, touch support, and accessibility out of the box
  */
 export function ProgressBar({ currentTime, duration, onSeek }: ProgressBarProps) {
@@ -13,6 +13,9 @@ export function ProgressBar({ currentTime, duration, onSeek }: ProgressBarProps)
     const newTime = parseFloat(e.target.value);
     onSeek(newTime);
   };
+
+  // Calculate progress percentage for background gradient
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
     <div className="flex-1 px-2">
@@ -24,7 +27,10 @@ export function ProgressBar({ currentTime, duration, onSeek }: ProgressBarProps)
         value={currentTime}
         onChange={handleChange}
         aria-label="Video progress"
-        className="w-full h-2 bg-muted rounded-lg appearance-none cursor-pointer accent-primary hover:accent-primary/80 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background"
+        style={{
+          background: `linear-gradient(to right, hsl(var(--primary)) 0%, hsl(var(--primary)) ${progress}%, hsl(var(--muted)) ${progress}%, hsl(var(--muted)) 100%)`
+        }}
+        className="w-full h-2 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:hover:bg-primary/80 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-primary [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:cursor-pointer [&::-moz-range-thumb]:hover:bg-primary/80"
       />
     </div>
   );
