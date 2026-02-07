@@ -6,6 +6,7 @@ import { NavBar } from '@/components/layout/NavBar';
 import { VideoSyncPage } from '@/components/pages/VideoSyncPage';
 import { ManualControlPage } from '@/components/pages/ManualControlPage';
 import { DeviceLogPage } from '@/components/pages/DeviceLogPage';
+import { PatternLibraryPage } from '@/components/pages/PatternLibraryPage';
 import { Timeline } from '@/components/timeline/Timeline';
 import { useVideoFile } from '@/hooks/useVideoFile';
 import { useFunscriptFile } from '@/hooks/useFunscriptFile';
@@ -17,7 +18,9 @@ import { useManualControl } from '@/hooks/useManualControl';
 import { useSyncPlayback } from '@/hooks/useSyncPlayback';
 import { useDeviceLog } from '@/hooks/useDeviceLog';
 import { exportFunscript } from '@/lib/funscriptExport';
+import { insertPatternAtCursor, insertPatternAtEnd } from '@/lib/patternInsertion';
 import type { TabId } from '@/types/navigation';
+import type { PatternDefinition } from '@/types/patterns';
 
 function App() {
   const [showSessionHint, setShowSessionHint] = useState(false);
@@ -218,6 +221,15 @@ function App() {
     exportFunscript(editableActions, filename);
   };
 
+  // Pattern insertion handler
+  const handlePatternInsert = (pattern: PatternDefinition, position: 'cursor' | 'end') => {
+    if (position === 'end') {
+      setActions(insertPatternAtEnd(editableActions, pattern));
+    } else {
+      setActions(insertPatternAtCursor(editableActions, pattern, currentTime * 1000));
+    }
+  };
+
   return (
     <ThemeProvider defaultTheme="dark">
       <div onDrop={handleFileDrop} onDragOver={handleDragOver}>
@@ -317,6 +329,10 @@ function App() {
 
           {activeTab === 'device-log' && (
             <DeviceLogPage logs={logs} onClearLogs={clearLogs} />
+          )}
+
+          {activeTab === 'pattern-library' && (
+            <PatternLibraryPage onInsert={handlePatternInsert} />
           )}
         </Layout>
       </div>
