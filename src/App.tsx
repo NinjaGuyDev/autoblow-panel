@@ -1,11 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
-import { VideoLoader } from '@/components/file-loader/VideoLoader';
-import { FunscriptLoader } from '@/components/file-loader/FunscriptLoader';
+import { Layout } from '@/components/layout/Layout';
+import { AppHeader } from '@/components/layout/AppHeader';
+import { NavBar } from '@/components/layout/NavBar';
+import { VideoSyncPage } from '@/components/pages/VideoSyncPage';
+import { ManualControlPage } from '@/components/pages/ManualControlPage';
+import { DeviceLogPage } from '@/components/pages/DeviceLogPage';
 import { Timeline } from '@/components/timeline/Timeline';
-import { DeviceConnection } from '@/components/device-control/DeviceConnection';
-import { ManualControls } from '@/components/device-control/ManualControls';
-import { SyncStatus } from '@/components/device-control/SyncStatus';
 import { useVideoFile } from '@/hooks/useVideoFile';
 import { useFunscriptFile } from '@/hooks/useFunscriptFile';
 import { useAutoSave } from '@/hooks/useAutoSave';
@@ -13,9 +14,13 @@ import { useVideoPlayback } from '@/hooks/useVideoPlayback';
 import { useDeviceConnection } from '@/hooks/useDeviceConnection';
 import { useManualControl } from '@/hooks/useManualControl';
 import { useSyncPlayback } from '@/hooks/useSyncPlayback';
+import { useDeviceLog } from '@/hooks/useDeviceLog';
+import type { TabId } from '@/types/navigation';
 
 function App() {
   const [showSessionHint, setShowSessionHint] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabId>('video-sync');
+  const { logs, addLog, clearLogs } = useDeviceLog();
 
   // Video file state - must come first as videoUrl is used by playback hook
   const {
@@ -74,7 +79,6 @@ function App() {
     stop,
     updateParams,
     setPatternType,
-    error: manualError,
   } = useManualControl(ultra);
 
   // Sync playback state
@@ -113,6 +117,38 @@ function App() {
     }
   }, [isRunning, isPlaying]);
 
+  // Device log integration: Track connection state changes
+  const prevConnectionStateRef = useRef<typeof connectionState>('disconnected');
+  useEffect(() => {
+    if (connectionState === 'connected' && prevConnectionStateRef.current !== 'connected') {
+      addLog('info', 'Device connected');
+    } else if (connectionState === 'disconnected' && prevConnectionStateRef.current === 'connected') {
+      addLog('info', 'Device disconnected');
+    }
+    prevConnectionStateRef.current = connectionState;
+  }, [connectionState, addLog]);
+
+  // Device log integration: Track device errors
+  useEffect(() => {
+    if (deviceError) {
+      addLog('error', deviceError);
+    }
+  }, [deviceError, addLog]);
+
+  // Device log integration: Track sync status changes
+  useEffect(() => {
+    if (syncStatus !== 'idle') {
+      addLog('info', `Sync status: ${syncStatus}`);
+    }
+  }, [syncStatus, addLog]);
+
+  // Device log integration: Track sync errors
+  useEffect(() => {
+    if (syncError) {
+      addLog('error', syncError);
+    }
+  }, [syncError, addLog]);
+
   const handleVideoLoad = (file: File) => {
     loadVideo(file);
   };
@@ -127,12 +163,6 @@ function App() {
 
   const handleFunscriptClear = () => {
     clearFunscript();
-  };
-
-  // Helper: extract basename without extension
-  const getBaseName = (filename: string): string => {
-    const lastDotIndex = filename.lastIndexOf('.');
-    return lastDotIndex > 0 ? filename.substring(0, lastDotIndex) : filename;
   };
 
   // Unified file drop handler for auto-detect
@@ -170,117 +200,21 @@ function App() {
 
   return (
     <ThemeProvider defaultTheme="dark">
-      <div
-        className="min-h-screen bg-background text-foreground"
-        onDrop={handleFileDrop}
-        onDragOver={handleDragOver}
-      >
-        {/* Top bar */}
-        <div className="border-b border-muted">
-          <div className="container mx-auto px-4 py-4">
-            <h1 className="text-2xl font-bold">Autoblow Panel</h1>
-          </div>
-        </div>
-
-        {/* Session recovery hint */}
-        {showSessionHint && lastSession?.funscriptName && (
-          <div className="bg-primary/10 border-b border-primary/20">
-            <div className="container mx-auto px-4 py-3">
-              <div className="flex items-center justify-between">
-                <p className="text-sm">
-                  Previous session found: <span className="font-medium">{lastSession.funscriptName}</span>. Load files to continue.
-                </p>
-                <button
-                  onClick={() => setShowSessionHint(false)}
-                  className="text-sm text-muted-foreground hover:text-foreground"
-                >
-                  Dismiss
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Main content */}
-        <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,400px)] gap-6">
-            {/* Left: Video loader */}
-            <div className="bg-card border border-muted rounded-lg p-6">
-              <VideoLoader
-                videoFile={videoFile}
-                videoUrl={videoUrl}
-                videoName={videoName}
-                onVideoLoad={handleVideoLoad}
-                onVideoClear={handleVideoClear}
-                error={videoError}
-                videoRef={videoRef}
-                isPlaying={isPlaying}
-                currentTime={currentTime}
-                duration={duration}
-                playbackError={playbackError}
-                onTogglePlayPause={togglePlayPause}
-                onSeek={seek}
-              />
-            </div>
-
-            {/* Right: Funscript + Device panels stacked */}
-            <div className="flex flex-col gap-6">
-              <div className="bg-card border border-muted rounded-lg p-6">
-                <FunscriptLoader
-                  funscriptFile={funscriptFile}
-                  funscriptData={funscriptData}
-                  funscriptName={funscriptName}
-                  onFunscriptLoad={handleFunscriptLoad}
-                  onFunscriptClear={handleFunscriptClear}
-                  error={funscriptError}
-                  isLoading={isLoading}
-                />
-              </div>
-
-              <div className="bg-card border border-muted rounded-lg p-6">
-                <DeviceConnection
-                  connectionState={connectionState}
-                  error={deviceError}
-                  deviceInfo={deviceInfo}
-                  savedToken={savedToken}
-                  onConnect={connect}
-                  onDisconnect={disconnect}
-                />
-              </div>
-
-              <div className="bg-card border border-muted rounded-lg p-6">
-                <SyncStatus
-                  syncStatus={syncStatus}
-                  scriptUploaded={scriptUploaded}
-                  driftMs={driftMs}
-                  error={syncError}
-                  isDeviceConnected={connectionState === 'connected'}
-                  hasFunscript={funscriptData !== null}
-                />
-              </div>
-
-              <div className="bg-card border border-muted rounded-lg p-6">
-                <ManualControls
-                  isRunning={isRunning}
-                  patternType={patternType}
-                  speed={speed}
-                  minY={minY}
-                  maxY={maxY}
-                  increment={increment}
-                  variability={variability}
-                  isConnected={connectionState === 'connected'}
-                  onStart={start}
-                  onStop={stop}
-                  onParamChange={updateParams}
-                  onPatternTypeChange={setPatternType}
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Timeline - full width below loaders */}
-          {funscriptData && videoUrl && (
-            <div className="mt-6">
+      <div onDrop={handleFileDrop} onDragOver={handleDragOver}>
+        <Layout
+          header={
+            <AppHeader
+              connectionState={connectionState}
+              deviceInfo={deviceInfo}
+              error={deviceError}
+              savedToken={savedToken}
+              onConnect={connect}
+              onDisconnect={disconnect}
+            />
+          }
+          navbar={<NavBar activeTab={activeTab} onTabChange={setActiveTab} />}
+          timeline={
+            funscriptData && videoUrl ? (
               <Timeline
                 actions={funscriptData.actions}
                 currentTimeMs={currentTime * 1000}
@@ -288,9 +222,94 @@ function App() {
                 isPlaying={isPlaying}
                 onSeek={seek}
               />
+            ) : undefined
+          }
+        >
+          {/* Session recovery hint */}
+          {showSessionHint && lastSession?.funscriptName && (
+            <div className="bg-primary/10 border border-primary/20 rounded-lg mb-6">
+              <div className="px-4 py-3">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm">
+                    Previous session found: <span className="font-medium">{lastSession.funscriptName}</span>. Load files to continue.
+                  </p>
+                  <button
+                    onClick={() => setShowSessionHint(false)}
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              </div>
             </div>
           )}
-        </div>
+
+          {/* Conditional page rendering based on active tab */}
+          {activeTab === 'video-sync' && (
+            <VideoSyncPage
+              videoFile={videoFile}
+              videoUrl={videoUrl}
+              videoName={videoName}
+              onVideoLoad={handleVideoLoad}
+              onVideoClear={handleVideoClear}
+              videoError={videoError}
+              videoRef={videoRef}
+              isPlaying={isPlaying}
+              currentTime={currentTime}
+              duration={duration}
+              playbackError={playbackError}
+              onTogglePlayPause={togglePlayPause}
+              onSeek={seek}
+              funscriptFile={funscriptFile}
+              funscriptData={funscriptData}
+              funscriptName={funscriptName}
+              onFunscriptLoad={handleFunscriptLoad}
+              onFunscriptClear={handleFunscriptClear}
+              funscriptError={funscriptError}
+              isLoading={isLoading}
+              syncStatus={syncStatus}
+              scriptUploaded={scriptUploaded}
+              driftMs={driftMs}
+              syncError={syncError}
+              isDeviceConnected={connectionState === 'connected'}
+              hasFunscript={funscriptData !== null}
+            />
+          )}
+
+          {activeTab === 'manual-control' && (
+            <ManualControlPage
+              videoFile={videoFile}
+              videoUrl={videoUrl}
+              videoName={videoName}
+              onVideoLoad={handleVideoLoad}
+              onVideoClear={handleVideoClear}
+              videoError={videoError}
+              videoRef={videoRef}
+              isPlaying={isPlaying}
+              currentTime={currentTime}
+              duration={duration}
+              playbackError={playbackError}
+              onTogglePlayPause={togglePlayPause}
+              onSeek={seek}
+              isRunning={isRunning}
+              patternType={patternType}
+              speed={speed}
+              minY={minY}
+              maxY={maxY}
+              increment={increment}
+              variability={variability}
+              isConnected={connectionState === 'connected'}
+              onStart={start}
+              onStop={stop}
+              onParamChange={updateParams}
+              onPatternTypeChange={setPatternType}
+            />
+          )}
+
+          {activeTab === 'device-log' && (
+            <DeviceLogPage logs={logs} onClearLogs={clearLogs} />
+          )}
+        </Layout>
       </div>
     </ThemeProvider>
   );
