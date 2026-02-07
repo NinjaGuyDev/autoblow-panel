@@ -71,7 +71,7 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
       isUploadingRef.current = true;
       setError(null);
 
-      // Generate 5-minute funscript from current pattern settings
+      // Generate 1-minute funscript from current pattern settings (reduced for testing)
       const funscript = generatePatternFunscript(
         patternType,
         speed,
@@ -79,11 +79,18 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
         maxY,
         increment,
         variability,
-        5 * 60 * 1000, // 5 minutes
-        100 // Sample every 100ms
+        1 * 60 * 1000, // 1 minute (reduced from 5 to test)
+        200 // Sample every 200ms (reduced frequency)
       );
 
       // Upload funscript to device
+      console.log('Uploading funscript:', {
+        actionCount: funscript.actions.length,
+        duration: funscript.actions[funscript.actions.length - 1]?.at,
+        firstActions: funscript.actions.slice(0, 3),
+        lastActions: funscript.actions.slice(-3),
+      });
+
       await ultra.syncScriptUploadFunscriptFile(funscript);
 
       // Start playback from beginning
@@ -91,6 +98,7 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
 
       setIsRunning(true);
     } catch (err) {
+      console.error('Funscript upload error:', err);
       setError(err instanceof Error ? err.message : 'Failed to upload funscript');
       setIsRunning(false);
     } finally {
