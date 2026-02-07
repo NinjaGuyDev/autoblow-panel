@@ -84,13 +84,6 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
       );
 
       // Upload funscript to device
-      console.log('Uploading funscript:', {
-        actionCount: funscript.actions.length,
-        duration: funscript.actions[funscript.actions.length - 1]?.at,
-        firstActions: funscript.actions.slice(0, 3),
-        lastActions: funscript.actions.slice(-3),
-      });
-
       await ultra.syncScriptUploadFunscriptFile(funscript);
 
       // Start playback from beginning
@@ -98,7 +91,6 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
 
       setIsRunning(true);
     } catch (err) {
-      console.error('Funscript upload error:', err);
       setError(err instanceof Error ? err.message : 'Failed to upload funscript');
       setIsRunning(false);
     } finally {

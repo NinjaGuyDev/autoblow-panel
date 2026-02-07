@@ -59,9 +59,6 @@ function App() {
     savedToken,
   } = useDeviceConnection();
 
-  // Debug: log savedToken value
-  console.log('App.tsx: savedToken from hook:', savedToken);
-
   // Manual control state
   const {
     isRunning,
