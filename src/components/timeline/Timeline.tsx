@@ -1,8 +1,10 @@
 import { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { useTimelineViewport } from '@/hooks/useTimelineViewport';
 import { useTimelineEditor } from '@/hooks/useTimelineEditor';
+import { useValidation } from '@/hooks/useValidation';
 import { TimelineCanvas } from './TimelineCanvas';
 import { TimelineEditorOverlay } from './TimelineEditorOverlay';
+import { ValidationOverlay } from './ValidationOverlay';
 import { PlayheadOverlay } from './PlayheadOverlay';
 import { TimelineAxis } from './TimelineAxis';
 import { TimelineControls } from './TimelineControls';
@@ -72,6 +74,9 @@ export function Timeline({
     currentTimeMs,
     isPlaying,
   });
+
+  // Validation state
+  const validation = useValidation(actions as FunscriptAction[]);
 
   // Editor state (only when in edit mode)
   const editor = isEditMode
@@ -319,6 +324,7 @@ export function Timeline({
         onExport={onExport}
         selectedCount={editor?.selectedIndices.size ?? 0}
         onDeleteSelected={editor?.deleteSelected}
+        validationSummary={validation.summary}
       />
 
       <div className="relative" style={{ height: CANVAS_HEIGHT }}>
@@ -329,6 +335,19 @@ export function Timeline({
             viewStart={viewport.viewStart}
             viewEnd={viewport.viewEnd}
             showActionPoints={isEditMode || showActionPoints}
+            width={containerWidth}
+            height={CANVAS_HEIGHT}
+          />
+        )}
+
+        {/* Validation overlay */}
+        {containerWidth > 0 && validation.segments.length > 0 && (
+          <ValidationOverlay
+            actions={actions as FunscriptAction[]}
+            segments={validation.segments}
+            gaps={validation.gaps}
+            viewStart={viewport.viewStart}
+            viewEnd={viewport.viewEnd}
             width={containerWidth}
             height={CANVAS_HEIGHT}
           />

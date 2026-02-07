@@ -1,4 +1,5 @@
 import type { EditMode } from '@/types/timeline';
+import type { ValidationResult } from '@/types/validation';
 
 interface TimelineControlsProps {
   showActionPoints: boolean;
@@ -15,6 +16,7 @@ interface TimelineControlsProps {
   onExport?: () => void;
   selectedCount?: number;
   onDeleteSelected?: () => void;
+  validationSummary?: ValidationResult['summary'];
 }
 
 export function TimelineControls({
@@ -32,6 +34,7 @@ export function TimelineControls({
   onExport,
   selectedCount,
   onDeleteSelected,
+  validationSummary,
 }: TimelineControlsProps) {
   const isEditMode = !!editMode;
 
@@ -110,7 +113,7 @@ export function TimelineControls({
         </div>
       )}
 
-      {/* Right: Export and Zoom controls */}
+      {/* Right: Export, Validation summary, and Zoom controls */}
       <div className="flex items-center gap-1">
         {isEditMode && onExport && (
           <button
@@ -120,6 +123,25 @@ export function TimelineControls({
           >
             ↓ Export
           </button>
+        )}
+        {validationSummary && (validationSummary.fastCount > 0 || validationSummary.impossibleCount > 0 || validationSummary.gapCount > 0) && (
+          <div className="flex items-center gap-2 text-xs mr-3">
+            {validationSummary.impossibleCount > 0 && (
+              <span className="text-red-400" title={`${validationSummary.impossibleCount} segment(s) exceed device capabilities`}>
+                {validationSummary.impossibleCount} impossible
+              </span>
+            )}
+            {validationSummary.fastCount > 0 && (
+              <span className="text-yellow-400" title={`${validationSummary.fastCount} segment(s) are fast but achievable`}>
+                {validationSummary.fastCount} fast
+              </span>
+            )}
+            {validationSummary.gapCount > 0 && (
+              <span className="text-zinc-400" title={`${validationSummary.gapCount} gap(s) longer than 3 seconds`}>
+                {validationSummary.gapCount} gap{validationSummary.gapCount !== 1 ? 's' : ''}
+              </span>
+            )}
+          </div>
         )}
         <button
           onClick={onZoomOut}
