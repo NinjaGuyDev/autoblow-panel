@@ -78,9 +78,8 @@ export function useDeviceConnection(): UseDeviceConnectionReturn {
     setDeviceInfo(null);
     setError(null);
 
-    // Clear saved token from localStorage on disconnect
-    localStorage.removeItem(DEVICE_TOKEN_KEY);
-    setSavedToken('');
+    // Keep token in localStorage for convenience (don't clear on disconnect)
+    // Token persists across page reloads so user doesn't need to re-enter
   };
 
   // Cleanup on unmount
