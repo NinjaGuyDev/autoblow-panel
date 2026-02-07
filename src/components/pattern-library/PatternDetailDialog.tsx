@@ -205,13 +205,13 @@ export function PatternDetailDialog({
         <div className="flex gap-3">
           <button
             onClick={() => onInsert(pattern)}
-            className="flex-1 px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium"
+            className="flex-1 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium shadow-sm"
           >
             Insert Pattern
           </button>
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded border border-muted text-foreground hover:bg-muted/50 transition-colors"
+            className="px-4 py-2 rounded border border-zinc-600 text-zinc-200 hover:bg-zinc-800 transition-colors"
           >
             Close
           </button>
