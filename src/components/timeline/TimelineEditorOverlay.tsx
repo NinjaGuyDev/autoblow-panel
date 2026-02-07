@@ -27,7 +27,6 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
     hoveredIndex,
     isDragging,
     dragPreview,
-    mode,
   }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -55,7 +54,7 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
 
       // Draw all visible action points (small dots)
       ctx.fillStyle = '#60a5fa';
-      visibleActions.forEach((action, globalIndex) => {
+      visibleActions.forEach((action) => {
         // Find global index
         const index = actions.indexOf(action);
         if (index === -1) return;

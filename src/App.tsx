@@ -9,12 +9,14 @@ import { DeviceLogPage } from '@/components/pages/DeviceLogPage';
 import { Timeline } from '@/components/timeline/Timeline';
 import { useVideoFile } from '@/hooks/useVideoFile';
 import { useFunscriptFile } from '@/hooks/useFunscriptFile';
+import { useUndoableActions } from '@/hooks/useUndoableActions';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useVideoPlayback } from '@/hooks/useVideoPlayback';
 import { useDeviceConnection } from '@/hooks/useDeviceConnection';
 import { useManualControl } from '@/hooks/useManualControl';
 import { useSyncPlayback } from '@/hooks/useSyncPlayback';
 import { useDeviceLog } from '@/hooks/useDeviceLog';
+import { exportFunscript } from '@/lib/funscriptExport';
 import type { TabId } from '@/types/navigation';
 
 function App() {
@@ -53,6 +55,9 @@ function App() {
     error: funscriptError,
     isLoading,
   } = useFunscriptFile();
+
+  // Undoable actions state for editing
+  const { actions: editableActions, setActions, undo, redo, canUndo, canRedo, reset: resetActions } = useUndoableActions(funscriptData?.actions ?? []);
 
   const { saveSession, lastSession } = useAutoSave();
 
@@ -97,12 +102,20 @@ function App() {
     }
   }, [lastSession]);
 
-  // Auto-save when files are loaded or changed
+  // Sync loaded funscript into undoable state
   useEffect(() => {
     if (funscriptData) {
-      saveSession(videoName, funscriptName, funscriptData);
+      resetActions(funscriptData.actions);
     }
-  }, [videoName, funscriptName, funscriptData, saveSession]);
+  }, [funscriptData, resetActions]);
+
+  // Auto-save when files are loaded or changed (save editableActions)
+  useEffect(() => {
+    if (funscriptData && editableActions) {
+      const editedFunscript = { ...funscriptData, actions: editableActions };
+      saveSession(videoName, funscriptName, editedFunscript);
+    }
+  }, [videoName, funscriptName, funscriptData, editableActions, saveSession]);
 
   // Mutual exclusion: Stop manual control when sync playback starts
   useEffect(() => {
@@ -199,6 +212,12 @@ function App() {
     e.stopPropagation();
   };
 
+  // Export handler
+  const handleExport = () => {
+    const filename = funscriptName?.replace('.funscript', '-edited.funscript') ?? 'script.funscript';
+    exportFunscript(editableActions, filename);
+  };
+
   return (
     <ThemeProvider defaultTheme="dark">
       <div onDrop={handleFileDrop} onDragOver={handleDragOver}>
@@ -247,13 +266,19 @@ function App() {
               showTimeline={showTimeline}
               onToggleTimeline={() => setShowTimeline(!showTimeline)}
               timelineElement={
-                showTimeline && funscriptData && videoUrl ? (
+                showTimeline && videoUrl ? (
                   <Timeline
-                    actions={funscriptData.actions}
+                    actions={editableActions}
                     currentTimeMs={currentTime * 1000}
                     durationMs={duration * 1000}
                     isPlaying={isPlaying}
                     onSeek={seek}
+                    onActionsChange={setActions}
+                    onUndo={undo}
+                    onRedo={redo}
+                    canUndo={canUndo}
+                    canRedo={canRedo}
+                    onExport={handleExport}
                   />
                 ) : null
               }

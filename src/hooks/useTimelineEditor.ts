@@ -81,13 +81,6 @@ export function useTimelineEditor({
     setSelectedIndices(new Set());
   }, [actions, selectedIndices, setActions]);
 
-  const deletePoint = useCallback(
-    (index: number) => {
-      const newActions = actions.filter((_, i) => i !== index);
-      setActions(newActions);
-    },
-    [actions, setActions]
-  );
 
   const movePoint = useCallback(
     (index: number, newTimeMs: number, newPos: number) => {
@@ -113,7 +106,7 @@ export function useTimelineEditor({
   }, []);
 
   const handleMouseDown = useCallback(
-    (mouseX: number, mouseY: number, e: React.MouseEvent) => {
+    (mouseX: number, mouseY: number, _e: React.MouseEvent) => {
       const hitResult = hitTestActionPoint(
         mouseX,
         mouseY,
