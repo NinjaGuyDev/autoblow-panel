@@ -17,18 +17,16 @@ export function useDeviceConnection(): UseDeviceConnectionReturn {
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [error, setError] = useState<string | null>(null);
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
-  const [savedToken, setSavedToken] = useState<string>('');
-  const ultraRef = useRef<Ultra | null>(null);
 
-  // Load saved token from localStorage on mount
-  useEffect(() => {
+  // Initialize savedToken directly from localStorage (lazy initialization)
+  const [savedToken, setSavedToken] = useState<string>(() => {
     console.log('Loading token from localStorage on mount...');
     const token = localStorage.getItem(DEVICE_TOKEN_KEY);
     console.log('Found token:', token);
-    if (token) {
-      setSavedToken(token);
-    }
-  }, []);
+    return token || '';
+  });
+
+  const ultraRef = useRef<Ultra | null>(null);
 
   const connect = async (token: string) => {
     // Clear previous errors on new connection attempt
