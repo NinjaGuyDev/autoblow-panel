@@ -3,6 +3,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { Layout } from '@/components/layout/Layout';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { NavBar } from '@/components/layout/NavBar';
+import { CreationFooter } from '@/components/layout/CreationFooter';
 import { VideoSyncPage } from '@/components/pages/VideoSyncPage';
 import { ManualControlPage } from '@/components/pages/ManualControlPage';
 import { DeviceLogPage } from '@/components/pages/DeviceLogPage';
@@ -26,6 +27,7 @@ function App() {
   const [showSessionHint, setShowSessionHint] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('video-sync');
   const [showTimeline, setShowTimeline] = useState(true);
+  const [isCreationMode, setIsCreationMode] = useState(false);
   const { logs, addLog, clearLogs } = useDeviceLog();
 
   // Video file state - must come first as videoUrl is used by playback hook
@@ -230,9 +232,25 @@ function App() {
     }
   };
 
+  // New script creation handler
+  const handleNewScript = () => {
+    setActions([]); // Clear existing actions
+    setIsCreationMode(true);
+    setActiveTab('pattern-library'); // Navigate to pattern library
+  };
+
+  // Close creation footer
+  const handleCloseCreation = () => {
+    setIsCreationMode(false);
+  };
+
   return (
     <ThemeProvider defaultTheme="dark">
-      <div onDrop={handleFileDrop} onDragOver={handleDragOver}>
+      <div
+        onDrop={handleFileDrop}
+        onDragOver={handleDragOver}
+        className={isCreationMode ? 'pb-24' : ''}
+      >
         <Layout
           header={
             <AppHeader
@@ -242,6 +260,8 @@ function App() {
               savedToken={savedToken}
               onConnect={connect}
               onDisconnect={disconnect}
+              onNewScript={handleNewScript}
+              isCreationMode={isCreationMode}
             />
           }
           navbar={<NavBar activeTab={activeTab} onTabChange={setActiveTab} />}
@@ -335,6 +355,14 @@ function App() {
             <PatternLibraryPage onInsert={handlePatternInsert} />
           )}
         </Layout>
+
+        {/* Creation mode footer */}
+        {isCreationMode && (
+          <CreationFooter
+            actions={editableActions}
+            onClose={handleCloseCreation}
+          />
+        )}
       </div>
     </ThemeProvider>
   );

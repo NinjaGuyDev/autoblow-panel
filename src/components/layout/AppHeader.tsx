@@ -8,6 +8,8 @@ interface AppHeaderProps {
   savedToken: string;
   onConnect: (token: string) => void;
   onDisconnect: () => void;
+  onNewScript: () => void;
+  isCreationMode: boolean;
 }
 
 /**
@@ -22,6 +24,8 @@ export function AppHeader({
   savedToken,
   onConnect,
   onDisconnect,
+  onNewScript,
+  isCreationMode,
 }: AppHeaderProps) {
   const [tokenValue, setTokenValue] = useState(savedToken || '');
   const [showPopover, setShowPopover] = useState(false);
@@ -86,6 +90,18 @@ export function AppHeader({
     <div className="flex items-center justify-between px-4 py-3">
       {/* Left: App title */}
       <h1 className="text-xl font-bold">Autoblow Panel</h1>
+
+      {/* Center: New Script button */}
+      <button
+        onClick={onNewScript}
+        className={`px-4 py-2 rounded font-medium transition-colors ${
+          isCreationMode
+            ? 'bg-green-600 text-white hover:bg-green-700'
+            : 'bg-blue-600 text-white hover:bg-blue-700'
+        }`}
+      >
+        {isCreationMode ? '✓ Creating Script' : '+ New Script'}
+      </button>
 
       {/* Right: Connection controls */}
       <div className="flex items-center gap-3 relative">
