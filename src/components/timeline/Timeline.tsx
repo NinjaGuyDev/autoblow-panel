@@ -8,6 +8,7 @@ import { ValidationOverlay } from './ValidationOverlay';
 import { PlayheadOverlay } from './PlayheadOverlay';
 import { TimelineAxis } from './TimelineAxis';
 import { TimelineControls } from './TimelineControls';
+import { TimelineSeekBar } from './TimelineSeekBar';
 import type { FunscriptAction } from '@/types/funscript';
 
 interface TimelineProps {
@@ -140,72 +141,33 @@ export function Timeline({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isEditMode, editor, onUndo, onRedo]);
 
-  // Click to seek (or editor interaction)
-  const handleCanvasClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    // In edit mode, click-to-seek is handled by the interaction layer
-    // This function is kept for backward compatibility with read-only mode
-    if (isEditMode) return;
-
-    if (durationMs === 0) return;
-
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickRatio = clickX / containerWidth;
-
-    // Calculate timestamp at click position
-    const clickedTimeMs = viewport.viewStart + clickRatio * viewport.viewportDuration;
-
-    // Clamp to valid range and convert to seconds
-    const clampedTimeMs = Math.max(0, Math.min(clickedTimeMs, durationMs));
-    const timeSeconds = clampedTimeMs / 1000;
-
+  // Seek handler (used by seek bar)
+  const handleSeek = (timeSeconds: number) => {
     onSeek(timeSeconds);
   };
-
-  // Pan state
-  const panStartRef = useRef<{ x: number; ratio: number } | null>(null);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    const mouseXRatio = mouseX / containerWidth;
 
     if (isEditMode && editor) {
-      // Let editor handle it first
+      // Let editor handle it (select, draw, drag, etc.)
       editor.handleMouseDown(mouseX, mouseY, e);
-      // Don't start pan - wait to see if editor starts dragging
-    } else {
-      // Read-only mode: start pan
-      panStartRef.current = { x: mouseX, ratio: mouseXRatio };
-      viewport.handlePanStart(mouseXRatio);
     }
+    // Panning is now handled by the seek bar, not the main canvas
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect();
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
-    const mouseXRatio = mouseX / containerWidth;
 
     if (isEditMode && editor) {
-      // Always update editor state
+      // Update editor state (hover, drag preview, etc.)
       editor.handleMouseMove(mouseX, mouseY);
-
-      // If editor is dragging or selecting, don't pan
-      if (editor.isDragging || editor.selectionRect) {
-        return;
-      }
-
-      // If not dragging/selecting but mouse is down, start/continue pan
-      if (panStartRef.current) {
-        viewport.handlePanMove(mouseXRatio);
-      }
-    } else {
-      // Read-only mode: pan if mouse is down
-      if (!panStartRef.current) return;
-      viewport.handlePanMove(mouseXRatio);
     }
+    // Panning is now handled by the seek bar, not the main canvas
   };
 
   const handleMouseUp = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -221,7 +183,7 @@ export function Timeline({
       editor.handleMouseUp(mouseX, mouseY, e);
 
       // If was dragging or selecting, don't fire click-to-seek
-      if (!wasDragging && !wasSelecting && durationMs > 0 && !panStartRef.current) {
+      if (!wasDragging && !wasSelecting && durationMs > 0) {
         // Click-to-seek (simple click on empty space)
         const clickRatio = mouseX / containerWidth;
         const clickedTimeMs = viewport.viewStart + clickRatio * viewport.viewportDuration;
@@ -230,9 +192,6 @@ export function Timeline({
         onSeek(timeSeconds);
       }
     }
-
-    panStartRef.current = null;
-    viewport.handlePanEnd();
   };
 
   const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -245,10 +204,7 @@ export function Timeline({
   };
 
   const handleMouseLeave = () => {
-    if (panStartRef.current) {
-      panStartRef.current = null;
-      viewport.handlePanEnd();
-    }
+    // No pan state to clean up - handled by seek bar
   };
 
   // Zoom button handlers
@@ -386,7 +342,6 @@ export function Timeline({
         {/* Interaction layer */}
         <div
           className="absolute inset-0 cursor-crosshair"
-          onClick={handleCanvasClick}
           onMouseDown={handleMouseDown}
           onMouseMove={handleMouseMove}
           onMouseUp={handleMouseUp}
@@ -400,6 +355,21 @@ export function Timeline({
           viewStart={viewport.viewStart}
           viewEnd={viewport.viewEnd}
           width={containerWidth}
+        />
+      )}
+
+      {/* Seek bar for panning and seeking */}
+      {containerWidth > 0 && (
+        <TimelineSeekBar
+          durationMs={durationMs}
+          currentTimeMs={currentTimeMs}
+          viewStart={viewport.viewStart}
+          viewEnd={viewport.viewEnd}
+          width={containerWidth}
+          onSeek={handleSeek}
+          onPanStart={viewport.handlePanStart}
+          onPanMove={viewport.handlePanMove}
+          onPanEnd={viewport.handlePanEnd}
         />
       )}
     </div>
