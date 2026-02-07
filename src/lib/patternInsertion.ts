@@ -9,6 +9,44 @@ function lerp(start: number, end: number, t: number): number {
 }
 
 /**
+ * Creates smooth transition points between two positions
+ * @param startPos Starting position (0-100)
+ * @param endPos Ending position (0-100)
+ * @param startTime Starting time in ms
+ * @param endTime Ending time in ms (if provided, overrides spacing calculation)
+ * @returns Array of transition actions
+ */
+function createSmoothTransition(
+  startPos: number,
+  endPos: number,
+  startTime: number,
+  endTime?: number
+): FunscriptAction[] {
+  const posDiff = Math.abs(endPos - startPos);
+
+  // 1 point for every 10 units of position difference
+  const numPoints = Math.max(0, Math.floor(posDiff / 10));
+
+  if (numPoints === 0) {
+    return [];
+  }
+
+  const transitionActions: FunscriptAction[] = [];
+  const spacing = 750; // 0.75 seconds between points
+
+  for (let i = 1; i <= numPoints; i++) {
+    const t = i / (numPoints + 1); // Distribute evenly between start and end
+    const pos = lerp(startPos, endPos, t);
+    const at = endTime
+      ? lerp(startTime, endTime, t)
+      : startTime + (i * spacing);
+    transitionActions.push({ pos, at });
+  }
+
+  return transitionActions;
+}
+
+/**
  * Inserts a pattern at the end of the existing actions array
  * @param currentActions Existing actions array
  * @param pattern Pattern definition to insert
@@ -20,24 +58,55 @@ export function insertPatternAtEnd(
 ): FunscriptAction[] {
   // Generate pattern actions
   const patternActions = pattern.generator();
+  if (patternActions.length === 0) return currentActions;
 
-  // Find max time in current actions (0 if empty)
+  // Find max time and last position in current actions
   const maxTime =
     currentActions.length > 0
       ? Math.max(...currentActions.map((a) => a.at))
       : 0;
 
-  // Offset pattern actions to start after current actions
-  const offsetPatternActions = patternActions.map((action) => ({
-    pos: action.pos,
-    at: action.at + maxTime,
-  }));
+  const lastPos =
+    currentActions.length > 0
+      ? currentActions[currentActions.length - 1].pos
+      : patternActions[0].pos; // If no existing actions, no smoothing needed
 
-  // Merge and sort by time
-  const merged = [...currentActions, ...offsetPatternActions];
-  merged.sort((a, b) => a.at - b.at);
+  // Create smooth transition from last position to pattern start
+  const smoothingActions: FunscriptAction[] = [];
+  if (currentActions.length > 0) {
+    const patternStartPos = patternActions[0].pos;
+    const transitionPoints = createSmoothTransition(
+      lastPos,
+      patternStartPos,
+      maxTime
+    );
 
-  return merged;
+    // Calculate total smoothing duration
+    const smoothingDuration = transitionPoints.length * 750;
+
+    // Offset pattern to start after smoothing
+    const patternStartTime = maxTime + smoothingDuration;
+    const offsetPatternActions = patternActions.map((action) => ({
+      pos: action.pos,
+      at: action.at + patternStartTime,
+    }));
+
+    // Merge all parts
+    const merged = [
+      ...currentActions,
+      ...transitionPoints,
+      ...offsetPatternActions,
+    ];
+    merged.sort((a, b) => a.at - b.at);
+    return merged;
+  } else {
+    // No existing actions, just add the pattern
+    const offsetPatternActions = patternActions.map((action) => ({
+      pos: action.pos,
+      at: action.at + maxTime,
+    }));
+    return offsetPatternActions;
+  }
 }
 
 /**
@@ -65,9 +134,28 @@ export function insertPatternAtCursor(
   const beforeActions = currentActions.filter((a) => a.at < cursorTimeMs);
   const afterActions = currentActions.filter((a) => a.at >= cursorTimeMs);
 
-  // Calculate shift amount: pattern duration + 1 second transition
+  // Calculate smoothing transition if there are after actions
+  let transitionActions: FunscriptAction[] = [];
+  let transitionDuration = 0;
+
+  if (offsetPatternActions.length > 0 && afterActions.length > 0) {
+    const patternEndPos = offsetPatternActions[offsetPatternActions.length - 1].pos;
+    const patternEndTime = offsetPatternActions[offsetPatternActions.length - 1].at;
+    const afterStartPos = afterActions[0].pos;
+
+    // Create smooth transition from pattern end to after actions start
+    transitionActions = createSmoothTransition(
+      patternEndPos,
+      afterStartPos,
+      patternEndTime
+    );
+
+    // Calculate transition duration
+    transitionDuration = transitionActions.length * 750;
+  }
+
+  // Calculate total shift amount: pattern duration + transition duration
   const patternDuration = pattern.durationMs;
-  const transitionDuration = 1000;
   const shiftAmount = patternDuration + transitionDuration;
 
   // Shift all after actions
@@ -75,24 +163,6 @@ export function insertPatternAtCursor(
     pos: action.pos,
     at: action.at + shiftAmount,
   }));
-
-  // Create transition bridge between pattern end and first shifted action
-  const transitionActions: FunscriptAction[] = [];
-  if (offsetPatternActions.length > 0 && shiftedAfterActions.length > 0) {
-    const patternEndPos = offsetPatternActions[offsetPatternActions.length - 1].pos;
-    const patternEndTime = offsetPatternActions[offsetPatternActions.length - 1].at;
-    const afterStartPos = shiftedAfterActions[0].pos;
-    const afterStartTime = shiftedAfterActions[0].at;
-
-    // Create 5 intermediate lerp points over 1 second
-    const numIntermediatePoints = 5;
-    for (let i = 1; i <= numIntermediatePoints; i++) {
-      const t = i / (numIntermediatePoints + 1);
-      const pos = lerp(patternEndPos, afterStartPos, t);
-      const at = lerp(patternEndTime, afterStartTime, t);
-      transitionActions.push({ pos, at });
-    }
-  }
 
   // Merge all arrays
   const merged = [
