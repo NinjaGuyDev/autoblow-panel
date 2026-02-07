@@ -37,7 +37,9 @@ interface VideoSyncPageProps {
   isDeviceConnected: boolean;
   hasFunscript: boolean;
 
-  // Timeline element
+  // Timeline controls
+  showTimeline: boolean;
+  onToggleTimeline: () => void;
   timelineElement: React.ReactNode;
 }
 
@@ -71,6 +73,8 @@ export function VideoSyncPage({
   syncError,
   isDeviceConnected,
   hasFunscript,
+  showTimeline,
+  onToggleTimeline,
   timelineElement,
 }: VideoSyncPageProps) {
   return (
@@ -112,6 +116,8 @@ export function VideoSyncPage({
             onFunscriptClear={onFunscriptClear}
             error={funscriptError}
             isLoading={isLoading}
+            showTimeline={showTimeline}
+            onToggleTimeline={onToggleTimeline}
           />
         </div>
 

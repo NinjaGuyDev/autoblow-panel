@@ -20,6 +20,7 @@ import type { TabId } from '@/types/navigation';
 function App() {
   const [showSessionHint, setShowSessionHint] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('video-sync');
+  const [showTimeline, setShowTimeline] = useState(true);
   const { logs, addLog, clearLogs } = useDeviceLog();
 
   // Video file state - must come first as videoUrl is used by playback hook
@@ -243,8 +244,10 @@ function App() {
               syncError={syncError}
               isDeviceConnected={connectionState === 'connected'}
               hasFunscript={funscriptData !== null}
+              showTimeline={showTimeline}
+              onToggleTimeline={() => setShowTimeline(!showTimeline)}
               timelineElement={
-                funscriptData && videoUrl ? (
+                showTimeline && funscriptData && videoUrl ? (
                   <Timeline
                     actions={funscriptData.actions}
                     currentTimeMs={currentTime * 1000}
