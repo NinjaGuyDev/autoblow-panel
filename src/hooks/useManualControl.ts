@@ -98,9 +98,8 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
       params.variability
     );
 
-    // Send position to device
-    // SDK doesn't have a direct setPosition method, so we use oscillateSet with min=max
-    ultra.oscillateSet(params.speed, position, position).catch((err) => {
+    // Send position to device using goToPosition
+    ultra.goToPosition(position, params.speed).catch((err) => {
       setError(err instanceof Error ? err.message : 'Failed to send position command');
       stop();
     });
