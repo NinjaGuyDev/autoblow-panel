@@ -77,9 +77,9 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
     const params = paramsRef.current;
 
     // Throttle API calls to prevent 429 errors
-    // Only send position commands every 500ms (~2 commands/sec)
+    // Only send position commands every 1000ms (~1 command/sec)
     const timeSinceLastCommand = timestamp - lastCommandTimeRef.current;
-    const COMMAND_INTERVAL = 500; // ms between commands
+    const COMMAND_INTERVAL = 1000; // ms between commands
 
     if (timeSinceLastCommand >= COMMAND_INTERVAL) {
       // Select generator based on pattern type
