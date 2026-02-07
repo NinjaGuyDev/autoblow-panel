@@ -87,21 +87,23 @@ export function AppHeader({
   };
 
   return (
-    <div className="flex items-center justify-between px-4 py-3">
+    <div className="flex items-center px-4 py-3">
       {/* Left: App title */}
-      <h1 className="text-xl font-bold">Autoblow Panel</h1>
+      <h1 className="text-xl font-bold flex-shrink-0">Autoblow Panel</h1>
 
       {/* Center: New Script button */}
-      <button
-        onClick={onNewScript}
-        className={`px-4 py-2 rounded font-medium transition-colors ${
-          isCreationMode
-            ? 'bg-green-600 text-white hover:bg-green-700'
-            : 'bg-blue-600 text-white hover:bg-blue-700'
-        }`}
-      >
-        {isCreationMode ? '✓ Creating Script' : '+ New Script'}
-      </button>
+      <div className="flex-1 flex justify-center">
+        <button
+          onClick={onNewScript}
+          className={`px-4 py-2 rounded font-medium transition-colors ${
+            isCreationMode
+              ? 'bg-green-600 text-white hover:bg-green-700'
+              : 'bg-blue-600 text-white hover:bg-blue-700'
+          }`}
+        >
+          {isCreationMode ? '✓ Creating Script' : '+ New Script'}
+        </button>
+      </div>
 
       {/* Right: Connection controls */}
       <div className="flex items-center gap-3 relative">
