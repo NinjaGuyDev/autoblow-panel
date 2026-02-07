@@ -23,10 +23,10 @@ export function InsertPositionDialog({
 
   return (
     <div
-      className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-card border border-muted rounded-lg max-w-md w-full p-6">
+      <div className="bg-zinc-900 border border-zinc-700 rounded-lg max-w-md w-full p-6 shadow-2xl">
         <h2 className="text-lg font-semibold text-foreground mb-4">
           Where would you like to insert this pattern?
         </h2>
