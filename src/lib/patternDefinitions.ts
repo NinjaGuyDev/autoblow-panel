@@ -1,5 +1,5 @@
 import type { FunscriptAction } from '@/types/funscript';
-import {
+import type {
   PatternDefinition,
   PatternDirection,
   StyleTag,
