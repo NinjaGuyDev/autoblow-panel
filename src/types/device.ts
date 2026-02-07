@@ -1,15 +1,10 @@
-import type { Autoblow } from '@xsense/autoblow-sdk';
+import type { Ultra, DeviceInfo as SDKDeviceInfo } from '@xsense/autoblow-sdk';
 
 // Connection state type
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
 
-// Device info returned from SDK getInfo()
-export interface DeviceInfo {
-  firmwareVersion: string;
-  hardwareVersion: string;
-  macAddress: string;
-  deviceType: string;
-}
+// Re-export SDK DeviceInfo for external use
+export type DeviceInfo = SDKDeviceInfo;
 
 // Pattern types for manual control
 export type PatternType = 'oscillation' | 'sine-wave' | 'triangle-wave' | 'random-walk';
@@ -38,5 +33,5 @@ export interface UseDeviceConnectionReturn {
   deviceInfo: DeviceInfo | null;
   connect: (token: string) => Promise<void>;
   disconnect: () => void;
-  autoblow: Autoblow | null;  // Expose SDK instance for manual control hook
+  ultra: Ultra | null;  // Expose SDK Ultra instance for manual control hook
 }
