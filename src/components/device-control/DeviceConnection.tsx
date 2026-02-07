@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { ConnectionState, DeviceInfo } from '@/types/device';
 import { StatusIndicator } from './StatusIndicator';
 
@@ -6,6 +6,7 @@ interface DeviceConnectionProps {
   connectionState: ConnectionState;
   error: string | null;
   deviceInfo: DeviceInfo | null;
+  savedToken: string;
   onConnect: (token: string) => void;
   onDisconnect: () => void;
 }
@@ -18,10 +19,18 @@ export function DeviceConnection({
   connectionState,
   error,
   deviceInfo,
+  savedToken,
   onConnect,
   onDisconnect,
 }: DeviceConnectionProps) {
   const [tokenValue, setTokenValue] = useState('');
+
+  // Pre-fill token input with saved token when it loads
+  useEffect(() => {
+    if (savedToken && !tokenValue) {
+      setTokenValue(savedToken);
+    }
+  }, [savedToken, tokenValue]);
 
   const handleConnectClick = () => {
     if (tokenValue.trim()) {

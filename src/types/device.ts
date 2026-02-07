@@ -34,4 +34,5 @@ export interface UseDeviceConnectionReturn {
   connect: (token: string) => Promise<void>;
   disconnect: () => void;
   ultra: Ultra | null;  // Expose SDK Ultra instance for manual control hook
+  savedToken: string;   // Token saved in localStorage for persistence
 }

@@ -7,6 +7,8 @@ import type {
   UseDeviceConnectionReturn,
 } from '@/types/device';
 
+const DEVICE_TOKEN_KEY = 'autoblow-device-token';
+
 /**
  * Hook to manage device connection state and lifecycle
  * Follows the same pattern as useVideoPlayback - encapsulates state with clean return interface
@@ -15,7 +17,16 @@ export function useDeviceConnection(): UseDeviceConnectionReturn {
   const [connectionState, setConnectionState] = useState<ConnectionState>('disconnected');
   const [error, setError] = useState<string | null>(null);
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
+  const [savedToken, setSavedToken] = useState<string>('');
   const ultraRef = useRef<Ultra | null>(null);
+
+  // Load saved token from localStorage on mount
+  useEffect(() => {
+    const token = localStorage.getItem(DEVICE_TOKEN_KEY);
+    if (token) {
+      setSavedToken(token);
+    }
+  }, []);
 
   const connect = async (token: string) => {
     // Clear previous errors on new connection attempt
@@ -31,6 +42,10 @@ export function useDeviceConnection(): UseDeviceConnectionReturn {
         setDeviceInfo(result.deviceInfo);
         ultraRef.current = result.ultra;
         setConnectionState('connected');
+
+        // Save token to localStorage on successful connection
+        localStorage.setItem(DEVICE_TOKEN_KEY, token);
+        setSavedToken(token);
       } else {
         throw new Error('Device is not an Autoblow AI Ultra');
       }
@@ -58,6 +73,10 @@ export function useDeviceConnection(): UseDeviceConnectionReturn {
     setConnectionState('disconnected');
     setDeviceInfo(null);
     setError(null);
+
+    // Clear saved token from localStorage on disconnect
+    localStorage.removeItem(DEVICE_TOKEN_KEY);
+    setSavedToken('');
   };
 
   // Cleanup on unmount
@@ -74,5 +93,6 @@ export function useDeviceConnection(): UseDeviceConnectionReturn {
     connect,
     disconnect,
     ultra: ultraRef.current,
+    savedToken,
   };
 }

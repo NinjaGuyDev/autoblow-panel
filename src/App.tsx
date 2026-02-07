@@ -56,6 +56,7 @@ function App() {
     connect,
     disconnect,
     ultra,
+    savedToken,
   } = useDeviceConnection();
 
   // Manual control state
@@ -217,6 +218,7 @@ function App() {
                   connectionState={connectionState}
                   error={deviceError}
                   deviceInfo={deviceInfo}
+                  savedToken={savedToken}
                   onConnect={connect}
                   onDisconnect={disconnect}
                 />
