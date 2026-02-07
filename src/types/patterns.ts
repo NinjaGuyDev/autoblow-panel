@@ -1,4 +1,4 @@
-import { FunscriptAction } from './funscript';
+import type { FunscriptAction } from '@/types/funscript';
 
 /**
  * Intensity level of a motion pattern
