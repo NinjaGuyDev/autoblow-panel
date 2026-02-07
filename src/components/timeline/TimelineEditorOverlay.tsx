@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from 'react';
 import type { FunscriptAction } from '@/types/funscript';
-import type { EditMode } from '@/types/timeline';
-import { timeToX, posToY } from '@/lib/timelineHitDetection';
+import type { EditMode, SelectionRect } from '@/types/timeline';
+import { timeToX, posToY, getPointsInRect } from '@/lib/timelineHitDetection';
 
 interface TimelineEditorOverlayProps {
   actions: FunscriptAction[];
@@ -15,6 +15,7 @@ interface TimelineEditorOverlayProps {
   dragPreview: { index: number; timeMs: number; pos: number } | null;
   mode: EditMode;
   drawPoints?: Array<{ timeMs: number; pos: number }>;
+  selectionRect?: SelectionRect | null;
 }
 
 export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
@@ -29,6 +30,7 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
     isDragging,
     dragPreview,
     drawPoints,
+    selectionRect,
   }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -182,6 +184,58 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
           ctx.fill();
         });
       }
+
+      // Draw selection rectangle
+      if (selectionRect) {
+        const minX = Math.min(selectionRect.startX, selectionRect.endX);
+        const maxX = Math.max(selectionRect.startX, selectionRect.endX);
+        const minY = Math.min(selectionRect.startY, selectionRect.endY);
+        const maxY = Math.max(selectionRect.startY, selectionRect.endY);
+        const rectWidth = maxX - minX;
+        const rectHeight = maxY - minY;
+
+        // Fill
+        ctx.fillStyle = 'rgba(96, 165, 250, 0.15)'; // Subtle blue fill
+        ctx.fillRect(minX, minY, rectWidth, rectHeight);
+
+        // Border
+        ctx.strokeStyle = 'rgba(96, 165, 250, 0.6)'; // Blue border
+        ctx.lineWidth = 1;
+        ctx.setLineDash([5, 5]); // Dashed
+        ctx.strokeRect(minX, minY, rectWidth, rectHeight);
+        ctx.setLineDash([]); // Reset dash
+
+        // Highlight points within rectangle (live preview)
+        const indicesInRect = getPointsInRect(
+          selectionRect,
+          actions,
+          viewStart,
+          viewEnd,
+          width,
+          height
+        );
+
+        indicesInRect.forEach((index) => {
+          const action = actions[index];
+          if (!action || action.at < viewStart || action.at > viewEnd) return;
+
+          const x = timeToX(action.at, viewStart, viewEnd, width);
+          const y = posToY(action.pos, height);
+
+          // Yellow outline (same as selected)
+          ctx.strokeStyle = '#facc15';
+          ctx.lineWidth = 2.5;
+          ctx.beginPath();
+          ctx.arc(x, y, 6, 0, Math.PI * 2);
+          ctx.stroke();
+
+          // Blue fill
+          ctx.fillStyle = '#60a5fa';
+          ctx.beginPath();
+          ctx.arc(x, y, 4, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
     }, [
       actions,
       viewStart,
@@ -193,6 +247,7 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
       isDragging,
       dragPreview,
       drawPoints,
+      selectionRect,
     ]);
 
     return (
@@ -220,7 +275,8 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
       prevProps.isDragging === nextProps.isDragging &&
       prevProps.dragPreview === nextProps.dragPreview &&
       prevProps.mode === nextProps.mode &&
-      prevProps.drawPoints === nextProps.drawPoints
+      prevProps.drawPoints === nextProps.drawPoints &&
+      prevProps.selectionRect === nextProps.selectionRect
     );
   }
 );

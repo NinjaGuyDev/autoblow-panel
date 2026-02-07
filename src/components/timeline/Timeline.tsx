@@ -184,15 +184,15 @@ export function Timeline({
     const mouseXRatio = mouseX / containerWidth;
 
     if (isEditMode && editor) {
-      // Always update editor hover state
+      // Always update editor state
       editor.handleMouseMove(mouseX, mouseY);
 
-      // If editor is dragging, don't pan
-      if (editor.isDragging) {
+      // If editor is dragging or selecting, don't pan
+      if (editor.isDragging || editor.selectionRect) {
         return;
       }
 
-      // If not dragging but mouse is down, start/continue pan
+      // If not dragging/selecting but mouse is down, start/continue pan
       if (panStartRef.current) {
         viewport.handlePanMove(mouseXRatio);
       }
@@ -210,11 +210,14 @@ export function Timeline({
 
     if (isEditMode && editor) {
       const wasDragging = editor.isDragging;
-      editor.handleMouseUp(mouseX, mouseY);
+      const wasSelecting = editor.selectionRect !== null;
 
-      // If was dragging, don't fire click-to-seek
-      if (!wasDragging && durationMs > 0 && !panStartRef.current) {
-        // Click-to-seek
+      // Pass event to editor (for Shift key detection)
+      editor.handleMouseUp(mouseX, mouseY, e);
+
+      // If was dragging or selecting, don't fire click-to-seek
+      if (!wasDragging && !wasSelecting && durationMs > 0 && !panStartRef.current) {
+        // Click-to-seek (simple click on empty space)
         const clickRatio = mouseX / containerWidth;
         const clickedTimeMs = viewport.viewStart + clickRatio * viewport.viewportDuration;
         const clampedTimeMs = Math.max(0, Math.min(clickedTimeMs, durationMs));
@@ -345,6 +348,7 @@ export function Timeline({
             dragPreview={editor.dragPreview}
             mode={editor.mode}
             drawPoints={editor.drawPoints}
+            selectionRect={editor.selectionRect}
           />
         )}
 

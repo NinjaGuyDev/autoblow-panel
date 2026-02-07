@@ -1,10 +1,11 @@
 import { useState, useRef, useCallback } from 'react';
 import type { FunscriptAction } from '@/types/funscript';
-import type { EditMode } from '@/types/timeline';
+import type { EditMode, SelectionRect } from '@/types/timeline';
 import {
   hitTestActionPoint,
   xToTime,
   yToPos,
+  getPointsInRect,
 } from '@/lib/timelineHitDetection';
 
 interface UseTimelineEditorProps {
@@ -35,9 +36,10 @@ export interface UseTimelineEditorReturn {
   dragPreview: DragPreview | null;
   isDrawing: boolean;
   drawPoints: Array<{ timeMs: number; pos: number }>;
+  selectionRect: SelectionRect | null;
   handleMouseDown: (mouseX: number, mouseY: number, e: React.MouseEvent) => void;
   handleMouseMove: (mouseX: number, mouseY: number) => void;
-  handleMouseUp: (mouseX: number, mouseY: number) => void;
+  handleMouseUp: (mouseX: number, mouseY: number, e?: React.MouseEvent) => void;
   handleDoubleClick: (mouseX: number, mouseY: number) => void;
   deleteSelected: () => void;
   addPoint: (timeMs: number, pos: number) => void;
@@ -58,11 +60,16 @@ export function useTimelineEditor({
   const [dragPreview, setDragPreview] = useState<DragPreview | null>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [drawPoints, setDrawPoints] = useState<Array<{ timeMs: number; pos: number }>>([]);
+  const [selectionRect, setSelectionRect] = useState<SelectionRect | null>(null);
 
   // Drag state refs (avoid re-renders during drag)
   const dragPointIndexRef = useRef<number | null>(null);
   const dragStartPosRef = useRef<{ x: number; y: number; timeMs: number; pos: number } | null>(null);
   const dragThresholdMetRef = useRef(false);
+
+  // Rectangle selection refs
+  const rectStartRef = useRef<{ x: number; y: number } | null>(null);
+  const isSelectingRef = useRef(false);
 
   const addPoint = useCallback(
     (timeMs: number, pos: number) => {
@@ -111,7 +118,7 @@ export function useTimelineEditor({
   }, []);
 
   const handleMouseDown = useCallback(
-    (mouseX: number, mouseY: number, _e: React.MouseEvent) => {
+    (mouseX: number, mouseY: number, e: React.MouseEvent) => {
       if (mode === 'draw') {
         // Start drawing
         setIsDrawing(true);
@@ -143,10 +150,11 @@ export function useTimelineEditor({
         dragThresholdMetRef.current = false;
         setIsDragging(false); // Not yet dragging (waiting for threshold)
       } else {
-        // No hit
+        // No hit - potential rectangle selection in select mode
         if (mode === 'select') {
-          // Allow click-to-seek to pass through
-          // Rectangle selection handled in Task 2
+          // Store start position for potential rectangle selection
+          rectStartRef.current = { x: mouseX, y: mouseY };
+          isSelectingRef.current = false; // Not yet selecting (waiting for drag threshold)
         }
       }
     },
@@ -170,6 +178,29 @@ export function useTimelineEditor({
 
         setDrawPoints([...drawPoints, { timeMs, pos }]);
         return;
+      }
+
+      // Handle rectangle selection
+      if (rectStartRef.current && mode === 'select' && !dragPointIndexRef.current) {
+        const dx = mouseX - rectStartRef.current.x;
+        const dy = mouseY - rectStartRef.current.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+
+        if (!isSelectingRef.current && distance > DRAG_THRESHOLD_PX) {
+          // Threshold met - start rectangle selection
+          isSelectingRef.current = true;
+        }
+
+        if (isSelectingRef.current) {
+          // Update selection rectangle
+          setSelectionRect({
+            startX: rectStartRef.current.x,
+            startY: rectStartRef.current.y,
+            endX: mouseX,
+            endY: mouseY,
+          });
+          return; // Don't update hover during rectangle selection
+        }
       }
 
       // Update hover state
@@ -213,7 +244,7 @@ export function useTimelineEditor({
   );
 
   const handleMouseUp = useCallback(
-    (_mouseX: number, _mouseY: number) => {
+    (_mouseX: number, _mouseY: number, e?: React.MouseEvent) => {
       // Handle draw mode
       if (isDrawing && mode === 'draw') {
         // Finalize the drawn curve
@@ -251,6 +282,38 @@ export function useTimelineEditor({
         return;
       }
 
+      // Handle rectangle selection
+      if (isSelectingRef.current && selectionRect && mode === 'select') {
+        // Find all points within rectangle
+        const indicesInRect = getPointsInRect(
+          selectionRect,
+          actions,
+          viewStart,
+          viewEnd,
+          canvasWidth,
+          canvasHeight
+        );
+
+        // Check if Shift is held
+        const shiftHeld = e?.shiftKey ?? false;
+
+        if (shiftHeld) {
+          // Add to existing selection
+          const newSelection = new Set(selectedIndices);
+          indicesInRect.forEach((idx) => newSelection.add(idx));
+          setSelectedIndices(newSelection);
+        } else {
+          // Replace selection
+          setSelectedIndices(new Set(indicesInRect));
+        }
+
+        // Clear rectangle selection state
+        setSelectionRect(null);
+        rectStartRef.current = null;
+        isSelectingRef.current = false;
+        return;
+      }
+
       if (dragPointIndexRef.current !== null && dragStartPosRef.current) {
         if (dragThresholdMetRef.current) {
           // Was dragging - commit the move
@@ -278,8 +341,13 @@ export function useTimelineEditor({
         dragStartPosRef.current = null;
         dragThresholdMetRef.current = false;
       }
+
+      // Clear rectangle selection if it was just a click (didn't exceed threshold)
+      if (rectStartRef.current && !isSelectingRef.current) {
+        rectStartRef.current = null;
+      }
     },
-    [viewStart, viewEnd, canvasWidth, canvasHeight, movePoint, selectedIndices, isDrawing, mode, drawPoints, actions, setActions]
+    [viewStart, viewEnd, canvasWidth, canvasHeight, movePoint, selectedIndices, isDrawing, mode, drawPoints, actions, setActions, selectionRect]
   );
 
   const handleDoubleClick = useCallback(
@@ -315,6 +383,7 @@ export function useTimelineEditor({
     dragPreview,
     isDrawing,
     drawPoints,
+    selectionRect,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
