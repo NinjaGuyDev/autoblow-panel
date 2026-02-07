@@ -68,8 +68,8 @@ export function ManualControls({
               className={`
                 flex-1 px-3 py-1.5 text-xs rounded border font-medium
                 ${patternType === type
-                  ? 'bg-primary text-primary-foreground border-primary shadow-sm'
-                  : 'bg-background text-muted-foreground border-muted hover:text-foreground hover:border-foreground/20'
+                  ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-400/50'
+                  : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:text-zinc-200 hover:border-zinc-600'
                 }
                 disabled:opacity-50 disabled:cursor-not-allowed
                 transition-all
