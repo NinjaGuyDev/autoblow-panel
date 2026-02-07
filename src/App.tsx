@@ -5,12 +5,14 @@ import { FunscriptLoader } from '@/components/file-loader/FunscriptLoader';
 import { Timeline } from '@/components/timeline/Timeline';
 import { DeviceConnection } from '@/components/device-control/DeviceConnection';
 import { ManualControls } from '@/components/device-control/ManualControls';
+import { SyncStatus } from '@/components/device-control/SyncStatus';
 import { useVideoFile } from '@/hooks/useVideoFile';
 import { useFunscriptFile } from '@/hooks/useFunscriptFile';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useVideoPlayback } from '@/hooks/useVideoPlayback';
 import { useDeviceConnection } from '@/hooks/useDeviceConnection';
 import { useManualControl } from '@/hooks/useManualControl';
+import { useSyncPlayback } from '@/hooks/useSyncPlayback';
 
 function App() {
   const [showSessionHint, setShowSessionHint] = useState(false);
@@ -75,6 +77,14 @@ function App() {
     error: manualError,
   } = useManualControl(ultra);
 
+  // Sync playback state
+  const {
+    syncStatus,
+    scriptUploaded,
+    driftMs,
+    error: syncError,
+  } = useSyncPlayback(videoRef, ultra, funscriptData, videoUrl);
+
   // Handle session recovery hint on mount
   useEffect(() => {
     if (lastSession?.funscriptName) {
@@ -88,6 +98,20 @@ function App() {
       saveSession(videoName, funscriptName, funscriptData);
     }
   }, [videoName, funscriptName, funscriptData, saveSession]);
+
+  // Mutual exclusion: Stop manual control when sync playback starts
+  useEffect(() => {
+    if (syncStatus === 'playing' && isRunning) {
+      stop();
+    }
+  }, [syncStatus, isRunning, stop]);
+
+  // Mutual exclusion: Pause video when manual control starts during playback
+  useEffect(() => {
+    if (isRunning && isPlaying && videoRef.current) {
+      videoRef.current.pause();
+    }
+  }, [isRunning, isPlaying]);
 
   const handleVideoLoad = (file: File) => {
     loadVideo(file);
@@ -221,6 +245,17 @@ function App() {
                   savedToken={savedToken}
                   onConnect={connect}
                   onDisconnect={disconnect}
+                />
+              </div>
+
+              <div className="bg-card border border-muted rounded-lg p-6">
+                <SyncStatus
+                  syncStatus={syncStatus}
+                  scriptUploaded={scriptUploaded}
+                  driftMs={driftMs}
+                  error={syncError}
+                  isDeviceConnected={connectionState === 'connected'}
+                  hasFunscript={funscriptData !== null}
                 />
               </div>
 
