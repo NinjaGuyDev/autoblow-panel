@@ -62,6 +62,24 @@ export function FunscriptLoader({
               {metadata?.title ?? funscriptName}
             </p>
           </div>
+
+          {/* Timeline visibility toggle */}
+          {funscriptData && (
+            <div className="pt-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showTimeline}
+                  onChange={onToggleTimeline}
+                  className="w-4 h-4 rounded border-muted text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background cursor-pointer"
+                />
+                <span className="text-sm text-muted-foreground">
+                  Show Timeline (disable to improve performance)
+                </span>
+              </label>
+            </div>
+          )}
+
           {funscriptData && (
             <div className="pt-2 border-t border-muted space-y-1">
               <p className="text-sm text-muted-foreground">
@@ -86,23 +104,6 @@ export function FunscriptLoader({
                   )}
                 </>
               )}
-            </div>
-          )}
-
-          {/* Timeline visibility toggle */}
-          {funscriptData && (
-            <div className="pt-3 border-t border-muted mt-3">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={showTimeline}
-                  onChange={onToggleTimeline}
-                  className="w-4 h-4 rounded border-muted text-primary focus:ring-2 focus:ring-primary focus:ring-offset-2 focus:ring-offset-background cursor-pointer"
-                />
-                <span className="text-sm text-muted-foreground">
-                  Show Timeline (disable to improve performance)
-                </span>
-              </label>
             </div>
           )}
         </div>
