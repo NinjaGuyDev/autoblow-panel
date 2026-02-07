@@ -36,6 +36,9 @@ interface VideoSyncPageProps {
   syncError: string | null;
   isDeviceConnected: boolean;
   hasFunscript: boolean;
+
+  // Timeline element
+  timelineElement: React.ReactNode;
 }
 
 /**
@@ -68,6 +71,7 @@ export function VideoSyncPage({
   syncError,
   isDeviceConnected,
   hasFunscript,
+  timelineElement,
 }: VideoSyncPageProps) {
   return (
     <div role="tabpanel" id="panel-video-sync" aria-labelledby="tab-video-sync">
@@ -90,6 +94,13 @@ export function VideoSyncPage({
             onSeek={onSeek}
           />
         </div>
+
+        {/* Timeline section - same width as video */}
+        {timelineElement && (
+          <div className="bg-card border border-muted rounded-lg">
+            {timelineElement}
+          </div>
+        )}
 
         {/* Funscript section */}
         <div className="bg-card border border-muted rounded-lg p-6">
