@@ -364,6 +364,7 @@ function App() {
           <CreationFooter
             actions={editableActions}
             onClose={handleCloseCreation}
+            onExport={handleExport}
           />
         )}
       </div>

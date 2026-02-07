@@ -4,13 +4,14 @@ import type { FunscriptAction } from '@/types/funscript';
 interface CreationFooterProps {
   actions: FunscriptAction[];
   onClose: () => void;
+  onExport: () => void;
 }
 
 /**
  * Sticky footer showing timeline for script creation mode
  * Displays actions added via pattern insertion
  */
-export function CreationFooter({ actions, onClose }: CreationFooterProps) {
+export function CreationFooter({ actions, onClose, onExport }: CreationFooterProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Draw mini timeline
@@ -71,12 +72,21 @@ export function CreationFooter({ actions, onClose }: CreationFooterProps) {
             className="flex-1 max-w-3xl rounded border border-zinc-700 bg-zinc-950"
           />
         </div>
-        <button
-          onClick={onClose}
-          className="ml-4 px-3 py-1.5 text-sm rounded border border-zinc-600 text-zinc-300 hover:bg-zinc-800 transition-colors"
-        >
-          Close
-        </button>
+        <div className="flex gap-2 ml-4">
+          <button
+            onClick={onExport}
+            disabled={actions.length === 0}
+            className="px-4 py-1.5 text-sm rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Export Script
+          </button>
+          <button
+            onClick={onClose}
+            className="px-3 py-1.5 text-sm rounded border border-zinc-600 text-zinc-300 hover:bg-zinc-800 transition-colors"
+          >
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );
