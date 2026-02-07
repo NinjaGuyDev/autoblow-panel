@@ -344,6 +344,7 @@ export function Timeline({
             isDragging={editor.isDragging}
             dragPreview={editor.dragPreview}
             mode={editor.mode}
+            drawPoints={editor.drawPoints}
           />
         )}
 

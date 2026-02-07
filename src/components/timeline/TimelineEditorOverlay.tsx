@@ -14,6 +14,7 @@ interface TimelineEditorOverlayProps {
   isDragging: boolean;
   dragPreview: { index: number; timeMs: number; pos: number } | null;
   mode: EditMode;
+  drawPoints?: Array<{ timeMs: number; pos: number }>;
 }
 
 export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
@@ -27,6 +28,7 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
     hoveredIndex,
     isDragging,
     dragPreview,
+    drawPoints,
   }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -149,6 +151,37 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
           ctx.fill();
         }
       }
+
+      // Draw freehand drawing preview
+      if (drawPoints && drawPoints.length >= 2) {
+        ctx.strokeStyle = 'rgba(34, 211, 238, 0.8)'; // Bright cyan
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+
+        // Draw connected line through all points
+        const firstPoint = drawPoints[0];
+        const firstX = timeToX(firstPoint.timeMs, viewStart, viewEnd, width);
+        const firstY = posToY(firstPoint.pos, height);
+        ctx.moveTo(firstX, firstY);
+
+        for (let i = 1; i < drawPoints.length; i++) {
+          const point = drawPoints[i];
+          const x = timeToX(point.timeMs, viewStart, viewEnd, width);
+          const y = posToY(point.pos, height);
+          ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Draw small dots at each point
+        ctx.fillStyle = 'rgba(34, 211, 238, 1)'; // Solid cyan
+        drawPoints.forEach((point) => {
+          const x = timeToX(point.timeMs, viewStart, viewEnd, width);
+          const y = posToY(point.pos, height);
+          ctx.beginPath();
+          ctx.arc(x, y, 2, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
     }, [
       actions,
       viewStart,
@@ -159,6 +192,7 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
       hoveredIndex,
       isDragging,
       dragPreview,
+      drawPoints,
     ]);
 
     return (
@@ -185,7 +219,8 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
       prevProps.hoveredIndex === nextProps.hoveredIndex &&
       prevProps.isDragging === nextProps.isDragging &&
       prevProps.dragPreview === nextProps.dragPreview &&
-      prevProps.mode === nextProps.mode
+      prevProps.mode === nextProps.mode &&
+      prevProps.drawPoints === nextProps.drawPoints
     );
   }
 );

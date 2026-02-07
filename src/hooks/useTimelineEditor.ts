@@ -23,6 +23,7 @@ interface DragPreview {
 }
 
 const DRAG_THRESHOLD_PX = 5;
+const DRAW_SUBSAMPLE_MS = 50; // Minimum time gap between drawn points
 
 export interface UseTimelineEditorReturn {
   mode: EditMode;
@@ -32,6 +33,8 @@ export interface UseTimelineEditorReturn {
   hoveredIndex: number | null;
   isDragging: boolean;
   dragPreview: DragPreview | null;
+  isDrawing: boolean;
+  drawPoints: Array<{ timeMs: number; pos: number }>;
   handleMouseDown: (mouseX: number, mouseY: number, e: React.MouseEvent) => void;
   handleMouseMove: (mouseX: number, mouseY: number) => void;
   handleMouseUp: (mouseX: number, mouseY: number) => void;
@@ -53,6 +56,8 @@ export function useTimelineEditor({
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragPreview, setDragPreview] = useState<DragPreview | null>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [drawPoints, setDrawPoints] = useState<Array<{ timeMs: number; pos: number }>>([]);
 
   // Drag state refs (avoid re-renders during drag)
   const dragPointIndexRef = useRef<number | null>(null);
@@ -107,6 +112,15 @@ export function useTimelineEditor({
 
   const handleMouseDown = useCallback(
     (mouseX: number, mouseY: number, _e: React.MouseEvent) => {
+      if (mode === 'draw') {
+        // Start drawing
+        setIsDrawing(true);
+        const timeMs = xToTime(mouseX, viewStart, viewEnd, canvasWidth);
+        const pos = yToPos(mouseY, canvasHeight);
+        setDrawPoints([{ timeMs, pos }]);
+        return;
+      }
+
       const hitResult = hitTestActionPoint(
         mouseX,
         mouseY,
@@ -132,7 +146,7 @@ export function useTimelineEditor({
         // No hit
         if (mode === 'select') {
           // Allow click-to-seek to pass through
-          // Future: Ctrl/Meta held will start selection rect (plan 03)
+          // Rectangle selection handled in Task 2
         }
       }
     },
@@ -141,6 +155,23 @@ export function useTimelineEditor({
 
   const handleMouseMove = useCallback(
     (mouseX: number, mouseY: number) => {
+      // Handle draw mode
+      if (isDrawing && mode === 'draw') {
+        const timeMs = xToTime(mouseX, viewStart, viewEnd, canvasWidth);
+        const pos = yToPos(mouseY, canvasHeight);
+
+        // Subsample: only add if time diff from last point >= 50ms
+        if (drawPoints.length > 0) {
+          const lastPoint = drawPoints[drawPoints.length - 1];
+          if (Math.abs(timeMs - lastPoint.timeMs) < DRAW_SUBSAMPLE_MS) {
+            return; // Skip this point - too close to last one
+          }
+        }
+
+        setDrawPoints([...drawPoints, { timeMs, pos }]);
+        return;
+      }
+
       // Update hover state
       const hitResult = hitTestActionPoint(
         mouseX,
@@ -178,16 +209,53 @@ export function useTimelineEditor({
         }
       }
     },
-    [actions, viewStart, viewEnd, canvasWidth, canvasHeight]
+    [actions, viewStart, viewEnd, canvasWidth, canvasHeight, isDrawing, mode, drawPoints]
   );
 
   const handleMouseUp = useCallback(
-    (mouseX: number, mouseY: number) => {
+    (_mouseX: number, _mouseY: number) => {
+      // Handle draw mode
+      if (isDrawing && mode === 'draw') {
+        // Finalize the drawn curve
+        if (drawPoints.length > 0) {
+          // Subsample to ensure minimum 50ms intervals
+          const subsampledPoints: Array<{ timeMs: number; pos: number }> = [];
+          subsampledPoints.push(drawPoints[0]); // Always keep first point
+
+          for (let i = 1; i < drawPoints.length - 1; i++) {
+            const lastKept = subsampledPoints[subsampledPoints.length - 1];
+            if (drawPoints[i].timeMs - lastKept.timeMs >= DRAW_SUBSAMPLE_MS) {
+              subsampledPoints.push(drawPoints[i]);
+            }
+          }
+
+          // Always keep last point
+          if (drawPoints.length > 1) {
+            subsampledPoints.push(drawPoints[drawPoints.length - 1]);
+          }
+
+          // Convert to FunscriptActions (clamp and round)
+          const newActions: FunscriptAction[] = subsampledPoints.map((point) => ({
+            at: Math.round(point.timeMs),
+            pos: Math.round(Math.max(0, Math.min(100, point.pos))),
+          }));
+
+          // Merge with existing actions and sort
+          const mergedActions = [...actions, ...newActions].sort((a, b) => a.at - b.at);
+          setActions(mergedActions);
+        }
+
+        // Clear drawing state
+        setIsDrawing(false);
+        setDrawPoints([]);
+        return;
+      }
+
       if (dragPointIndexRef.current !== null && dragStartPosRef.current) {
         if (dragThresholdMetRef.current) {
           // Was dragging - commit the move
-          const newTimeMs = xToTime(mouseX, viewStart, viewEnd, canvasWidth);
-          const newPos = yToPos(mouseY, canvasHeight);
+          const newTimeMs = xToTime(_mouseX, viewStart, viewEnd, canvasWidth);
+          const newPos = yToPos(_mouseY, canvasHeight);
           movePoint(dragPointIndexRef.current, newTimeMs, newPos);
           setIsDragging(false);
           setDragPreview(null);
@@ -211,7 +279,7 @@ export function useTimelineEditor({
         dragThresholdMetRef.current = false;
       }
     },
-    [viewStart, viewEnd, canvasWidth, canvasHeight, movePoint, selectedIndices]
+    [viewStart, viewEnd, canvasWidth, canvasHeight, movePoint, selectedIndices, isDrawing, mode, drawPoints, actions, setActions]
   );
 
   const handleDoubleClick = useCallback(
@@ -245,6 +313,8 @@ export function useTimelineEditor({
     hoveredIndex,
     isDragging,
     dragPreview,
+    isDrawing,
+    drawPoints,
     handleMouseDown,
     handleMouseMove,
     handleMouseUp,
