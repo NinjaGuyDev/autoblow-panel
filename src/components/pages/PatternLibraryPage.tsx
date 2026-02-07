@@ -9,6 +9,7 @@ import { InsertPositionDialog } from '@/components/pattern-library/InsertPositio
 
 interface PatternLibraryPageProps {
   onInsert: (pattern: PatternDefinition, position: 'cursor' | 'end') => void;
+  isCreationMode?: boolean;
 }
 
 /**
@@ -17,6 +18,7 @@ interface PatternLibraryPageProps {
  */
 export function PatternLibraryPage({
   onInsert,
+  isCreationMode = false,
 }: PatternLibraryPageProps) {
   // Filter state
   const {
@@ -46,8 +48,16 @@ export function PatternLibraryPage({
   // Handle insert button click in detail dialog
   const handleInsertClick = (pattern: PatternDefinition) => {
     setShowDetailDialog(false);
-    setSelectedPattern(pattern);
-    setShowInsertDialog(true);
+
+    // In creation mode, always insert at end (no cursor position available)
+    if (isCreationMode) {
+      onInsert(pattern, 'end');
+      setSelectedPattern(null);
+    } else {
+      // Show position dialog for normal mode
+      setSelectedPattern(pattern);
+      setShowInsertDialog(true);
+    }
   };
 
   // Handle position selection in insert dialog

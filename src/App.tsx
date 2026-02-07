@@ -352,7 +352,10 @@ function App() {
           )}
 
           {activeTab === 'pattern-library' && (
-            <PatternLibraryPage onInsert={handlePatternInsert} />
+            <PatternLibraryPage
+              onInsert={handlePatternInsert}
+              isCreationMode={isCreationMode}
+            />
           )}
         </Layout>
 
