@@ -27,10 +27,13 @@ export function DeviceConnection({
 
   // Update token input when savedToken changes
   useEffect(() => {
+    console.log('DeviceConnection: savedToken changed to:', savedToken);
+    console.log('DeviceConnection: current tokenValue:', tokenValue);
     if (savedToken) {
+      console.log('DeviceConnection: setting tokenValue to:', savedToken);
       setTokenValue(savedToken);
     }
-  }, [savedToken]);
+  }, [savedToken, tokenValue]);
 
   const handleConnectClick = () => {
     if (tokenValue.trim()) {
