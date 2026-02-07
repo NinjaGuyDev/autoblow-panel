@@ -106,31 +106,34 @@ export function VideoSyncPage({
           </div>
         )}
 
-        {/* Funscript section */}
-        <div className="bg-card border border-muted rounded-lg p-6">
-          <FunscriptLoader
-            funscriptFile={funscriptFile}
-            funscriptData={funscriptData}
-            funscriptName={funscriptName}
-            onFunscriptLoad={onFunscriptLoad}
-            onFunscriptClear={onFunscriptClear}
-            error={funscriptError}
-            isLoading={isLoading}
-            showTimeline={showTimeline}
-            onToggleTimeline={onToggleTimeline}
-          />
-        </div>
+        {/* Two-column layout: Funscript and Sync Status side-by-side */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Funscript section */}
+          <div className="bg-card border border-muted rounded-lg p-6">
+            <FunscriptLoader
+              funscriptFile={funscriptFile}
+              funscriptData={funscriptData}
+              funscriptName={funscriptName}
+              onFunscriptLoad={onFunscriptLoad}
+              onFunscriptClear={onFunscriptClear}
+              error={funscriptError}
+              isLoading={isLoading}
+              showTimeline={showTimeline}
+              onToggleTimeline={onToggleTimeline}
+            />
+          </div>
 
-        {/* Sync status section */}
-        <div className="bg-card border border-muted rounded-lg p-6">
-          <SyncStatus
-            syncStatus={syncStatus}
-            scriptUploaded={scriptUploaded}
-            driftMs={driftMs}
-            error={syncError}
-            isDeviceConnected={isDeviceConnected}
-            hasFunscript={hasFunscript}
-          />
+          {/* Sync status section */}
+          <div className="bg-card border border-muted rounded-lg p-6">
+            <SyncStatus
+              syncStatus={syncStatus}
+              scriptUploaded={scriptUploaded}
+              driftMs={driftMs}
+              error={syncError}
+              isDeviceConnected={isDeviceConnected}
+              hasFunscript={hasFunscript}
+            />
+          </div>
         </div>
       </div>
     </div>
