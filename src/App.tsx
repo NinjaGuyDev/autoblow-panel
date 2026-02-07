@@ -3,10 +3,14 @@ import { ThemeProvider } from '@/components/theme-provider';
 import { VideoLoader } from '@/components/file-loader/VideoLoader';
 import { FunscriptLoader } from '@/components/file-loader/FunscriptLoader';
 import { Timeline } from '@/components/timeline/Timeline';
+import { DeviceConnection } from '@/components/device-control/DeviceConnection';
+import { ManualControls } from '@/components/device-control/ManualControls';
 import { useVideoFile } from '@/hooks/useVideoFile';
 import { useFunscriptFile } from '@/hooks/useFunscriptFile';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useVideoPlayback } from '@/hooks/useVideoPlayback';
+import { useDeviceConnection } from '@/hooks/useDeviceConnection';
+import { useManualControl } from '@/hooks/useManualControl';
 
 function App() {
   const [showSessionHint, setShowSessionHint] = useState(false);
@@ -43,6 +47,32 @@ function App() {
   } = useFunscriptFile();
 
   const { saveSession, lastSession } = useAutoSave();
+
+  // Device connection state
+  const {
+    connectionState,
+    error: deviceError,
+    deviceInfo,
+    connect,
+    disconnect,
+    ultra,
+  } = useDeviceConnection();
+
+  // Manual control state
+  const {
+    isRunning,
+    patternType,
+    speed,
+    minY,
+    maxY,
+    increment,
+    variability,
+    start,
+    stop,
+    updateParams,
+    setPatternType,
+    error: manualError,
+  } = useManualControl(ultra);
 
   // Handle session recovery hint on mount
   useEffect(() => {
@@ -148,8 +178,8 @@ function App() {
 
         {/* Main content */}
         <div className="container mx-auto px-4 py-8">
-          <div className="grid grid-cols-1 lg:grid-cols-[60%_40%] gap-6">
-            {/* Video loader - left/top, larger space */}
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_minmax(0,400px)] gap-6">
+            {/* Left: Video loader */}
             <div className="bg-card border border-muted rounded-lg p-6">
               <VideoLoader
                 videoFile={videoFile}
@@ -168,17 +198,46 @@ function App() {
               />
             </div>
 
-            {/* Funscript loader - right/bottom, smaller space */}
-            <div className="bg-card border border-muted rounded-lg p-6">
-              <FunscriptLoader
-                funscriptFile={funscriptFile}
-                funscriptData={funscriptData}
-                funscriptName={funscriptName}
-                onFunscriptLoad={handleFunscriptLoad}
-                onFunscriptClear={handleFunscriptClear}
-                error={funscriptError}
-                isLoading={isLoading}
-              />
+            {/* Right: Funscript + Device panels stacked */}
+            <div className="flex flex-col gap-6">
+              <div className="bg-card border border-muted rounded-lg p-6">
+                <FunscriptLoader
+                  funscriptFile={funscriptFile}
+                  funscriptData={funscriptData}
+                  funscriptName={funscriptName}
+                  onFunscriptLoad={handleFunscriptLoad}
+                  onFunscriptClear={handleFunscriptClear}
+                  error={funscriptError}
+                  isLoading={isLoading}
+                />
+              </div>
+
+              <div className="bg-card border border-muted rounded-lg p-6">
+                <DeviceConnection
+                  connectionState={connectionState}
+                  error={deviceError}
+                  deviceInfo={deviceInfo}
+                  onConnect={connect}
+                  onDisconnect={disconnect}
+                />
+              </div>
+
+              <div className="bg-card border border-muted rounded-lg p-6">
+                <ManualControls
+                  isRunning={isRunning}
+                  patternType={patternType}
+                  speed={speed}
+                  minY={minY}
+                  maxY={maxY}
+                  increment={increment}
+                  variability={variability}
+                  isConnected={connectionState === 'connected'}
+                  onStart={start}
+                  onStop={stop}
+                  onParamChange={updateParams}
+                  onPatternTypeChange={setPatternType}
+                />
+              </div>
             </div>
           </div>
 
