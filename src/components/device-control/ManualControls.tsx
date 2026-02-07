@@ -66,13 +66,13 @@ export function ManualControls({
               onClick={() => onPatternTypeChange(type)}
               disabled={!isConnected}
               className={`
-                flex-1 px-3 py-1.5 text-xs rounded border
+                flex-1 px-3 py-1.5 text-xs rounded border font-medium
                 ${patternType === type
-                  ? 'bg-primary text-primary-foreground border-primary'
-                  : 'bg-background text-muted-foreground border-muted hover:text-foreground'
+                  ? 'bg-primary text-primary-foreground border-primary shadow-sm'
+                  : 'bg-background text-muted-foreground border-muted hover:text-foreground hover:border-foreground/20'
                 }
                 disabled:opacity-50 disabled:cursor-not-allowed
-                transition-colors
+                transition-all
               `}
             >
               {label}

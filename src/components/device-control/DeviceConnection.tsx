@@ -23,14 +23,14 @@ export function DeviceConnection({
   onConnect,
   onDisconnect,
 }: DeviceConnectionProps) {
-  const [tokenValue, setTokenValue] = useState('');
+  const [tokenValue, setTokenValue] = useState(savedToken || '');
 
-  // Pre-fill token input with saved token when it loads
+  // Update token input when savedToken changes
   useEffect(() => {
-    if (savedToken && !tokenValue) {
+    if (savedToken) {
       setTokenValue(savedToken);
     }
-  }, [savedToken, tokenValue]);
+  }, [savedToken]);
 
   const handleConnectClick = () => {
     if (tokenValue.trim()) {
