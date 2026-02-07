@@ -2,12 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import type { Ultra } from '@xsense/autoblow-sdk';
 import type { PatternType, ManualControlParams } from '@/types/device';
-import {
-  generateSineWave,
-  generateTriangleWave,
-  createRandomWalkGenerator,
-  type PatternGenerator,
-} from '@/lib/patternGenerators';
+import { generatePatternFunscript } from '@/lib/funscriptGenerator';
 
 export interface UseManualControlReturn {
   isRunning: boolean;
@@ -39,17 +34,8 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
   const [variability, setVariability] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  // Refs for RAF loop
-  const animationRef = useRef<number | null>(null);
-  const startTimeRef = useRef<number>(0);
-  const lastCommandTimeRef = useRef<number>(0);
-  const paramsRef = useRef({ speed, minY, maxY, increment, variability });
-  const randomWalkGeneratorRef = useRef<PatternGenerator>(createRandomWalkGenerator());
-
-  // Keep paramsRef in sync with state
-  useEffect(() => {
-    paramsRef.current = { speed, minY, maxY, increment, variability };
-  }, [speed, minY, maxY, increment, variability]);
+  // Track if we're currently uploading a funscript
+  const isUploadingRef = useRef(false);
 
   // Debounced SDK oscillateSet for real-time parameter updates
   const debouncedOscillateSet = useDebouncedCallback(
@@ -64,59 +50,53 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
     150
   );
 
+  // Debounced funscript regeneration for custom pattern parameter changes
+  // Wait 3 seconds after last change before regenerating
+  const debouncedRegenerateFunscript = useDebouncedCallback(
+    async () => {
+      if (!ultra || !isRunning || patternType === 'oscillation') return;
+      await uploadAndStartFunscript();
+    },
+    3000
+  );
+
   /**
-   * RAF loop callback for custom patterns
+   * Upload and start a generated funscript for custom patterns
    */
-  const rafCallback = useCallback((timestamp: number) => {
-    if (!ultra) {
-      stop();
-      return;
-    }
+  const uploadAndStartFunscript = useCallback(async () => {
+    if (!ultra || patternType === 'oscillation') return;
+    if (isUploadingRef.current) return; // Prevent concurrent uploads
 
-    const elapsed = timestamp - startTimeRef.current;
-    const params = paramsRef.current;
+    try {
+      isUploadingRef.current = true;
+      setError(null);
 
-    // Throttle API calls to prevent 429 errors
-    // Only send position commands every 1000ms (~1 command/sec)
-    const timeSinceLastCommand = timestamp - lastCommandTimeRef.current;
-    const COMMAND_INTERVAL = 1000; // ms between commands
-
-    if (timeSinceLastCommand >= COMMAND_INTERVAL) {
-      // Select generator based on pattern type
-      let generator: PatternGenerator;
-      if (patternType === 'sine-wave') {
-        generator = generateSineWave;
-      } else if (patternType === 'triangle-wave') {
-        generator = generateTriangleWave;
-      } else if (patternType === 'random-walk') {
-        generator = randomWalkGeneratorRef.current;
-      } else {
-        // Should not happen, but fallback to sine
-        generator = generateSineWave;
-      }
-
-      // Generate position
-      const position = generator(
-        elapsed,
-        params.speed,
-        params.minY,
-        params.maxY,
-        params.increment,
-        params.variability
+      // Generate 5-minute funscript from current pattern settings
+      const funscript = generatePatternFunscript(
+        patternType,
+        speed,
+        minY,
+        maxY,
+        increment,
+        variability,
+        5 * 60 * 1000, // 5 minutes
+        100 // Sample every 100ms
       );
 
-      // Send position to device using goToPosition
-      ultra.goToPosition(position, params.speed).catch((err) => {
-        setError(err instanceof Error ? err.message : 'Failed to send position command');
-        stop();
-      });
+      // Upload funscript to device
+      await ultra.syncScriptUploadFunscriptFile(funscript);
 
-      lastCommandTimeRef.current = timestamp;
+      // Start playback from beginning
+      await ultra.syncScriptStart(0);
+
+      setIsRunning(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to upload funscript');
+      setIsRunning(false);
+    } finally {
+      isUploadingRef.current = false;
     }
-
-    // Schedule next frame (still run at 60fps for smooth animation calculation)
-    animationRef.current = requestAnimationFrame(rafCallback);
-  }, [ultra, patternType]);
+  }, [ultra, patternType, speed, minY, maxY, increment, variability]);
 
   /**
    * Start manual control motion
@@ -136,17 +116,13 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
         await ultra.oscillateStart();
         setIsRunning(true);
       } else {
-        // Custom RAF pattern mode
-        const now = performance.now();
-        startTimeRef.current = now;
-        lastCommandTimeRef.current = now; // Initialize to prevent immediate command
-        animationRef.current = requestAnimationFrame(rafCallback);
-        setIsRunning(true);
+        // Custom pattern mode - upload and start funscript
+        await uploadAndStartFunscript();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to start manual control');
     }
-  }, [ultra, patternType, speed, minY, maxY, rafCallback]);
+  }, [ultra, patternType, speed, minY, maxY, uploadAndStartFunscript]);
 
   /**
    * Stop manual control motion
@@ -158,12 +134,9 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
       if (patternType === 'oscillation' && ultra) {
         // SDK oscillation mode
         await ultra.oscillateStop();
-      } else {
-        // Custom RAF pattern mode
-        if (animationRef.current !== null) {
-          cancelAnimationFrame(animationRef.current);
-          animationRef.current = null;
-        }
+      } else if (ultra) {
+        // Custom pattern mode - stop funscript playback
+        await ultra.syncScriptStop();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to stop manual control');
@@ -198,15 +171,20 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
       setVariability(Math.max(0, Math.min(100, params.variability)));
     }
 
-    // If running in SDK oscillation mode and speed/minY/maxY changed, update device
-    if (isRunning && patternType === 'oscillation') {
-      const newSpeed = params.speed !== undefined ? params.speed : speed;
-      const newMinY = params.minY !== undefined ? params.minY : minY;
-      const newMaxY = params.maxY !== undefined ? params.maxY : maxY;
-      debouncedOscillateSet(newSpeed, newMinY, newMaxY);
+    // If running, update device with debouncing
+    if (isRunning) {
+      if (patternType === 'oscillation') {
+        // SDK oscillation mode - debounce oscillateSet calls
+        const newSpeed = params.speed !== undefined ? params.speed : speed;
+        const newMinY = params.minY !== undefined ? params.minY : minY;
+        const newMaxY = params.maxY !== undefined ? params.maxY : maxY;
+        debouncedOscillateSet(newSpeed, newMinY, newMaxY);
+      } else {
+        // Custom pattern mode - debounce funscript regeneration (3 seconds)
+        debouncedRegenerateFunscript();
+      }
     }
-    // For RAF mode, params are read from ref on next frame, no action needed
-  }, [isRunning, patternType, speed, minY, maxY, debouncedOscillateSet]);
+  }, [isRunning, patternType, speed, minY, maxY, debouncedOscillateSet, debouncedRegenerateFunscript]);
 
   /**
    * Change pattern type (stops if currently running)
