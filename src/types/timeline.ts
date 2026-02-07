@@ -17,3 +17,29 @@ export interface TimelineRenderData {
   isPlaying: boolean;
   showActionPoints: boolean;
 }
+
+// Editor-specific types
+export type EditMode = 'select' | 'draw';
+
+export interface HitTestResult {
+  index: number;
+  action: { pos: number; at: number };
+  distancePx: number;
+}
+
+export interface SelectionRect {
+  startX: number;
+  startY: number;
+  endX: number;
+  endY: number;
+}
+
+export interface EditorState {
+  mode: EditMode;
+  selectedIndices: Set<number>;
+  isDragging: boolean;
+  dragPointIndex: number | null;
+  dragStartPos: { timeMs: number; pos: number } | null;
+  isDrawing: boolean;
+  drawPoints: Array<{ timeMs: number; pos: number }>;
+}
