@@ -213,37 +213,7 @@ function App() {
             />
           }
           navbar={<NavBar activeTab={activeTab} onTabChange={setActiveTab} />}
-          timeline={
-            funscriptData && videoUrl ? (
-              <Timeline
-                actions={funscriptData.actions}
-                currentTimeMs={currentTime * 1000}
-                durationMs={duration * 1000}
-                isPlaying={isPlaying}
-                onSeek={seek}
-              />
-            ) : undefined
-          }
         >
-          {/* Session recovery hint */}
-          {showSessionHint && lastSession?.funscriptName && (
-            <div className="bg-primary/10 border border-primary/20 rounded-lg mb-6">
-              <div className="px-4 py-3">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm">
-                    Previous session found: <span className="font-medium">{lastSession.funscriptName}</span>. Load files to continue.
-                  </p>
-                  <button
-                    onClick={() => setShowSessionHint(false)}
-                    className="text-sm text-muted-foreground hover:text-foreground"
-                  >
-                    Dismiss
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Conditional page rendering based on active tab */}
           {activeTab === 'video-sync' && (
             <VideoSyncPage
@@ -273,6 +243,17 @@ function App() {
               syncError={syncError}
               isDeviceConnected={connectionState === 'connected'}
               hasFunscript={funscriptData !== null}
+              timelineElement={
+                funscriptData && videoUrl ? (
+                  <Timeline
+                    actions={funscriptData.actions}
+                    currentTimeMs={currentTime * 1000}
+                    durationMs={duration * 1000}
+                    isPlaying={isPlaying}
+                    onSeek={seek}
+                  />
+                ) : null
+              }
             />
           )}
 
