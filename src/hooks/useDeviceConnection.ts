@@ -22,7 +22,9 @@ export function useDeviceConnection(): UseDeviceConnectionReturn {
 
   // Load saved token from localStorage on mount
   useEffect(() => {
+    console.log('Loading token from localStorage on mount...');
     const token = localStorage.getItem(DEVICE_TOKEN_KEY);
+    console.log('Found token:', token);
     if (token) {
       setSavedToken(token);
     }
@@ -44,8 +46,10 @@ export function useDeviceConnection(): UseDeviceConnectionReturn {
         setConnectionState('connected');
 
         // Save token to localStorage on successful connection
+        console.log('Saving token to localStorage:', DEVICE_TOKEN_KEY, token);
         localStorage.setItem(DEVICE_TOKEN_KEY, token);
         setSavedToken(token);
+        console.log('Token saved. Verification:', localStorage.getItem(DEVICE_TOKEN_KEY));
       } else {
         throw new Error('Device is not an Autoblow AI Ultra');
       }
