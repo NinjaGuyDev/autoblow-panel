@@ -42,6 +42,7 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
   // Refs for RAF loop
   const animationRef = useRef<number | null>(null);
   const startTimeRef = useRef<number>(0);
+  const lastCommandTimeRef = useRef<number>(0);
   const paramsRef = useRef({ speed, minY, maxY, increment, variability });
   const randomWalkGeneratorRef = useRef<PatternGenerator>(createRandomWalkGenerator());
 
@@ -75,36 +76,45 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
     const elapsed = timestamp - startTimeRef.current;
     const params = paramsRef.current;
 
-    // Select generator based on pattern type
-    let generator: PatternGenerator;
-    if (patternType === 'sine-wave') {
-      generator = generateSineWave;
-    } else if (patternType === 'triangle-wave') {
-      generator = generateTriangleWave;
-    } else if (patternType === 'random-walk') {
-      generator = randomWalkGeneratorRef.current;
-    } else {
-      // Should not happen, but fallback to sine
-      generator = generateSineWave;
+    // Throttle API calls to prevent 429 errors
+    // Only send position commands every 100ms (~10 commands/sec)
+    const timeSinceLastCommand = timestamp - lastCommandTimeRef.current;
+    const COMMAND_INTERVAL = 100; // ms between commands
+
+    if (timeSinceLastCommand >= COMMAND_INTERVAL) {
+      // Select generator based on pattern type
+      let generator: PatternGenerator;
+      if (patternType === 'sine-wave') {
+        generator = generateSineWave;
+      } else if (patternType === 'triangle-wave') {
+        generator = generateTriangleWave;
+      } else if (patternType === 'random-walk') {
+        generator = randomWalkGeneratorRef.current;
+      } else {
+        // Should not happen, but fallback to sine
+        generator = generateSineWave;
+      }
+
+      // Generate position
+      const position = generator(
+        elapsed,
+        params.speed,
+        params.minY,
+        params.maxY,
+        params.increment,
+        params.variability
+      );
+
+      // Send position to device using goToPosition
+      ultra.goToPosition(position, params.speed).catch((err) => {
+        setError(err instanceof Error ? err.message : 'Failed to send position command');
+        stop();
+      });
+
+      lastCommandTimeRef.current = timestamp;
     }
 
-    // Generate position
-    const position = generator(
-      elapsed,
-      params.speed,
-      params.minY,
-      params.maxY,
-      params.increment,
-      params.variability
-    );
-
-    // Send position to device using goToPosition
-    ultra.goToPosition(position, params.speed).catch((err) => {
-      setError(err instanceof Error ? err.message : 'Failed to send position command');
-      stop();
-    });
-
-    // Schedule next frame
+    // Schedule next frame (still run at 60fps for smooth animation calculation)
     animationRef.current = requestAnimationFrame(rafCallback);
   }, [ultra, patternType]);
 
@@ -127,7 +137,9 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
         setIsRunning(true);
       } else {
         // Custom RAF pattern mode
-        startTimeRef.current = performance.now();
+        const now = performance.now();
+        startTimeRef.current = now;
+        lastCommandTimeRef.current = now; // Initialize to prevent immediate command
         animationRef.current = requestAnimationFrame(rafCallback);
         setIsRunning(true);
       }
