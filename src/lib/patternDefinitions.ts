@@ -1,4 +1,4 @@
-import { FunscriptAction } from '@/types/funscript';
+import type { FunscriptAction } from '@/types/funscript';
 import {
   PatternDefinition,
   PatternDirection,

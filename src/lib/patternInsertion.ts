@@ -1,5 +1,5 @@
-import { FunscriptAction } from '@/types/funscript';
-import { PatternDefinition } from '@/types/patterns';
+import type { FunscriptAction } from '@/types/funscript';
+import type { PatternDefinition } from '@/types/patterns';
 
 /**
  * Linear interpolation helper
