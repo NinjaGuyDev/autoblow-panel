@@ -62,7 +62,7 @@ export function generatePatternFunscript(
   // Return SDK-compatible Funscript
   return {
     metadata: {
-      id: Date.now(), // Use timestamp as unique ID
+      id: Math.floor(Math.random() * 4294967295), // Random 32-bit unsigned int
       version: 1,
     },
     actions,
