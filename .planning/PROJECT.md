@@ -12,24 +12,24 @@ Smooth, privacy-preserving funscript playback synced with local video content.
 
 ### Validated
 
-(None yet — ship to validate)
+- ✓ Load local video files (MP4, WebM, etc.) into the interface — v1.0
+- ✓ Auto-detect matching funscript files (same filename, .funscript extension) — v1.0
+- ✓ Manually load/select funscript files — v1.0
+- ✓ Play video with synchronized funscript execution on device — v1.0
+- ✓ Visual timeline editor displaying motion patterns as a graph — v1.0
+- ✓ Real-time device control via autoblow-js-sdk — v1.0
+- ✓ Browse and preview motion pattern library (36 presets) — v1.0
+- ✓ Load preset patterns into timeline — v1.0
+- ✓ Draw motion curves directly on timeline — v1.0
+- ✓ Edit individual action points (add, remove, adjust position/timing) — v1.0
+- ✓ Export edited/created funscripts as .funscript files — v1.0
+- ✓ Manual device controls for testing individual motions — v1.0
+- ✓ Visual feedback showing current playback position on timeline — v1.0
+- ✓ Pause/resume/seek controls affecting both video and device sync — v1.0
 
 ### Active
 
-- [ ] Load local video files (MP4, WebM, etc.) into the interface
-- [ ] Auto-detect matching funscript files (same filename, .funscript extension)
-- [ ] Manually load/select funscript files
-- [ ] Play video with synchronized funscript execution on device
-- [ ] Visual timeline editor displaying motion patterns as a graph
-- [ ] Real-time device control via autoblow-js-sdk
-- [ ] Browse and preview motion pattern library (motions/ directory)
-- [ ] Load preset patterns into timeline
-- [ ] Draw motion curves directly on timeline
-- [ ] Edit individual action points (add, remove, adjust position/timing)
-- [ ] Export edited/created funscripts as .funscript files
-- [ ] Manual device controls for testing individual motions
-- [ ] Visual feedback showing current playback position on timeline
-- [ ] Pause/resume/seek controls affecting both video and device sync
+(None — all v1.0 requirements shipped)
 
 ### Out of Scope
 
@@ -42,16 +42,20 @@ Smooth, privacy-preserving funscript playback synced with local video content.
 
 ## Context
 
+**Current State (v1.0 shipped):**
+- 8,566 LOC TypeScript/TSX across 92 files
+- Tech stack: Vite + React + TypeScript, shadcn/ui, Tailwind CSS, Dexie (IndexedDB), autoblow-js-sdk
+- 4 pages: Video Sync, Manual Control, Device Log, Pattern Library
+- Canvas-based timeline with editing, validation, and pattern insertion
+- 36 motion patterns with animated previews and search/filter
+
 **Existing Assets:**
-- 35+ pre-built motion patterns in motions/ directory (wave-up-slow, surge-down, bounce-up, etc.)
-- Sample funscripts demonstrating various patterns and complexities
-- Funscript format: JSON with `version`, `inverted`, `range`, and `actions` array containing `{pos, at}` pairs where `pos` is position 0-100 and `at` is time in milliseconds
+- 35+ pre-built motion patterns in motions/ directory
+- Funscript format: JSON with `version`, `inverted`, `range`, and `actions` array containing `{pos, at}` pairs
 
 **Technical Environment:**
 - Target device: Autoblow AI Ultra
 - SDK: autoblow-js-sdk (https://developers.autoblow.com/guides/autoblow-js-sdk/)
-- Development reference: whatcom383/autoblow-ultra-playground
-- UI inspiration: funscript.io (dark theme, visual timeline editor, clean controls)
 
 **User Intent:**
 - Personal use for testing and enjoying content
@@ -70,9 +74,16 @@ Smooth, privacy-preserving funscript playback synced with local video content.
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Privacy-first local architecture | User's core requirement - no cloud, no uploads, complete privacy | — Pending |
-| Visual timeline editor | Inspired by funscript.io - intuitive way to see and edit motion patterns over time | — Pending |
-| Web-based interface | Cross-platform, no installation, works on any device with browser and autoblow-js-sdk support | — Pending |
+| Privacy-first local architecture | User's core requirement - no cloud, no uploads, complete privacy | ✓ Good |
+| Visual timeline editor | Inspired by funscript.io - intuitive way to see and edit motion patterns over time | ✓ Good |
+| Web-based interface | Cross-platform, no installation, works on any device with browser and autoblow-js-sdk support | ✓ Good |
+| Canvas API for timeline rendering | 10-100x faster than SVG for large funscript datasets | ✓ Good |
+| Video element as master clock | Device follows video timing, single source of truth for sync | ✓ Good |
+| Snapshot-based undo/redo | Simpler than command pattern, sufficient for expected edit volumes | ✓ Good |
+| RAF drift detection every 2s | 200ms threshold keeps sync tight without excessive overhead | ✓ Good |
+| Pure function pattern generators | No React dependencies, testable and composable | ✓ Good |
+| Presentation components pattern | State lifted to App.tsx, pages are pure UI — clean separation | ✓ Good |
+| AND-logic pattern filtering | All filters must match simultaneously — intuitive UX | ✓ Good |
 
 ---
-*Last updated: 2026-02-06 after initialization*
+*Last updated: 2026-02-08 after v1.0 milestone*
