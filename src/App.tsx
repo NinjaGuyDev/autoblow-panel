@@ -9,6 +9,7 @@ import { VideoSyncPage } from '@/components/pages/VideoSyncPage';
 import { ManualControlPage } from '@/components/pages/ManualControlPage';
 import { DeviceLogPage } from '@/components/pages/DeviceLogPage';
 import { PatternLibraryPage } from '@/components/pages/PatternLibraryPage';
+import { LibraryPage } from '@/components/pages/LibraryPage';
 import { Timeline } from '@/components/timeline/Timeline';
 import { useVideoFile } from '@/hooks/useVideoFile';
 import { useFunscriptFile } from '@/hooks/useFunscriptFile';
@@ -20,19 +21,25 @@ import { useDeviceConnection } from '@/hooks/useDeviceConnection';
 import { useManualControl } from '@/hooks/useManualControl';
 import { useSyncPlayback } from '@/hooks/useSyncPlayback';
 import { useDeviceLog } from '@/hooks/useDeviceLog';
+import { useLibrary } from '@/hooks/useLibrary';
 import { exportFunscript } from '@/lib/funscriptExport';
 import { insertPatternAtCursor, insertPatternAtEnd } from '@/lib/patternInsertion';
 import type { TabId } from '@/types/navigation';
 import type { PatternDefinition } from '@/types/patterns';
+import type { LibraryItem } from '../server/types/shared';
+import type { Funscript } from '@/types/funscript';
 
 function App() {
   const [showSessionHint, setShowSessionHint] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabId>('video-sync');
+  const [activeTab, setActiveTab] = useState<TabId>('library');
   const [showTimeline, setShowTimeline] = useState(true);
   const [isCreationMode, setIsCreationMode] = useState(false);
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [scriptName, setScriptName] = useState<string>('');
   const { logs, addLog, clearLogs } = useDeviceLog();
+
+  // Library state
+  const library = useLibrary();
 
   // Video file state - must come first as videoUrl is used by playback hook
   const {
@@ -60,6 +67,7 @@ function App() {
     funscriptData,
     funscriptName,
     loadFunscript,
+    loadFunscriptFromData,
     clearFunscript,
     error: funscriptError,
     isLoading,
@@ -269,6 +277,32 @@ function App() {
     setScriptName('');
   };
 
+  // Load item from library
+  const handleLoadFromLibrary = (item: LibraryItem) => {
+    try {
+      // Parse funscript data from JSON string
+      const parsedData: Funscript = JSON.parse(item.funscriptData);
+
+      // Load funscript data using the new loadFunscriptFromData method
+      loadFunscriptFromData(item.funscriptName || 'library-item.funscript', parsedData);
+
+      // Switch to video-sync tab
+      setActiveTab('video-sync');
+
+      // Log the loaded item
+      addLog('info', `Loaded from library: ${item.funscriptName || item.videoName || 'Unnamed'}`);
+
+      // Note: Video file cannot be loaded from library (not stored in DB)
+      // User will need to re-select the video file manually
+      if (item.videoName) {
+        addLog('info', `Please load video file: ${item.videoName}`);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load library item';
+      addLog('error', errorMessage);
+    }
+  };
+
   return (
     <ThemeProvider defaultTheme="dark">
       <div
@@ -292,6 +326,13 @@ function App() {
           navbar={<NavBar activeTab={activeTab} onTabChange={setActiveTab} />}
         >
           {/* Conditional page rendering based on active tab */}
+          {activeTab === 'library' && (
+            <LibraryPage
+              {...library}
+              onLoadItem={handleLoadFromLibrary}
+            />
+          )}
+
           {activeTab === 'video-sync' && (
             <VideoSyncPage
               videoFile={videoFile}
