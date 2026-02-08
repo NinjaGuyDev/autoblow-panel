@@ -1,10 +1,13 @@
 import { useMemo, useState } from 'react';
 import type {
   PatternDefinition,
+  CustomPatternDefinition,
+  AnyPattern,
   Intensity,
   StyleTag,
   PatternDirection,
 } from '@/types/patterns';
+import { isCustomPattern } from '@/types/patterns';
 import { getPatternDirection } from '@/lib/patternDefinitions';
 
 /**
@@ -12,25 +15,44 @@ import { getPatternDirection } from '@/lib/patternDefinitions';
  *
  * Manages search text, intensity, style, and direction filters.
  * All filters start empty (showing all patterns).
+ * Merges custom patterns with presets, prioritizing custom patterns in results.
  */
-export function usePatternFilters(patterns: PatternDefinition[]) {
+export function usePatternFilters(
+  patterns: PatternDefinition[],
+  customPatterns: CustomPatternDefinition[] = []
+) {
   const [searchText, setSearchText] = useState('');
   const [intensities, setIntensities] = useState<Set<Intensity>>(new Set());
   const [styles, setStyles] = useState<Set<StyleTag>>(new Set());
   const [directions, setDirections] = useState<Set<PatternDirection>>(new Set());
 
+  // Merge custom patterns with presets into AnyPattern array
+  const allPatterns = useMemo<AnyPattern[]>(() => {
+    // Map custom patterns to include a generator for compatibility
+    const mappedCustomPatterns: AnyPattern[] = customPatterns.map((cp) => ({
+      ...cp,
+      generator: () => cp.actions,
+    }));
+
+    return [...mappedCustomPatterns, ...patterns];
+  }, [customPatterns, patterns]);
+
   // Pre-compute pattern directions (memoized)
   const patternDirections = useMemo(() => {
     const directionMap = new Map<string, PatternDirection>();
-    for (const pattern of patterns) {
-      directionMap.set(pattern.id, getPatternDirection(pattern));
+    for (const pattern of allPatterns) {
+      // For custom patterns, compute direction from actions
+      const direction = isCustomPattern(pattern)
+        ? getPatternDirection({ ...pattern, generator: () => pattern.actions })
+        : getPatternDirection(pattern);
+      directionMap.set(pattern.id, direction);
     }
     return directionMap;
-  }, [patterns]);
+  }, [allPatterns]);
 
-  // Filter patterns with AND logic
+  // Filter patterns with AND logic and sort (custom patterns first)
   const filteredPatterns = useMemo(() => {
-    return patterns.filter((pattern) => {
+    const filtered = allPatterns.filter((pattern) => {
       // Search filter: case-insensitive match on name or tags
       if (searchText.trim()) {
         const search = searchText.toLowerCase();
@@ -62,7 +84,25 @@ export function usePatternFilters(patterns: PatternDefinition[]) {
 
       return true;
     });
-  }, [patterns, searchText, intensities, styles, directions, patternDirections]);
+
+    // Sort: custom patterns first (by lastModified desc), then presets
+    return filtered.sort((a, b) => {
+      const aIsCustom = isCustomPattern(a);
+      const bIsCustom = isCustomPattern(b);
+
+      // Custom patterns come first
+      if (aIsCustom && !bIsCustom) return -1;
+      if (!aIsCustom && bIsCustom) return 1;
+
+      // Both custom: sort by lastModified desc (newest first)
+      if (aIsCustom && bIsCustom) {
+        return b.lastModified - a.lastModified;
+      }
+
+      // Both presets: maintain existing order (no sorting)
+      return 0;
+    });
+  }, [allPatterns, searchText, intensities, styles, directions, patternDirections]);
 
   // Toggle functions
   const toggleIntensity = (intensity: Intensity) => {

@@ -1,13 +1,14 @@
-import type { PatternDefinition } from '@/types/patterns';
+import type { AnyPattern } from '@/types/patterns';
+import { isCustomPattern } from '@/types/patterns';
 import { PatternCard } from './PatternCard';
 
 interface PatternGridProps {
-  patterns: PatternDefinition[];
+  patterns: AnyPattern[];
   totalCount: number;
-  onPatternClick: (pattern: PatternDefinition) => void;
+  onPatternClick: (pattern: AnyPattern) => void;
   onClearFilters: () => void;
   isCreationMode?: boolean;
-  onQuickAdd?: (pattern: PatternDefinition) => void;
+  onQuickAdd?: (pattern: AnyPattern) => void;
 }
 
 /**
@@ -48,13 +49,19 @@ export function PatternGrid({
         // Grid of pattern cards
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
           {patterns.map((pattern) => (
-            <PatternCard
-              key={pattern.id}
-              pattern={pattern}
-              onClick={() => onPatternClick(pattern)}
-              isCreationMode={isCreationMode}
-              onQuickAdd={onQuickAdd ? () => onQuickAdd(pattern) : undefined}
-            />
+            <div key={pattern.id} className="relative">
+              <PatternCard
+                pattern={pattern}
+                onClick={() => onPatternClick(pattern)}
+                isCreationMode={isCreationMode}
+                onQuickAdd={onQuickAdd ? () => onQuickAdd(pattern) : undefined}
+              />
+              {isCustomPattern(pattern) && (
+                <div className="absolute top-2 right-2 bg-emerald-600 text-white text-xs px-1.5 py-0.5 rounded shadow-sm pointer-events-none">
+                  Custom
+                </div>
+              )}
+            </div>
           ))}
         </div>
       )}

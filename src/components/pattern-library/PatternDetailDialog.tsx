@@ -10,6 +10,7 @@ interface PatternDetailDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onInsert: (pattern: PatternDefinition) => void;
+  onEditCopy?: (pattern: PatternDefinition) => void;
   ultra: Ultra | null;
   isDeviceConnected: boolean;
 }
@@ -23,6 +24,7 @@ export function PatternDetailDialog({
   isOpen,
   onClose,
   onInsert,
+  onEditCopy,
   ultra,
   isDeviceConnected,
 }: PatternDetailDialogProps) {
@@ -291,6 +293,18 @@ export function PatternDetailDialog({
           >
             Insert Pattern
           </button>
+
+          {onEditCopy && (
+            <button
+              onClick={() => {
+                onEditCopy(pattern);
+                onClose();
+              }}
+              className="px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-medium shadow-sm"
+            >
+              Edit Copy
+            </button>
+          )}
 
           {isDeviceConnected && (
             <button
