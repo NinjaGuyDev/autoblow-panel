@@ -31,6 +31,7 @@ import type { Funscript } from '@/types/funscript';
 
 function App() {
   const [showSessionHint, setShowSessionHint] = useState(false);
+  const [videoLoadHint, setVideoLoadHint] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('library');
   const [showTimeline, setShowTimeline] = useState(true);
   const [isCreationMode, setIsCreationMode] = useState(false);
@@ -185,6 +186,7 @@ function App() {
 
   const handleVideoLoad = (file: File) => {
     loadVideo(file);
+    setVideoLoadHint(null);
   };
 
   const handleVideoClear = () => {
@@ -292,10 +294,9 @@ function App() {
       // Log the loaded item
       addLog('info', `Loaded from library: ${item.funscriptName || item.videoName || 'Unnamed'}`);
 
-      // Note: Video file cannot be loaded from library (not stored in DB)
-      // User will need to re-select the video file manually
+      // Video files aren't stored in DB — prompt user to re-select
       if (item.videoName) {
-        addLog('info', `Please load video file: ${item.videoName}`);
+        setVideoLoadHint(item.videoName);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load library item';
@@ -363,6 +364,7 @@ function App() {
               hasFunscript={funscriptData !== null}
               showTimeline={showTimeline}
               onToggleTimeline={() => setShowTimeline(!showTimeline)}
+              videoLoadHint={videoLoadHint}
               timelineElement={
                 showTimeline && videoUrl ? (
                   <Timeline

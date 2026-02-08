@@ -41,6 +41,9 @@ interface VideoSyncPageProps {
   showTimeline: boolean;
   onToggleTimeline: () => void;
   timelineElement: React.ReactNode;
+
+  // Library load hint
+  videoLoadHint: string | null;
 }
 
 /**
@@ -76,10 +79,18 @@ export function VideoSyncPage({
   showTimeline,
   onToggleTimeline,
   timelineElement,
+  videoLoadHint,
 }: VideoSyncPageProps) {
   return (
     <div role="tabpanel" id="panel-video-sync" aria-labelledby="tab-video-sync">
       <div className="max-w-4xl mx-auto space-y-6">
+        {/* Video load hint from library */}
+        {videoLoadHint && !videoFile && (
+          <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg px-4 py-3 text-sm text-blue-400">
+            Script loaded from library. Please re-select your video file: <span className="font-medium text-blue-300">{videoLoadHint}</span>
+          </div>
+        )}
+
         {/* Video section */}
         <div className="bg-card border border-muted rounded-lg p-6">
           <VideoLoader
