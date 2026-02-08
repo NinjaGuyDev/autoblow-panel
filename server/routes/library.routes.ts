@@ -13,6 +13,9 @@ export function createLibraryRouter(controller: LibraryController): Router {
   // Get migration status (must come before /:id)
   router.get('/migration-status', controller.getMigrationStatus);
 
+  // Get custom patterns only (must come before /:id)
+  router.get('/custom-patterns', controller.getCustomPatterns);
+
   // Get single library item by id
   router.get('/:id', controller.getById);
 
@@ -24,6 +27,9 @@ export function createLibraryRouter(controller: LibraryController): Router {
 
   // Save or update library item
   router.put('/', controller.save);
+
+  // Update custom pattern
+  router.patch('/:id', controller.updateCustomPattern);
 
   // Delete library item
   router.delete('/:id', controller.delete);
