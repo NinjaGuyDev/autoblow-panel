@@ -18,9 +18,9 @@ interface VideoLoaderProps {
 }
 
 export function VideoLoader({
-  videoFile,
+  videoFile: _videoFile,
   videoUrl,
-  videoName,
+  videoName: _videoName,
   onVideoLoad,
   onVideoClear,
   error,
@@ -36,7 +36,7 @@ export function VideoLoader({
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Video</h2>
-        {videoFile && (
+        {videoUrl && (
           <button
             onClick={onVideoClear}
             className="px-3 py-1 text-sm bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-md transition-colors"
@@ -46,7 +46,7 @@ export function VideoLoader({
         )}
       </div>
 
-      {!videoFile ? (
+      {!videoUrl ? (
         <FileDropzone
           onFileAccepted={onVideoLoad}
           accept={{ 'video/*': ['.mp4', '.webm', '.ogg', '.mkv'] }}
@@ -55,18 +55,16 @@ export function VideoLoader({
           error={error}
         />
       ) : (
-        videoUrl && (
-          <VideoPlayer
-            videoUrl={videoUrl}
-            videoRef={videoRef}
-            isPlaying={isPlaying}
-            currentTime={currentTime}
-            duration={duration}
-            error={playbackError}
-            onTogglePlayPause={onTogglePlayPause}
-            onSeek={onSeek}
-          />
-        )
+        <VideoPlayer
+          videoUrl={videoUrl!}
+          videoRef={videoRef}
+          isPlaying={isPlaying}
+          currentTime={currentTime}
+          duration={duration}
+          error={playbackError}
+          onTogglePlayPause={onTogglePlayPause}
+          onSeek={onSeek}
+        />
       )}
     </div>
   );

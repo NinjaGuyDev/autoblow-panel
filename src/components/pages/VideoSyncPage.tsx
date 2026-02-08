@@ -85,7 +85,7 @@ export function VideoSyncPage({
     <div role="tabpanel" id="panel-video-sync" aria-labelledby="tab-video-sync">
       <div className="max-w-4xl mx-auto space-y-6">
         {/* Video load hint from library */}
-        {videoLoadHint && !videoFile && (
+        {videoLoadHint && !videoUrl && (
           <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg px-4 py-3 text-sm text-blue-400">
             Script loaded from library. Please re-select your video file: <span className="font-medium text-blue-300">{videoLoadHint}</span>
           </div>

@@ -15,3 +15,6 @@ data/
 *.db
 *.db-wal
 *.db-shm
+
+# Media files (video uploads)
+media/

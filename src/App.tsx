@@ -22,6 +22,7 @@ import { useManualControl } from '@/hooks/useManualControl';
 import { useSyncPlayback } from '@/hooks/useSyncPlayback';
 import { useDeviceLog } from '@/hooks/useDeviceLog';
 import { useLibrary } from '@/hooks/useLibrary';
+import { mediaApi } from '@/lib/apiClient';
 import { exportFunscript } from '@/lib/funscriptExport';
 import { insertPatternAtCursor, insertPatternAtEnd } from '@/lib/patternInsertion';
 import type { TabId } from '@/types/navigation';
@@ -48,6 +49,7 @@ function App() {
     videoUrl,
     videoName,
     loadVideo,
+    loadVideoFromUrl,
     clearVideo,
     error: videoError,
   } = useVideoFile();
@@ -187,6 +189,11 @@ function App() {
   const handleVideoLoad = (file: File) => {
     loadVideo(file);
     setVideoLoadHint(null);
+
+    // Upload to media directory in background for future library loads
+    mediaApi.upload(file).catch(err => {
+      console.warn('Failed to upload video to media directory:', err);
+    });
   };
 
   const handleVideoClear = () => {
@@ -280,7 +287,7 @@ function App() {
   };
 
   // Load item from library
-  const handleLoadFromLibrary = (item: LibraryItem) => {
+  const handleLoadFromLibrary = async (item: LibraryItem) => {
     try {
       // Parse funscript data from JSON string
       const parsedData: Funscript = JSON.parse(item.funscriptData);
@@ -291,12 +298,19 @@ function App() {
       // Switch to video-sync tab
       setActiveTab('video-sync');
 
-      // Log the loaded item
-      addLog('info', `Loaded from library: ${item.funscriptName || item.videoName || 'Unnamed'}`);
-
-      // Video files aren't stored in DB — prompt user to re-select
+      // Try to load video from media directory
       if (item.videoName) {
-        setVideoLoadHint(item.videoName);
+        const { exists } = await mediaApi.check(item.videoName);
+        if (exists) {
+          loadVideoFromUrl(mediaApi.streamUrl(item.videoName), item.videoName);
+          addLog('info', `Loaded from library: ${item.funscriptName || item.videoName || 'Unnamed'}`);
+          setVideoLoadHint(null);
+        } else {
+          addLog('info', `Loaded from library: ${item.funscriptName || 'Unnamed'}`);
+          setVideoLoadHint(item.videoName);
+        }
+      } else {
+        addLog('info', `Loaded from library: ${item.funscriptName || 'Unnamed'}`);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to load library item';
