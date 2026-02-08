@@ -67,11 +67,12 @@ export function adjustIntensity(
       return { ...action };
     }
 
-    // Determine direction: positions >= 50 move up, < 50 move down
+    // Determine direction from center: positions >= 50 are above, < 50 below
+    // Positive delta expands (away from center), negative contracts (toward center)
     const direction = action.pos >= 50 ? 1 : -1;
 
-    // Apply delta in the appropriate direction
-    const newPos = action.pos + direction * Math.abs(delta);
+    // Apply delta with direction: +delta expands, -delta contracts
+    const newPos = action.pos + direction * delta;
 
     // Clamp to valid position range [0, 100]
     const clampedPos = Math.max(0, Math.min(100, newPos));
