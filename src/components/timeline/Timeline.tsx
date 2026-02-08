@@ -2,9 +2,11 @@ import { useState, useRef, useLayoutEffect, useEffect } from 'react';
 import { useTimelineViewport } from '@/hooks/useTimelineViewport';
 import { useTimelineEditor } from '@/hooks/useTimelineEditor';
 import { useValidation } from '@/hooks/useValidation';
+import { useSmoothing } from '@/hooks/useSmoothing';
 import { TimelineCanvas } from './TimelineCanvas';
 import { TimelineEditorOverlay } from './TimelineEditorOverlay';
 import { ValidationOverlay } from './ValidationOverlay';
+import { SmoothingOverlay } from './SmoothingOverlay';
 import { PlayheadOverlay } from './PlayheadOverlay';
 import { TimelineAxis } from './TimelineAxis';
 import { TimelineControls } from './TimelineControls';
@@ -90,6 +92,12 @@ export function Timeline({
         canvasHeight: CANVAS_HEIGHT,
       })
     : null;
+
+  // Smoothing state (always call hook, but only active in edit mode)
+  const smoothing = useSmoothing({
+    actions,
+    selectedIndices: editor?.selectedIndices ?? new Set(),
+  });
 
   // Keyboard shortcuts for edit mode
   useEffect(() => {
@@ -281,6 +289,21 @@ export function Timeline({
         selectedCount={editor?.selectedIndices.size ?? 0}
         onDeleteSelected={editor?.deleteSelected}
         validationSummary={validation.summary}
+        smoothingActive={smoothing.smoothingActive}
+        onSmoothingToggle={smoothing.smoothingActive ? smoothing.closeSmoothing : smoothing.openSmoothing}
+        smoothingIntensity={smoothing.intensity}
+        onSmoothingIntensityChange={smoothing.setIntensity}
+        isPreviewActive={smoothing.isPreviewActive}
+        onSmoothingPreview={smoothing.generatePreview}
+        onSmoothingApply={() => {
+          const result = smoothing.commitSmoothing();
+          if (result) {
+            onActionsChange?.(result);
+          }
+        }}
+        onSmoothingCancel={smoothing.cancelPreview}
+        smoothingStats={smoothing.stats}
+        hasSelection={(editor?.selectedIndices.size ?? 0) > 0}
       />
 
       <div className="relative" style={{ height: CANVAS_HEIGHT }}>
@@ -302,6 +325,17 @@ export function Timeline({
             actions={actions as FunscriptAction[]}
             segments={validation.segments}
             gaps={validation.gaps}
+            viewStart={viewport.viewStart}
+            viewEnd={viewport.viewEnd}
+            width={containerWidth}
+            height={CANVAS_HEIGHT}
+          />
+        )}
+
+        {/* Smoothing overlay (preview) */}
+        {smoothing.isPreviewActive && containerWidth > 0 && (
+          <SmoothingOverlay
+            smoothedActions={smoothing.previewActions}
             viewStart={viewport.viewStart}
             viewEnd={viewport.viewEnd}
             width={containerWidth}

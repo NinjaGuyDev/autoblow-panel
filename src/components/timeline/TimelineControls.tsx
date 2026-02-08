@@ -17,6 +17,16 @@ interface TimelineControlsProps {
   selectedCount?: number;
   onDeleteSelected?: () => void;
   validationSummary?: ValidationResult['summary'];
+  smoothingActive?: boolean;
+  onSmoothingToggle?: () => void;
+  smoothingIntensity?: number;
+  onSmoothingIntensityChange?: (value: number) => void;
+  isPreviewActive?: boolean;
+  onSmoothingPreview?: () => void;
+  onSmoothingApply?: () => void;
+  onSmoothingCancel?: () => void;
+  smoothingStats?: { originalCount: number; smoothedCount: number } | null;
+  hasSelection?: boolean;
 }
 
 export function TimelineControls({
@@ -35,52 +45,77 @@ export function TimelineControls({
   selectedCount,
   onDeleteSelected,
   validationSummary,
+  smoothingActive,
+  onSmoothingToggle,
+  smoothingIntensity,
+  onSmoothingIntensityChange,
+  isPreviewActive,
+  onSmoothingPreview,
+  onSmoothingApply,
+  onSmoothingCancel,
+  smoothingStats,
+  hasSelection,
 }: TimelineControlsProps) {
   const isEditMode = !!editMode;
 
   return (
-    <div className="flex items-center justify-between px-3 py-2 border-b border-muted bg-card">
-      {/* Left: Action point toggle and edit mode controls */}
-      <div className="flex items-center gap-3">
-        {!isEditMode && (
-          <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
-            <input
-              type="checkbox"
-              checked={showActionPoints}
-              onChange={onToggleActionPoints}
-              className="cursor-pointer"
-            />
-            <span>Show points</span>
-          </label>
-        )}
+    <>
+      <div className="flex items-center justify-between px-3 py-2 border-b border-muted bg-card">
+        {/* Left: Action point toggle and edit mode controls */}
+        <div className="flex items-center gap-3">
+          {!isEditMode && (
+            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+              <input
+                type="checkbox"
+                checked={showActionPoints}
+                onChange={onToggleActionPoints}
+                className="cursor-pointer"
+              />
+              <span>Show points</span>
+            </label>
+          )}
 
-        {isEditMode && onEditModeChange && (
-          <div className="flex items-center gap-1 bg-muted/30 rounded p-1">
+          {isEditMode && onEditModeChange && (
+            <div className="flex items-center gap-1 bg-muted/30 rounded p-1">
+              <button
+                onClick={() => onEditModeChange('select')}
+                className={`px-2 py-1 text-xs rounded transition-colors ${
+                  editMode === 'select'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Select mode (V)"
+              >
+                Select
+              </button>
+              <button
+                onClick={() => onEditModeChange('draw')}
+                className={`px-2 py-1 text-xs rounded transition-colors ${
+                  editMode === 'draw'
+                    ? 'bg-primary text-primary-foreground'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+                title="Draw mode (D)"
+              >
+                Draw
+              </button>
+            </div>
+          )}
+
+          {isEditMode && onSmoothingToggle && (
             <button
-              onClick={() => onEditModeChange('select')}
-              className={`px-2 py-1 text-xs rounded transition-colors ${
-                editMode === 'select'
+              onClick={onSmoothingToggle}
+              className={`px-2 py-1 text-sm rounded transition-colors ${
+                smoothingActive
                   ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
               }`}
-              title="Select mode (V)"
+              title="Smooth script"
             >
-              Select
+              Smooth
             </button>
-            <button
-              onClick={() => onEditModeChange('draw')}
-              className={`px-2 py-1 text-xs rounded transition-colors ${
-                editMode === 'draw'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-              title="Draw mode (D)"
-            >
-              Draw
-            </button>
-          </div>
-        )}
-      </div>
+          )}
+        </div>
 
       {/* Center: Undo/Redo controls (in edit mode) */}
       {isEditMode && (
@@ -166,5 +201,71 @@ export function TimelineControls({
         </button>
       </div>
     </div>
+
+    {/* Smoothing control strip */}
+    {isEditMode && smoothingActive && (
+      <div className="flex items-center justify-between px-3 py-2 border-b border-muted bg-card">
+        <div className="flex items-center gap-3 flex-1">
+          {/* Label */}
+          <span className="text-sm font-medium">Smoothing</span>
+
+          {/* Intensity slider */}
+          <div className="flex items-center gap-2 flex-1 max-w-md">
+            <span className="text-xs text-muted-foreground">Intensity:</span>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={smoothingIntensity ?? 50}
+              onChange={(e) => onSmoothingIntensityChange?.(parseInt(e.target.value))}
+              className="flex-1"
+            />
+            <span className="text-xs text-muted-foreground w-8 text-right">
+              {smoothingIntensity ?? 50}
+            </span>
+          </div>
+
+          {/* Scope indicator */}
+          <span className="text-xs text-muted-foreground">
+            {hasSelection ? `Selection (${selectedCount} points)` : 'Entire script'}
+          </span>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-2">
+          {/* Stats display */}
+          {isPreviewActive && smoothingStats && (
+            <span className="text-xs text-muted-foreground mr-2">
+              {smoothingStats.originalCount} → {smoothingStats.smoothedCount} actions
+            </span>
+          )}
+
+          <button
+            onClick={onSmoothingPreview}
+            disabled={isPreviewActive}
+            className="px-3 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Preview smoothing result"
+          >
+            Preview
+          </button>
+          <button
+            onClick={onSmoothingApply}
+            disabled={!isPreviewActive}
+            className="px-3 py-1 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Apply smoothing"
+          >
+            Apply
+          </button>
+          <button
+            onClick={onSmoothingCancel}
+            className="px-3 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+            title="Cancel smoothing"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    )}
+  </>
   );
 }
