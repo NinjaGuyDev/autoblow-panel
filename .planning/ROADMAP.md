@@ -103,10 +103,12 @@ Plans:
   3. Playlists persist in library across sessions
   4. User can reorder, add, and remove items from a playlist
   5. Next script preloads during current playback to avoid gaps
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
-- [ ] 14-01: TBD
+- [ ] 14-01-PLAN.md — Backend API + database schema for playlist CRUD
+- [ ] 14-02-PLAN.md — Playlist management UI with drag-and-drop reordering
+- [ ] 14-03-PLAN.md — Sequential playlist playback with preloading
 
 #### Phase 15: Embedded Video Integration
 **Goal**: Users can play third-party videos with funscript sync
@@ -158,6 +160,6 @@ Phases execute in numeric order: 10 → 11 → 12 → 13 → 14 → 15 → 16
 | 11. Script Smoothing | v1.1 | 2/2 | Complete | 2026-02-08 |
 | 12. Pattern Editing | v1.1 | 2/2 | Complete | 2026-02-08 |
 | 13. Pattern Builder | v1.1 | 2/2 | Complete | 2026-02-08 |
-| 14. Playlist Management | v1.1 | 0/TBD | Not started | - |
+| 14. Playlist Management | v1.1 | 0/3 | Not started | - |
 | 15. Embedded Video Integration | v1.1 | 0/TBD | Not started | - |
 | 16. Security Hardening + Docker Deployment | v1.1 | 0/TBD | Not started | - |
