@@ -29,7 +29,15 @@ Smooth, privacy-preserving funscript playback synced with local video content.
 
 ### Active
 
-(None — all v1.0 requirements shipped)
+<!-- v1.1 scope -->
+- [ ] Script smoother to remove noisy short movements from funscripts
+- [ ] Pattern editor for creating editable copies of presets with duration/motion controls
+- [ ] Pattern builder with step-based waypoint UI for custom pattern creation
+- [ ] Video/script library for persistent storage of played content
+- [ ] Playlist system with sequential playback and per-video funscript loading
+- [ ] Third-party video embedding with API-based funscript sync
+- [ ] Security hardening: localhost-only + Docker host access
+- [ ] SQLite backend for persistent storage (replacing IndexedDB)
 
 ### Out of Scope
 
@@ -39,6 +47,22 @@ Smooth, privacy-preserving funscript playback synced with local video content.
 - Multi-device support — Autoblow AI Ultra only for v1
 - Social/sharing features — Private tool for personal use
 - Pattern marketplace or community features — Privacy-focused, no external connections
+- Third-party video sync without embed API — Unreliable without player time access
+- AI/ML-based script generation — Deterministic algorithms only for v1.1
+
+## Current Milestone: v1.1 Content Library & Advanced Editing
+
+**Goal:** Transform the tool from a single-session player into a persistent content library with advanced pattern editing, playlist management, and third-party video support.
+
+**Target features:**
+- Script smoother (algorithm from user-provided examples)
+- Pattern editor (edit copies of presets, duration/motion controls, device demo with loop smoothing)
+- Pattern builder (step-based waypoint UI, device loop testing)
+- Video/script library (persistent storage, SQLite)
+- Playlist (sequential playback, per-video scripts, saved to library)
+- Third-party video embedding (Pornhub etc., API-only sync, embed links in library)
+- Security (localhost-only, Docker host access)
+- SQLite migration (replace IndexedDB)
 
 ## Context
 
@@ -85,5 +109,8 @@ Smooth, privacy-preserving funscript playback synced with local video content.
 | Presentation components pattern | State lifted to App.tsx, pages are pure UI — clean separation | ✓ Good |
 | AND-logic pattern filtering | All filters must match simultaneously — intuitive UX | ✓ Good |
 
+| SQLite for persistent storage | IndexedDB unreliable across browser clears; SQLite more robust for library/playlist data | — Pending |
+| API-only third-party sync | Embed APIs vary; only sync where player exposes time API | — Pending |
+
 ---
-*Last updated: 2026-02-08 after v1.0 milestone*
+*Last updated: 2026-02-08 after v1.1 milestone started*
