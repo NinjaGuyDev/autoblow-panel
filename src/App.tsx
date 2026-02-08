@@ -11,6 +11,7 @@ import { DeviceLogPage } from '@/components/pages/DeviceLogPage';
 import { PatternLibraryPage } from '@/components/pages/PatternLibraryPage';
 import { LibraryPage } from '@/components/pages/LibraryPage';
 import { PlaylistPage } from '@/components/pages/PlaylistPage';
+import { PlaylistControls } from '@/components/playlist/PlaylistControls';
 import { Timeline } from '@/components/timeline/Timeline';
 import { useVideoFile } from '@/hooks/useVideoFile';
 import { useFunscriptFile } from '@/hooks/useFunscriptFile';
@@ -24,6 +25,7 @@ import { useSyncPlayback } from '@/hooks/useSyncPlayback';
 import { useDeviceLog } from '@/hooks/useDeviceLog';
 import { useLibrary } from '@/hooks/useLibrary';
 import { usePlaylistManager } from '@/hooks/usePlaylistManager';
+import { usePlaylistPlayback } from '@/hooks/usePlaylistPlayback';
 import { mediaApi } from '@/lib/apiClient';
 import { captureVideoThumbnail } from '@/lib/thumbnailCapture';
 import { exportFunscript } from '@/lib/funscriptExport';
@@ -123,6 +125,15 @@ function App() {
     driftMs,
     error: syncError,
   } = useSyncPlayback(videoRef, ultra, funscriptData, videoUrl);
+
+  // Playlist playback state
+  const playlistPlayback = usePlaylistPlayback({
+    videoRef,
+    loadVideoFromUrl,
+    loadFunscriptFromData,
+    clearVideo,
+    clearFunscript,
+  });
 
   // Handle session recovery hint on mount
   useEffect(() => {
@@ -302,10 +313,10 @@ function App() {
     setScriptName('');
   };
 
-  // Play playlist handler (wired in 14-03)
-  const handlePlayPlaylist = (playlistId: number) => {
-    // Playlist playback will be implemented in 14-03
-    console.log('Play playlist:', playlistId);
+  // Play playlist handler
+  const handlePlayPlaylist = async (playlistId: number) => {
+    await playlistPlayback.startPlaylist(playlistId);
+    setActiveTab('video-sync'); // Switch to video sync tab for playback
   };
 
   // Load item from library
@@ -378,54 +389,68 @@ function App() {
           )}
 
           {activeTab === 'video-sync' && (
-            <VideoSyncPage
-              videoFile={videoFile}
-              videoUrl={videoUrl}
-              videoName={videoName}
-              onVideoLoad={handleVideoLoad}
-              onVideoClear={handleVideoClear}
-              videoError={videoError}
-              videoRef={videoRef}
-              isPlaying={isPlaying}
-              currentTime={currentTime}
-              duration={duration}
-              playbackError={playbackError}
-              onTogglePlayPause={togglePlayPause}
-              onSeek={seek}
-              funscriptFile={funscriptFile}
-              funscriptData={funscriptData}
-              funscriptName={funscriptName}
-              onFunscriptLoad={handleFunscriptLoad}
-              onFunscriptClear={handleFunscriptClear}
-              funscriptError={funscriptError}
-              isLoading={isLoading}
-              syncStatus={syncStatus}
-              scriptUploaded={scriptUploaded}
-              driftMs={driftMs}
-              syncError={syncError}
-              isDeviceConnected={connectionState === 'connected'}
-              hasFunscript={funscriptData !== null}
-              showTimeline={showTimeline}
-              onToggleTimeline={() => setShowTimeline(!showTimeline)}
-              videoLoadHint={videoLoadHint}
-              timelineElement={
-                showTimeline && videoUrl ? (
-                  <Timeline
-                    actions={editableActions}
-                    currentTimeMs={currentTime * 1000}
-                    durationMs={duration * 1000}
-                    isPlaying={isPlaying}
-                    onSeek={seek}
-                    onActionsChange={setActions}
-                    onUndo={undo}
-                    onRedo={redo}
-                    canUndo={canUndo}
-                    canRedo={canRedo}
-                    onExport={handleExport}
-                  />
-                ) : null
-              }
-            />
+            <>
+              {playlistPlayback.isPlaylistMode && (
+                <PlaylistControls
+                  currentIndex={playlistPlayback.currentIndex}
+                  totalItems={playlistPlayback.totalItems}
+                  currentItem={playlistPlayback.currentItem}
+                  isFirstItem={playlistPlayback.isFirstItem}
+                  isLastItem={playlistPlayback.isLastItem}
+                  onPrevious={playlistPlayback.previousItem}
+                  onNext={playlistPlayback.nextItem}
+                  onStop={playlistPlayback.stopPlaylist}
+                />
+              )}
+              <VideoSyncPage
+                videoFile={videoFile}
+                videoUrl={videoUrl}
+                videoName={videoName}
+                onVideoLoad={handleVideoLoad}
+                onVideoClear={handleVideoClear}
+                videoError={videoError}
+                videoRef={videoRef}
+                isPlaying={isPlaying}
+                currentTime={currentTime}
+                duration={duration}
+                playbackError={playbackError}
+                onTogglePlayPause={togglePlayPause}
+                onSeek={seek}
+                funscriptFile={funscriptFile}
+                funscriptData={funscriptData}
+                funscriptName={funscriptName}
+                onFunscriptLoad={handleFunscriptLoad}
+                onFunscriptClear={handleFunscriptClear}
+                funscriptError={funscriptError}
+                isLoading={isLoading}
+                syncStatus={syncStatus}
+                scriptUploaded={scriptUploaded}
+                driftMs={driftMs}
+                syncError={syncError}
+                isDeviceConnected={connectionState === 'connected'}
+                hasFunscript={funscriptData !== null}
+                showTimeline={showTimeline}
+                onToggleTimeline={() => setShowTimeline(!showTimeline)}
+                videoLoadHint={videoLoadHint}
+                timelineElement={
+                  showTimeline && videoUrl ? (
+                    <Timeline
+                      actions={editableActions}
+                      currentTimeMs={currentTime * 1000}
+                      durationMs={duration * 1000}
+                      isPlaying={isPlaying}
+                      onSeek={seek}
+                      onActionsChange={setActions}
+                      onUndo={undo}
+                      onRedo={redo}
+                      canUndo={canUndo}
+                      canRedo={canRedo}
+                      onExport={handleExport}
+                    />
+                  ) : null
+                }
+              />
+            </>
           )}
 
           {activeTab === 'manual-control' && (
