@@ -234,6 +234,7 @@ export function useWaypointBuilder() {
         videoName: `pattern-${Date.now()}`, // Placeholder video name
         funscriptName: `${patternName}.funscript`,
         funscriptData,
+        duration: durationMs / 1000,
         isCustomPattern: 1,
         originalPatternId: 'waypoint-builder',
         patternMetadata,

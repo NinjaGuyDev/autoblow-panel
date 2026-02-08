@@ -87,10 +87,11 @@ Plans:
   2. User can select interpolation type per segment (linear, easeIn, easeOut, easeInOut, step)
   3. User can load waypoint-built pattern onto device and loop for testing
   4. Built patterns save to library and appear in pattern listing
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 13-01: TBD
+- [x] 13-01-PLAN.md — Easing functions + waypoint-to-actions generator (TDD)
+- [x] 13-02-PLAN.md — Waypoint builder UI + pattern library integration
 
 #### Phase 14: Playlist Management
 **Goal**: Users can create and play sequential playlists with per-video scripts
@@ -156,7 +157,7 @@ Phases execute in numeric order: 10 → 11 → 12 → 13 → 14 → 15 → 16
 | 10. Backend Foundation + Content Library | v1.1 | 3/3 | Complete | 2026-02-08 |
 | 11. Script Smoothing | v1.1 | 2/2 | Complete | 2026-02-08 |
 | 12. Pattern Editing | v1.1 | 2/2 | Complete | 2026-02-08 |
-| 13. Pattern Builder | v1.1 | 0/TBD | Not started | - |
+| 13. Pattern Builder | v1.1 | 2/2 | Complete | 2026-02-08 |
 | 14. Playlist Management | v1.1 | 0/TBD | Not started | - |
 | 15. Embedded Video Integration | v1.1 | 0/TBD | Not started | - |
 | 16. Security Hardening + Docker Deployment | v1.1 | 0/TBD | Not started | - |

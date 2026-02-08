@@ -178,6 +178,7 @@ export function usePatternEditor() {
           videoName: `pattern-${editedPattern.id}`, // Placeholder video name
           funscriptName: `${editedPattern.name}.funscript`,
           funscriptData,
+          duration: editedPattern.durationMs / 1000,
           isCustomPattern: 1,
           originalPatternId: editedPattern.originalPatternId,
           patternMetadata,
