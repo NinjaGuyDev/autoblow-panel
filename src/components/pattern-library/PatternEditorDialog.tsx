@@ -45,8 +45,10 @@ export function PatternEditorDialog({
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [canvasWidth, setCanvasWidth] = useState(600);
 
-  // Canvas height constant
-  const CANVAS_HEIGHT = 200;
+  // Canvas dimensions
+  const CANVAS_HEIGHT = 220;
+  const DRAW_AREA_HEIGHT = 190;
+  const LABEL_AREA_TOP = 195;
   const POINT_RADIUS = 6;
   const HIT_RADIUS = 8;
 
@@ -84,7 +86,7 @@ export function PatternEditorDialog({
 
     // Horizontal grid lines at 0, 25, 50, 75, 100
     [0, 25, 50, 75, 100].forEach((pos) => {
-      const y = CANVAS_HEIGHT - (pos / 100) * CANVAS_HEIGHT;
+      const y = DRAW_AREA_HEIGHT - (pos / 100) * DRAW_AREA_HEIGHT;
       ctx.beginPath();
       ctx.moveTo(0, y);
       ctx.lineTo(canvas.width, y);
@@ -105,7 +107,7 @@ export function PatternEditorDialog({
 
     actions.forEach((action, i) => {
       const x = ((action.at - minTime) / timeRange) * canvas.width;
-      const y = CANVAS_HEIGHT - (action.pos / 100) * CANVAS_HEIGHT;
+      const y = DRAW_AREA_HEIGHT - (action.pos / 100) * DRAW_AREA_HEIGHT;
 
       if (i === 0) {
         ctx.moveTo(x, y);
@@ -120,12 +122,39 @@ export function PatternEditorDialog({
     ctx.fillStyle = '#8b5cf6'; // purple-500
     actions.forEach((action) => {
       const x = ((action.at - minTime) / timeRange) * canvas.width;
-      const y = CANVAS_HEIGHT - (action.pos / 100) * CANVAS_HEIGHT;
+      const y = DRAW_AREA_HEIGHT - (action.pos / 100) * DRAW_AREA_HEIGHT;
 
       ctx.beginPath();
       ctx.arc(x, y, POINT_RADIUS, 0, Math.PI * 2);
       ctx.fill();
     });
+
+    // Draw time axis labels
+    ctx.fillStyle = '#a1a1aa'; // zinc-400
+    ctx.font = '11px monospace';
+    ctx.textBaseline = 'top';
+
+    // Draw evenly spaced time markers
+    const totalSeconds = timeRange / 1000;
+    const tickCount = Math.min(Math.max(3, Math.ceil(totalSeconds)), 8);
+
+    for (let i = 0; i <= tickCount; i++) {
+      const fraction = i / tickCount;
+      const x = fraction * canvas.width;
+      const timeAtTick = minTime + fraction * timeRange;
+      const label = (timeAtTick / 1000).toFixed(1) + 's';
+
+      // Align text: left for first, right for last, center for middle
+      if (i === 0) {
+        ctx.textAlign = 'left';
+      } else if (i === tickCount) {
+        ctx.textAlign = 'right';
+      } else {
+        ctx.textAlign = 'center';
+      }
+
+      ctx.fillText(label, x, LABEL_AREA_TOP);
+    }
   };
 
   // Redraw when pattern or canvas size changes
@@ -155,7 +184,7 @@ export function PatternEditorDialog({
     for (let i = 0; i < actions.length; i++) {
       const action = actions[i];
       const px = ((action.at - minTime) / timeRange) * canvas.width;
-      const py = CANVAS_HEIGHT - (action.pos / 100) * CANVAS_HEIGHT;
+      const py = DRAW_AREA_HEIGHT - (action.pos / 100) * DRAW_AREA_HEIGHT;
 
       const distance = Math.sqrt((x - px) ** 2 + (y - py) ** 2);
 
@@ -193,7 +222,7 @@ export function PatternEditorDialog({
     // Calculate new position (clamped to 0-100)
     const newPos = Math.max(
       0,
-      Math.min(100, 100 - (y / CANVAS_HEIGHT) * 100)
+      Math.min(100, 100 - (y / DRAW_AREA_HEIGHT) * 100)
     );
 
     // Update action
