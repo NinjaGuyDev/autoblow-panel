@@ -6,6 +6,7 @@ interface UseFunscriptFileReturn {
   funscriptData: ZodFunscript | null;
   funscriptName: string | null;
   loadFunscript: (file: File) => Promise<void>;
+  loadFunscriptFromData: (name: string, data: ZodFunscript) => void;
   clearFunscript: () => void;
   error: string | null;
   isLoading: boolean;
@@ -35,6 +36,14 @@ export function useFunscriptFile(): UseFunscriptFileReturn {
     }
   };
 
+  const loadFunscriptFromData = (name: string, data: ZodFunscript) => {
+    setError(null);
+    setIsLoading(false);
+    // Create a synthetic file-like state for library-loaded funscripts
+    setFunscriptFile(new File([], name, { type: 'application/json' }));
+    setFunscriptData(data);
+  };
+
   const clearFunscript = () => {
     setFunscriptFile(null);
     setFunscriptData(null);
@@ -49,6 +58,7 @@ export function useFunscriptFile(): UseFunscriptFileReturn {
     funscriptData,
     funscriptName,
     loadFunscript,
+    loadFunscriptFromData,
     clearFunscript,
     error,
     isLoading,

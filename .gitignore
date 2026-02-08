@@ -9,3 +9,12 @@ dist/
 example-funscripts/
 *.funscript
 motions/
+
+# SQLite database files
+data/
+*.db
+*.db-wal
+*.db-shm
+
+# Media files (video uploads)
+media/

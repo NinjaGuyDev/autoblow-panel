@@ -9,29 +9,40 @@ import { VideoSyncPage } from '@/components/pages/VideoSyncPage';
 import { ManualControlPage } from '@/components/pages/ManualControlPage';
 import { DeviceLogPage } from '@/components/pages/DeviceLogPage';
 import { PatternLibraryPage } from '@/components/pages/PatternLibraryPage';
+import { LibraryPage } from '@/components/pages/LibraryPage';
 import { Timeline } from '@/components/timeline/Timeline';
 import { useVideoFile } from '@/hooks/useVideoFile';
 import { useFunscriptFile } from '@/hooks/useFunscriptFile';
 import { useUndoableActions } from '@/hooks/useUndoableActions';
+import { useMigration } from '@/hooks/useMigration';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useVideoPlayback } from '@/hooks/useVideoPlayback';
 import { useDeviceConnection } from '@/hooks/useDeviceConnection';
 import { useManualControl } from '@/hooks/useManualControl';
 import { useSyncPlayback } from '@/hooks/useSyncPlayback';
 import { useDeviceLog } from '@/hooks/useDeviceLog';
+import { useLibrary } from '@/hooks/useLibrary';
+import { mediaApi } from '@/lib/apiClient';
+import { captureVideoThumbnail } from '@/lib/thumbnailCapture';
 import { exportFunscript } from '@/lib/funscriptExport';
 import { insertPatternAtCursor, insertPatternAtEnd } from '@/lib/patternInsertion';
 import type { TabId } from '@/types/navigation';
 import type { PatternDefinition } from '@/types/patterns';
+import type { LibraryItem } from '../server/types/shared';
+import type { Funscript } from '@/types/funscript';
 
 function App() {
   const [showSessionHint, setShowSessionHint] = useState(false);
-  const [activeTab, setActiveTab] = useState<TabId>('video-sync');
+  const [videoLoadHint, setVideoLoadHint] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabId>('library');
   const [showTimeline, setShowTimeline] = useState(true);
   const [isCreationMode, setIsCreationMode] = useState(false);
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [scriptName, setScriptName] = useState<string>('');
   const { logs, addLog, clearLogs } = useDeviceLog();
+
+  // Library state
+  const library = useLibrary();
 
   // Video file state - must come first as videoUrl is used by playback hook
   const {
@@ -39,6 +50,7 @@ function App() {
     videoUrl,
     videoName,
     loadVideo,
+    loadVideoFromUrl,
     clearVideo,
     error: videoError,
   } = useVideoFile();
@@ -59,6 +71,7 @@ function App() {
     funscriptData,
     funscriptName,
     loadFunscript,
+    loadFunscriptFromData,
     clearFunscript,
     error: funscriptError,
     isLoading,
@@ -66,6 +79,9 @@ function App() {
 
   // Undoable actions state for editing
   const { actions: editableActions, setActions, undo, redo, canUndo, canRedo, reset: resetActions } = useUndoableActions(funscriptData?.actions ?? []);
+
+  // Run migration first to ensure data is available
+  useMigration();
 
   const { saveSession, lastSession } = useAutoSave();
 
@@ -173,6 +189,22 @@ function App() {
 
   const handleVideoLoad = (file: File) => {
     loadVideo(file);
+    setVideoLoadHint(null);
+
+    // Upload to media directory and capture thumbnail in background
+    mediaApi.upload(file).then(() => {
+      const blobUrl = URL.createObjectURL(file);
+      captureVideoThumbnail(blobUrl).then(blob => {
+        URL.revokeObjectURL(blobUrl);
+        if (blob) {
+          mediaApi.uploadThumbnail(file.name, blob).catch(err => {
+            console.warn('Failed to upload thumbnail:', err);
+          });
+        }
+      });
+    }).catch(err => {
+      console.warn('Failed to upload video to media directory:', err);
+    });
   };
 
   const handleVideoClear = () => {
@@ -265,6 +297,38 @@ function App() {
     setScriptName('');
   };
 
+  // Load item from library
+  const handleLoadFromLibrary = async (item: LibraryItem) => {
+    try {
+      // Parse funscript data from JSON string
+      const parsedData: Funscript = JSON.parse(item.funscriptData);
+
+      // Load funscript data using the new loadFunscriptFromData method
+      loadFunscriptFromData(item.funscriptName || 'library-item.funscript', parsedData);
+
+      // Switch to video-sync tab
+      setActiveTab('video-sync');
+
+      // Try to load video from media directory
+      if (item.videoName) {
+        const { exists } = await mediaApi.check(item.videoName);
+        if (exists) {
+          loadVideoFromUrl(mediaApi.streamUrl(item.videoName), item.videoName);
+          addLog('info', `Loaded from library: ${item.funscriptName || item.videoName || 'Unnamed'}`);
+          setVideoLoadHint(null);
+        } else {
+          addLog('info', `Loaded from library: ${item.funscriptName || 'Unnamed'}`);
+          setVideoLoadHint(item.videoName);
+        }
+      } else {
+        addLog('info', `Loaded from library: ${item.funscriptName || 'Unnamed'}`);
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load library item';
+      addLog('error', errorMessage);
+    }
+  };
+
   return (
     <ThemeProvider defaultTheme="dark">
       <div
@@ -288,6 +352,13 @@ function App() {
           navbar={<NavBar activeTab={activeTab} onTabChange={setActiveTab} />}
         >
           {/* Conditional page rendering based on active tab */}
+          {activeTab === 'library' && (
+            <LibraryPage
+              {...library}
+              onLoadItem={handleLoadFromLibrary}
+            />
+          )}
+
           {activeTab === 'video-sync' && (
             <VideoSyncPage
               videoFile={videoFile}
@@ -318,6 +389,7 @@ function App() {
               hasFunscript={funscriptData !== null}
               showTimeline={showTimeline}
               onToggleTimeline={() => setShowTimeline(!showTimeline)}
+              videoLoadHint={videoLoadHint}
               timelineElement={
                 showTimeline && videoUrl ? (
                   <Timeline

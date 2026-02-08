@@ -1,0 +1,85 @@
+import type { Request, Response, NextFunction } from 'express';
+import type { LibraryService } from '../services/library.service.js';
+import type { CreateLibraryItemRequest, SearchQuery, MigrationRequest } from '../types/shared.js';
+
+export class LibraryController {
+  constructor(private service: LibraryService) {}
+
+  getAll = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const items = this.service.getAllItems();
+      res.json(items);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const item = this.service.getItemById(id);
+      res.json(item);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  search = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { q } = req.query as SearchQuery;
+      const items = this.service.searchItems(q || '');
+      res.json(items);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = req.body as CreateLibraryItemRequest;
+      const item = this.service.createItem(data);
+      res.status(201).json(item);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  delete = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      this.service.deleteItem(id);
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  save = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const data = req.body as CreateLibraryItemRequest;
+      const item = this.service.saveOrUpdateItem(data);
+      res.json(item);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  getMigrationStatus = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const migrated = this.service.getMigrationStatus();
+      res.json({ migrated });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  migrate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const { data } = req.body as MigrationRequest;
+      this.service.migrateFromIndexedDB(data);
+      res.json({ success: true });
+    } catch (error) {
+      next(error);
+    }
+  };
+}
