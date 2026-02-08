@@ -10,6 +10,7 @@ import { ManualControlPage } from '@/components/pages/ManualControlPage';
 import { DeviceLogPage } from '@/components/pages/DeviceLogPage';
 import { PatternLibraryPage } from '@/components/pages/PatternLibraryPage';
 import { LibraryPage } from '@/components/pages/LibraryPage';
+import { PlaylistPage } from '@/components/pages/PlaylistPage';
 import { Timeline } from '@/components/timeline/Timeline';
 import { useVideoFile } from '@/hooks/useVideoFile';
 import { useFunscriptFile } from '@/hooks/useFunscriptFile';
@@ -22,6 +23,7 @@ import { useManualControl } from '@/hooks/useManualControl';
 import { useSyncPlayback } from '@/hooks/useSyncPlayback';
 import { useDeviceLog } from '@/hooks/useDeviceLog';
 import { useLibrary } from '@/hooks/useLibrary';
+import { usePlaylistManager } from '@/hooks/usePlaylistManager';
 import { mediaApi } from '@/lib/apiClient';
 import { captureVideoThumbnail } from '@/lib/thumbnailCapture';
 import { exportFunscript } from '@/lib/funscriptExport';
@@ -43,6 +45,9 @@ function App() {
 
   // Library state
   const library = useLibrary();
+
+  // Playlist state
+  const playlistManager = usePlaylistManager();
 
   // Video file state - must come first as videoUrl is used by playback hook
   const {
@@ -297,6 +302,12 @@ function App() {
     setScriptName('');
   };
 
+  // Play playlist handler (wired in 14-03)
+  const handlePlayPlaylist = (playlistId: number) => {
+    // Playlist playback will be implemented in 14-03
+    console.log('Play playlist:', playlistId);
+  };
+
   // Load item from library
   const handleLoadFromLibrary = async (item: LibraryItem) => {
     try {
@@ -356,6 +367,13 @@ function App() {
             <LibraryPage
               {...library}
               onLoadItem={handleLoadFromLibrary}
+            />
+          )}
+
+          {activeTab === 'playlists' && (
+            <PlaylistPage
+              {...playlistManager}
+              onPlayPlaylist={handlePlayPlaylist}
             />
           )}
 
