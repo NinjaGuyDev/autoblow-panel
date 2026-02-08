@@ -1,6 +1,23 @@
 import type { FunscriptAction } from '@/types/funscript';
 
 /**
+ * Interpolation type for waypoint-based pattern building
+ */
+export type InterpolationType = 'linear' | 'easeIn' | 'easeOut' | 'easeInOut' | 'step';
+
+/**
+ * A waypoint definition for pattern building
+ */
+export interface WaypointDefinition {
+  /** Position value (0-100) */
+  pos: number;
+  /** Time in milliseconds */
+  timeMs: number;
+  /** Interpolation type for segment from this waypoint to next */
+  interpolation: InterpolationType;
+}
+
+/**
  * Intensity level of a motion pattern
  */
 export type Intensity = 'low' | 'medium' | 'high';

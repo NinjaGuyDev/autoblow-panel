@@ -7,6 +7,7 @@ export class LibraryRepository {
   findAll(): LibraryItem[] {
     const stmt = this.db.prepare(`
       SELECT * FROM library_items
+      WHERE isCustomPattern = 0 OR isCustomPattern IS NULL
       ORDER BY lastModified DESC
     `);
     return stmt.all() as LibraryItem[];
@@ -23,7 +24,8 @@ export class LibraryRepository {
     const searchPattern = `%${query}%`;
     const stmt = this.db.prepare(`
       SELECT * FROM library_items
-      WHERE videoName LIKE ? OR funscriptName LIKE ?
+      WHERE (videoName LIKE ? OR funscriptName LIKE ?)
+        AND (isCustomPattern = 0 OR isCustomPattern IS NULL)
       ORDER BY lastModified DESC
     `);
     return stmt.all(searchPattern, searchPattern) as LibraryItem[];
