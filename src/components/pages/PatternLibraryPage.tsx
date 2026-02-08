@@ -24,7 +24,8 @@ interface PatternLibraryPageProps {
  * Converts LibraryItem to CustomPatternDefinition
  */
 function itemToCustomPattern(item: LibraryItem): CustomPatternDefinition {
-  const actions = JSON.parse(item.funscriptData);
+  const parsed = JSON.parse(item.funscriptData);
+  const actions = Array.isArray(parsed) ? parsed : parsed.actions || [];
   const metadata = item.patternMetadata ? JSON.parse(item.patternMetadata) : {};
 
   return {
