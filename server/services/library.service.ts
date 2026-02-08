@@ -47,9 +47,9 @@ export class LibraryService {
   }
 
   migrateFromIndexedDB(items: CreateLibraryItemRequest[]): void {
-    // Check if migration already completed
+    // Check if migration already completed - return silently for idempotency
     if (this.repository.getMigrationStatus()) {
-      throw new Error('Migration has already been completed');
+      return;
     }
 
     // Bulk insert items
