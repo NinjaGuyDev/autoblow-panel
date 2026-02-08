@@ -125,6 +125,56 @@ export const libraryApi = {
 };
 
 /**
+ * Custom Pattern API client
+ * Provides CRUD operations for user-created custom patterns
+ */
+export const customPatternApi = {
+  /**
+   * Get all custom patterns
+   */
+  async getAll(): Promise<LibraryItem[]> {
+    const response = await fetch(`${API_BASE}/custom-patterns`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch custom patterns: ${response.statusText}`);
+    }
+    return response.json();
+  },
+
+  /**
+   * Create a new custom pattern
+   * Reuses libraryApi.create with isCustomPattern=1
+   */
+  async create(data: CreateLibraryItemRequest): Promise<LibraryItem> {
+    return libraryApi.create(data);
+  },
+
+  /**
+   * Update a custom pattern
+   */
+  async update(id: number, data: Partial<CreateLibraryItemRequest>): Promise<LibraryItem> {
+    const response = await fetch(`${API_BASE}/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to update custom pattern: ${response.statusText}`);
+    }
+    return response.json();
+  },
+
+  /**
+   * Delete a custom pattern
+   * Reuses libraryApi.deleteItem
+   */
+  async delete(id: number): Promise<void> {
+    return libraryApi.deleteItem(id);
+  },
+};
+
+/**
  * Media API client — video file storage and streaming
  */
 export const mediaApi = {

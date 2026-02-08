@@ -33,6 +33,22 @@ export class LibraryService {
     return this.repository.search(query);
   }
 
+  getCustomPatterns(): LibraryItem[] {
+    return this.repository.findCustomPatterns();
+  }
+
+  updateCustomPattern(id: number, data: Partial<CreateLibraryItemRequest>): LibraryItem {
+    // Verify item exists and is a custom pattern
+    const item = this.repository.findById(id);
+    if (!item) {
+      throw new Error(`Library item with id ${id} not found`);
+    }
+    if (item.isCustomPattern !== 1) {
+      throw new Error(`Library item with id ${id} is not a custom pattern`);
+    }
+    return this.repository.updateCustomPattern(id, data);
+  }
+
   createItem(data: CreateLibraryItemRequest): LibraryItem {
     // Validate required fields
     if (!data.funscriptData) {

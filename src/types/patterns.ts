@@ -49,3 +49,44 @@ export interface PatternDefinition {
   /** Generator function returning action array */
   generator: () => FunscriptAction[];
 }
+
+/**
+ * A custom pattern definition with static actions instead of a generator
+ * Used for user-created patterns that can be edited and saved
+ */
+export interface CustomPatternDefinition {
+  /** Unique identifier */
+  id: string;
+  /** Human-readable name */
+  name: string;
+  /** Intensity level */
+  intensity: Intensity;
+  /** Style tags for filtering */
+  tags: StyleTag[];
+  /** Duration in milliseconds */
+  durationMs: number;
+  /** Static array of actions (not a generator) */
+  actions: FunscriptAction[];
+  /** Literal true discriminator for type guards */
+  isCustom: true;
+  /** Preset pattern ID this was copied from */
+  originalPatternId: string;
+  /** Unix timestamp in milliseconds */
+  lastModified: number;
+  /** Backend library_items.id once saved */
+  libraryItemId?: number;
+}
+
+/**
+ * Union type for both preset and custom patterns
+ */
+export type AnyPattern = PatternDefinition | CustomPatternDefinition;
+
+/**
+ * Type guard to check if a pattern is a custom pattern
+ * @param p Pattern to check
+ * @returns True if pattern is a CustomPatternDefinition
+ */
+export function isCustomPattern(p: AnyPattern): p is CustomPatternDefinition {
+  return 'isCustom' in p && p.isCustom === true;
+}

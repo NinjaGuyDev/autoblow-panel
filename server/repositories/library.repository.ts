@@ -29,11 +29,20 @@ export class LibraryRepository {
     return stmt.all(searchPattern, searchPattern) as LibraryItem[];
   }
 
+  findCustomPatterns(): LibraryItem[] {
+    const stmt = this.db.prepare(`
+      SELECT * FROM library_items
+      WHERE isCustomPattern = 1
+      ORDER BY lastModified DESC
+    `);
+    return stmt.all() as LibraryItem[];
+  }
+
   create(item: CreateLibraryItemRequest): LibraryItem {
     const lastModified = new Date().toISOString();
     const stmt = this.db.prepare(`
-      INSERT INTO library_items (videoName, funscriptName, funscriptData, duration, lastModified)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO library_items (videoName, funscriptName, funscriptData, duration, lastModified, isCustomPattern, originalPatternId, patternMetadata)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING *
     `);
     return stmt.get(
@@ -41,7 +50,10 @@ export class LibraryRepository {
       item.funscriptName,
       item.funscriptData,
       item.duration,
-      lastModified
+      lastModified,
+      item.isCustomPattern ?? 0,
+      item.originalPatternId ?? null,
+      item.patternMetadata ?? null
     ) as LibraryItem;
   }
 
@@ -51,6 +63,24 @@ export class LibraryRepository {
     `);
     const result = stmt.run(id);
     return result.changes;
+  }
+
+  updateCustomPattern(id: number, item: Partial<CreateLibraryItemRequest>): LibraryItem {
+    const lastModified = new Date().toISOString();
+    const stmt = this.db.prepare(`
+      UPDATE library_items
+      SET funscriptData = COALESCE(?, funscriptData),
+          patternMetadata = COALESCE(?, patternMetadata),
+          lastModified = ?
+      WHERE id = ?
+      RETURNING *
+    `);
+    return stmt.get(
+      item.funscriptData ?? null,
+      item.patternMetadata ?? null,
+      lastModified,
+      id
+    ) as LibraryItem;
   }
 
   upsertByVideoName(item: CreateLibraryItemRequest): LibraryItem {

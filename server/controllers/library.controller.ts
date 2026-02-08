@@ -34,6 +34,26 @@ export class LibraryController {
     }
   };
 
+  getCustomPatterns = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const items = this.service.getCustomPatterns();
+      res.json(items);
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  updateCustomPattern = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const id = parseInt(req.params.id, 10);
+      const data = req.body as Partial<CreateLibraryItemRequest>;
+      const item = this.service.updateCustomPattern(id, data);
+      res.json(item);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const data = req.body as CreateLibraryItemRequest;
