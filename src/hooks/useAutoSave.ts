@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { libraryApi } from '@/lib/apiClient';
 import type { ZodFunscript } from '@/lib/schemas';
 import type { LibraryItem } from '@/../server/types/shared';
@@ -39,7 +39,7 @@ export function useAutoSave(): UseAutoSaveReturn {
     loadLastSession();
   }, []);
 
-  const saveSession = async (
+  const saveSession = useCallback(async (
     videoName: string | null,
     funscriptName: string | null,
     funscriptData: ZodFunscript | null
@@ -64,7 +64,7 @@ export function useAutoSave(): UseAutoSaveReturn {
         // Don't crash the app on save failure
       }
     }, 2000);
-  };
+  }, []);
 
   const clearSession = async () => {
     if (lastSession) {

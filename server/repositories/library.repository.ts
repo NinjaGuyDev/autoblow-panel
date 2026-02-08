@@ -56,11 +56,16 @@ export class LibraryRepository {
   upsertByVideoName(item: CreateLibraryItemRequest): LibraryItem {
     const lastModified = new Date().toISOString();
 
-    // Check if item with this videoName exists
+    // Check if item with matching videoName or funscriptName exists
+    // Use IS instead of = for proper NULL comparison in SQL
     const existingStmt = this.db.prepare(`
-      SELECT id FROM library_items WHERE videoName = ?
+      SELECT id FROM library_items
+      WHERE (videoName IS ? AND videoName IS NOT NULL)
+         OR (funscriptName IS ? AND funscriptName IS NOT NULL AND videoName IS NULL AND ? IS NULL)
+      ORDER BY lastModified DESC
+      LIMIT 1
     `);
-    const existing = existingStmt.get(item.videoName) as { id: number } | undefined;
+    const existing = existingStmt.get(item.videoName, item.funscriptName, item.videoName) as { id: number } | undefined;
 
     if (existing) {
       // Update existing item
