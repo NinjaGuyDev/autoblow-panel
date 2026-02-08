@@ -191,57 +191,43 @@ export function LibraryPage({
           {items.map((item) => (
             <div
               key={item.id}
-              className="bg-card border border-border rounded-lg overflow-hidden hover:border-muted-foreground transition-colors"
+              className="relative bg-card border border-border rounded-lg overflow-hidden hover:border-muted-foreground transition-colors"
             >
-              {/* Thumbnail */}
-              {item.videoName ? (
-                <div className="relative aspect-video bg-muted">
-                  <img
-                    src={mediaApi.thumbnailUrl(item.videoName)}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      // Hide broken image, show fallback
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                    <Video className="w-10 h-10 text-white/30" />
-                  </div>
-                  {/* Badges overlaid on thumbnail */}
-                  <div className="absolute top-2 left-2 flex gap-1">
-                    <div className="flex items-center gap-1 text-xs bg-black/60 text-white px-2 py-0.5 rounded">
+              {/* Thumbnail background — low opacity, centered, covers full card */}
+              {item.videoName && (
+                <img
+                  src={mediaApi.thumbnailUrl(item.videoName)}
+                  alt=""
+                  className="absolute inset-0 w-full h-full object-cover opacity-15 pointer-events-none"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).style.display = 'none';
+                  }}
+                />
+              )}
+
+              {/* Card content — sits above the thumbnail */}
+              <div className="relative p-4">
+                {/* Badges */}
+                <div className="flex gap-2 mb-3">
+                  {item.videoName && (
+                    <div className="flex items-center gap-1 text-xs bg-muted/80 px-2 py-1 rounded">
                       <Video className="w-3 h-3" />
                       <span>Video</span>
                     </div>
-                    {item.funscriptName && (
-                      <div className="flex items-center gap-1 text-xs bg-black/60 text-white px-2 py-0.5 rounded">
-                        <FileText className="w-3 h-3" />
-                        <span>Script</span>
-                      </div>
-                    )}
-                  </div>
-                  {/* Duration badge */}
-                  {item.duration && (
-                    <div className="absolute bottom-2 right-2 text-xs bg-black/70 text-white px-2 py-0.5 rounded">
-                      {formatDuration(item.duration)}
-                    </div>
                   )}
-                </div>
-              ) : (
-                <div className="relative aspect-video bg-muted flex items-center justify-center">
-                  <FileText className="w-10 h-10 text-muted-foreground/30" />
                   {item.funscriptName && (
-                    <div className="absolute top-2 left-2 flex items-center gap-1 text-xs bg-black/60 text-white px-2 py-0.5 rounded">
+                    <div className="flex items-center gap-1 text-xs bg-muted/80 px-2 py-1 rounded">
                       <FileText className="w-3 h-3" />
                       <span>Script</span>
                     </div>
                   )}
+                  {item.duration && (
+                    <div className="ml-auto text-xs bg-muted/80 px-2 py-1 rounded">
+                      {formatDuration(item.duration)}
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {/* Card body */}
-              <div className="p-4">
                 {/* Video name (title) */}
                 <h3 className="text-lg font-semibold text-foreground mb-1 truncate" title={item.videoName || 'No video'}>
                   {item.videoName || item.funscriptName || 'Unnamed'}
