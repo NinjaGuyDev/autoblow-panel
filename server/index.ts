@@ -25,6 +25,9 @@ const libraryRouter = createLibraryRouter(controller);
 const mediaController = new MediaController(MEDIA_DIR);
 const mediaRouter = createMediaRouter(mediaController, MEDIA_DIR);
 
+// Connect media cleanup to library service for cascading deletes
+service.setMediaCleanup(mediaController);
+
 // Create Express app
 const app = express();
 

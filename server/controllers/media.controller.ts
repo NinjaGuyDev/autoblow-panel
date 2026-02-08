@@ -166,6 +166,27 @@ export class MediaController {
   }
 
   /**
+   * Delete a video file and its thumbnail from the media directory.
+   * Called by LibraryService via MediaCleanup interface — not an HTTP endpoint.
+   */
+  deleteFiles(videoName: string): void {
+    const sanitized = path.basename(videoName);
+
+    // Delete video file
+    const videoPath = path.join(this.mediaDir, sanitized);
+    if (fs.existsSync(videoPath)) {
+      fs.unlinkSync(videoPath);
+    }
+
+    // Delete thumbnail
+    const thumbName = this.thumbnailName(sanitized);
+    const thumbPath = path.join(this.mediaDir, 'thumbnails', thumbName);
+    if (fs.existsSync(thumbPath)) {
+      fs.unlinkSync(thumbPath);
+    }
+  }
+
+  /**
    * Resolve and validate a media file path, preventing directory traversal
    */
   private resolveMediaPath(filename: string): string | null {

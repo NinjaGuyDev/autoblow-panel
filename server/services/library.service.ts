@@ -1,8 +1,18 @@
 import type { LibraryItem, CreateLibraryItemRequest } from '../types/shared.js';
 import type { LibraryRepository } from '../repositories/library.repository.js';
 
+export interface MediaCleanup {
+  deleteFiles(videoName: string): void;
+}
+
 export class LibraryService {
+  private mediaCleanup: MediaCleanup | null = null;
+
   constructor(private repository: LibraryRepository) {}
+
+  setMediaCleanup(cleanup: MediaCleanup): void {
+    this.mediaCleanup = cleanup;
+  }
 
   getAllItems(): LibraryItem[] {
     return this.repository.findAll();
@@ -32,9 +42,22 @@ export class LibraryService {
   }
 
   deleteItem(id: number): void {
-    const changes = this.repository.delete(id);
-    if (changes === 0) {
+    // Look up item first to get videoName for media cleanup
+    const item = this.repository.findById(id);
+    if (!item) {
       throw new Error(`Library item with id ${id} not found`);
+    }
+
+    this.repository.delete(id);
+
+    // Clean up associated media files
+    if (item.videoName && this.mediaCleanup) {
+      try {
+        this.mediaCleanup.deleteFiles(item.videoName);
+      } catch (err) {
+        // Log but don't fail the delete — DB record is already gone
+        console.warn(`Failed to clean up media files for ${item.videoName}:`, err);
+      }
     }
   }
 
