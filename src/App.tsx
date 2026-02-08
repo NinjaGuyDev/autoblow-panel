@@ -23,6 +23,7 @@ import { useSyncPlayback } from '@/hooks/useSyncPlayback';
 import { useDeviceLog } from '@/hooks/useDeviceLog';
 import { useLibrary } from '@/hooks/useLibrary';
 import { mediaApi } from '@/lib/apiClient';
+import { captureVideoThumbnail } from '@/lib/thumbnailCapture';
 import { exportFunscript } from '@/lib/funscriptExport';
 import { insertPatternAtCursor, insertPatternAtEnd } from '@/lib/patternInsertion';
 import type { TabId } from '@/types/navigation';
@@ -190,8 +191,18 @@ function App() {
     loadVideo(file);
     setVideoLoadHint(null);
 
-    // Upload to media directory in background for future library loads
-    mediaApi.upload(file).catch(err => {
+    // Upload to media directory and capture thumbnail in background
+    mediaApi.upload(file).then(() => {
+      const blobUrl = URL.createObjectURL(file);
+      captureVideoThumbnail(blobUrl).then(blob => {
+        URL.revokeObjectURL(blobUrl);
+        if (blob) {
+          mediaApi.uploadThumbnail(file.name, blob).catch(err => {
+            console.warn('Failed to upload thumbnail:', err);
+          });
+        }
+      });
+    }).catch(err => {
       console.warn('Failed to upload video to media directory:', err);
     });
   };

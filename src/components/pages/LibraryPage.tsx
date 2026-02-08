@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { Search, RefreshCw, Trash2, Play, Video, FileText } from 'lucide-react';
+import { mediaApi } from '@/lib/apiClient';
 import type { LibraryItem } from '../../../server/types/shared';
 import type { LibraryFilter } from '@/hooks/useLibrary';
 
@@ -190,59 +191,92 @@ export function LibraryPage({
           {items.map((item) => (
             <div
               key={item.id}
-              className="bg-card border border-border rounded-lg p-4 hover:border-muted-foreground transition-colors"
+              className="bg-card border border-border rounded-lg overflow-hidden hover:border-muted-foreground transition-colors"
             >
-              {/* Icons for content type */}
-              <div className="flex gap-2 mb-3">
-                {item.videoName && (
-                  <div className="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded">
-                    <Video className="w-3 h-3" />
-                    <span>Video</span>
+              {/* Thumbnail */}
+              {item.videoName ? (
+                <div className="relative aspect-video bg-muted">
+                  <img
+                    src={mediaApi.thumbnailUrl(item.videoName)}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      // Hide broken image, show fallback
+                      (e.target as HTMLImageElement).style.display = 'none';
+                    }}
+                  />
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <Video className="w-10 h-10 text-white/30" />
                   </div>
-                )}
-                {item.funscriptName && (
-                  <div className="flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded">
-                    <FileText className="w-3 h-3" />
-                    <span>Script</span>
+                  {/* Badges overlaid on thumbnail */}
+                  <div className="absolute top-2 left-2 flex gap-1">
+                    <div className="flex items-center gap-1 text-xs bg-black/60 text-white px-2 py-0.5 rounded">
+                      <Video className="w-3 h-3" />
+                      <span>Video</span>
+                    </div>
+                    {item.funscriptName && (
+                      <div className="flex items-center gap-1 text-xs bg-black/60 text-white px-2 py-0.5 rounded">
+                        <FileText className="w-3 h-3" />
+                        <span>Script</span>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-
-              {/* Video name (title) */}
-              <h3 className="text-lg font-semibold text-foreground mb-1 truncate" title={item.videoName || 'No video'}>
-                {item.videoName || 'No video'}
-              </h3>
-
-              {/* Funscript name (subtitle) */}
-              {item.funscriptName && (
-                <p className="text-sm text-muted-foreground mb-2 truncate" title={item.funscriptName}>
-                  {item.funscriptName}
-                </p>
+                  {/* Duration badge */}
+                  {item.duration && (
+                    <div className="absolute bottom-2 right-2 text-xs bg-black/70 text-white px-2 py-0.5 rounded">
+                      {formatDuration(item.duration)}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="relative aspect-video bg-muted flex items-center justify-center">
+                  <FileText className="w-10 h-10 text-muted-foreground/30" />
+                  {item.funscriptName && (
+                    <div className="absolute top-2 left-2 flex items-center gap-1 text-xs bg-black/60 text-white px-2 py-0.5 rounded">
+                      <FileText className="w-3 h-3" />
+                      <span>Script</span>
+                    </div>
+                  )}
+                </div>
               )}
 
-              {/* Metadata */}
-              <div className="flex items-center justify-between text-xs text-muted-foreground mb-4">
-                <span>{formatRelativeTime(item.lastModified)}</span>
-                <span>{formatDuration(item.duration)}</span>
-              </div>
+              {/* Card body */}
+              <div className="p-4">
+                {/* Video name (title) */}
+                <h3 className="text-lg font-semibold text-foreground mb-1 truncate" title={item.videoName || 'No video'}>
+                  {item.videoName || item.funscriptName || 'Unnamed'}
+                </h3>
 
-              {/* Action buttons */}
-              <div className="flex gap-2">
-                <button
-                  onClick={() => onLoadItem(item)}
-                  className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-                >
-                  <Play className="w-4 h-4" />
-                  <span>Load</span>
-                </button>
-                <button
-                  onClick={() => handleDelete(item.id, item.videoName || item.funscriptName || 'this item')}
-                  disabled={deletingId === item.id}
-                  className="px-3 py-2 border border-destructive text-destructive rounded-md hover:bg-destructive hover:text-destructive-foreground transition-colors disabled:opacity-50"
-                  title="Delete item"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                {/* Funscript name (subtitle) */}
+                {item.funscriptName && item.videoName && (
+                  <p className="text-sm text-muted-foreground mb-2 truncate" title={item.funscriptName}>
+                    {item.funscriptName}
+                  </p>
+                )}
+
+                {/* Metadata */}
+                <div className="text-xs text-muted-foreground mb-4">
+                  <span>{formatRelativeTime(item.lastModified)}</span>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => onLoadItem(item)}
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                  >
+                    <Play className="w-4 h-4" />
+                    <span>Load</span>
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item.id, item.videoName || item.funscriptName || 'this item')}
+                    disabled={deletingId === item.id}
+                    className="px-3 py-2 border border-destructive text-destructive rounded-md hover:bg-destructive hover:text-destructive-foreground transition-colors disabled:opacity-50"
+                    title="Delete item"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           ))}

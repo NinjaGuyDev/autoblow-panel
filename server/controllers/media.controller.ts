@@ -120,6 +120,52 @@ export class MediaController {
   };
 
   /**
+   * POST /api/media/thumbnail — upload a thumbnail JPEG for a video
+   * Expects multipart form data with a 'thumbnail' field and 'videoName' in body
+   */
+  uploadThumbnail = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const file = (req as any).file;
+      if (!file) {
+        res.status(400).json({ error: 'No thumbnail file provided' });
+        return;
+      }
+
+      res.json({ name: file.originalname, stored: true });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  /**
+   * GET /api/media/thumbnail/:filename — serve a thumbnail image
+   */
+  getThumbnail = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const filename = req.params.filename as string;
+      const thumbName = this.thumbnailName(filename);
+      const thumbDir = path.join(this.mediaDir, 'thumbnails');
+      const thumbPath = path.join(thumbDir, thumbName);
+
+      if (!thumbPath.startsWith(path.resolve(thumbDir)) || !fs.existsSync(thumbPath)) {
+        res.status(404).json({ error: 'Thumbnail not found' });
+        return;
+      }
+
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Cache-Control', 'public, max-age=86400');
+      fs.createReadStream(thumbPath).pipe(res);
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  private thumbnailName(videoFilename: string): string {
+    const base = path.basename(videoFilename, path.extname(videoFilename));
+    return `${base}.jpg`;
+  }
+
+  /**
    * Resolve and validate a media file path, preventing directory traversal
    */
   private resolveMediaPath(filename: string): string | null {

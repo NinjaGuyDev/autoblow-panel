@@ -162,4 +162,31 @@ export const mediaApi = {
     }
     return response.json();
   },
+
+  /**
+   * Get the URL for a video thumbnail
+   */
+  thumbnailUrl(videoFilename: string): string {
+    return `${MEDIA_BASE}/thumbnail/${encodeURIComponent(videoFilename)}`;
+  },
+
+  /**
+   * Upload a thumbnail image for a video
+   */
+  async uploadThumbnail(videoFilename: string, blob: Blob): Promise<void> {
+    const ext = videoFilename.lastIndexOf('.');
+    const baseName = ext > 0 ? videoFilename.substring(0, ext) : videoFilename;
+    const thumbFilename = `${baseName}.jpg`;
+
+    const formData = new FormData();
+    formData.append('thumbnail', blob, thumbFilename);
+
+    const response = await fetch(`${MEDIA_BASE}/thumbnail`, {
+      method: 'POST',
+      body: formData,
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to upload thumbnail: ${response.statusText}`);
+    }
+  },
 };
