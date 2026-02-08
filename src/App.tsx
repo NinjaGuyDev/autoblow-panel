@@ -13,6 +13,7 @@ import { Timeline } from '@/components/timeline/Timeline';
 import { useVideoFile } from '@/hooks/useVideoFile';
 import { useFunscriptFile } from '@/hooks/useFunscriptFile';
 import { useUndoableActions } from '@/hooks/useUndoableActions';
+import { useMigration } from '@/hooks/useMigration';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useVideoPlayback } from '@/hooks/useVideoPlayback';
 import { useDeviceConnection } from '@/hooks/useDeviceConnection';
@@ -66,6 +67,9 @@ function App() {
 
   // Undoable actions state for editing
   const { actions: editableActions, setActions, undo, redo, canUndo, canRedo, reset: resetActions } = useUndoableActions(funscriptData?.actions ?? []);
+
+  // Run migration first to ensure data is available
+  useMigration();
 
   const { saveSession, lastSession } = useAutoSave();
 
