@@ -7,6 +7,10 @@ import { LibraryRepository } from './repositories/library.repository.js';
 import { LibraryService } from './services/library.service.js';
 import { LibraryController } from './controllers/library.controller.js';
 import { createLibraryRouter } from './routes/library.routes.js';
+import { PlaylistRepository } from './repositories/playlist.repository.js';
+import { PlaylistService } from './services/playlist.service.js';
+import { PlaylistController } from './controllers/playlist.controller.js';
+import { createPlaylistRouter } from './routes/playlist.routes.js';
 import { MediaController } from './controllers/media.controller.js';
 import { createMediaRouter } from './routes/media.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -22,6 +26,13 @@ const repository = new LibraryRepository(db);
 const service = new LibraryService(repository);
 const controller = new LibraryController(service);
 const libraryRouter = createLibraryRouter(controller);
+
+// Wire up playlist dependency chain
+const playlistRepository = new PlaylistRepository(db);
+const playlistService = new PlaylistService(playlistRepository, repository);
+const playlistController = new PlaylistController(playlistService);
+const playlistRouter = createPlaylistRouter(playlistController);
+
 const mediaController = new MediaController(MEDIA_DIR);
 const mediaRouter = createMediaRouter(mediaController, MEDIA_DIR);
 
@@ -42,6 +53,7 @@ app.use(express.json({ limit: '50mb' }));
 
 // Mount routes
 app.use('/api/library', libraryRouter);
+app.use('/api/playlists', playlistRouter);
 app.use('/api/media', mediaRouter);
 
 // Error handler (must be last)

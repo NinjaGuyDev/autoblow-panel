@@ -3,10 +3,21 @@
  * Provides type-safe methods for CRUD operations on library items
  */
 
-import type { LibraryItem, CreateLibraryItemRequest, MigrationRequest } from '../../server/types/shared';
+import type {
+  LibraryItem,
+  CreateLibraryItemRequest,
+  MigrationRequest,
+  Playlist,
+  PlaylistItem,
+  CreatePlaylistRequest,
+  UpdatePlaylistRequest,
+  AddPlaylistItemRequest,
+  ReorderPlaylistItemsRequest
+} from '../../server/types/shared';
 
 const API_BASE = '/api/library';
 const MEDIA_BASE = '/api/media';
+const PLAYLIST_BASE = '/api/playlists';
 
 /**
  * Library API client
@@ -237,6 +248,138 @@ export const mediaApi = {
     });
     if (!response.ok) {
       throw new Error(`Failed to upload thumbnail: ${response.statusText}`);
+    }
+  },
+};
+
+/**
+ * Playlist API client
+ * Provides type-safe methods for playlist CRUD operations
+ */
+export const playlistApi = {
+  /**
+   * Get all playlists with item counts
+   */
+  async getAll(): Promise<Playlist[]> {
+    const response = await fetch(PLAYLIST_BASE);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch playlists: ${response.statusText}`);
+    }
+    return response.json();
+  },
+
+  /**
+   * Get a single playlist by ID
+   */
+  async getById(id: number): Promise<Playlist> {
+    const response = await fetch(`${PLAYLIST_BASE}/${id}`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch playlist: ${response.statusText}`);
+    }
+    return response.json();
+  },
+
+  /**
+   * Get all items in a playlist with library item details
+   */
+  async getItems(playlistId: number): Promise<PlaylistItem[]> {
+    const response = await fetch(`${PLAYLIST_BASE}/${playlistId}/items`);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch playlist items: ${response.statusText}`);
+    }
+    return response.json();
+  },
+
+  /**
+   * Create a new playlist
+   */
+  async create(data: CreatePlaylistRequest): Promise<Playlist> {
+    const response = await fetch(PLAYLIST_BASE, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to create playlist: ${response.statusText}`);
+    }
+    return response.json();
+  },
+
+  /**
+   * Update a playlist's name or description
+   */
+  async update(id: number, data: UpdatePlaylistRequest): Promise<Playlist> {
+    const response = await fetch(`${PLAYLIST_BASE}/${id}`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to update playlist: ${response.statusText}`);
+    }
+    return response.json();
+  },
+
+  /**
+   * Delete a playlist (cascades to remove all items)
+   */
+  async deletePlaylist(id: number): Promise<void> {
+    const response = await fetch(`${PLAYLIST_BASE}/${id}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to delete playlist: ${response.statusText}`);
+    }
+  },
+
+  /**
+   * Add a library item to a playlist
+   */
+  async addItem(playlistId: number, libraryItemId: number): Promise<PlaylistItem> {
+    const body: AddPlaylistItemRequest = { libraryItemId };
+    const response = await fetch(`${PLAYLIST_BASE}/${playlistId}/items`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to add item to playlist: ${response.statusText}`);
+    }
+    return response.json();
+  },
+
+  /**
+   * Remove an item from a playlist
+   */
+  async removeItem(playlistId: number, itemId: number): Promise<void> {
+    const response = await fetch(`${PLAYLIST_BASE}/${playlistId}/items/${itemId}`, {
+      method: 'DELETE',
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to remove item from playlist: ${response.statusText}`);
+    }
+  },
+
+  /**
+   * Reorder items in a playlist
+   */
+  async reorderItems(playlistId: number, itemIds: number[]): Promise<void> {
+    const body: ReorderPlaylistItemsRequest = { itemIds };
+    const response = await fetch(`${PLAYLIST_BASE}/${playlistId}/items/reorder`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to reorder playlist items: ${response.statusText}`);
     }
   },
 };
