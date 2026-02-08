@@ -4,10 +4,12 @@ import type { PatternDefinition, CustomPatternDefinition, AnyPattern } from '@/t
 import { PATTERN_DEFINITIONS } from '@/lib/patternDefinitions';
 import { usePatternFilters } from '@/hooks/usePatternFilters';
 import { usePatternEditor } from '@/hooks/usePatternEditor';
+import { useWaypointBuilder } from '@/hooks/useWaypointBuilder';
 import { PatternFilters } from '@/components/pattern-library/PatternFilters';
 import { PatternGrid } from '@/components/pattern-library/PatternGrid';
 import { PatternDetailDialog } from '@/components/pattern-library/PatternDetailDialog';
 import { PatternEditorDialog } from '@/components/pattern-library/PatternEditorDialog';
+import { WaypointBuilderDialog } from '@/components/pattern-library/WaypointBuilderDialog';
 import { InsertPositionDialog } from '@/components/pattern-library/InsertPositionDialog';
 import { createEditableCopy } from '@/lib/patternTransform';
 import { customPatternApi } from '@/lib/apiClient';
@@ -72,6 +74,9 @@ export function PatternLibraryPage({
 
   // Pattern editor hook
   const patternEditor = usePatternEditor();
+
+  // Waypoint builder hook
+  const waypointBuilder = useWaypointBuilder();
 
   // Filter state (now includes custom patterns)
   const {
@@ -158,6 +163,19 @@ export function PatternLibraryPage({
     }
   };
 
+  // Handle waypoint pattern save
+  const handleWaypointSave = async () => {
+    await waypointBuilder.savePattern();
+    // Reload custom patterns
+    try {
+      const libraryItems = await customPatternApi.getAll();
+      const mappedPatterns = libraryItems.map(itemToCustomPattern);
+      setCustomPatterns(mappedPatterns);
+    } catch (err) {
+      console.error('Failed to reload custom patterns:', err);
+    }
+  };
+
   // Close dialogs
   const handleCloseDetailDialog = () => {
     setShowDetailDialog(false);
@@ -176,9 +194,17 @@ export function PatternLibraryPage({
       aria-labelledby="tab-pattern-library"
       className="container mx-auto px-4 py-6"
     >
-      <h1 className="text-2xl font-bold text-foreground mb-6">
-        Pattern Library
-      </h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-foreground">
+          Pattern Library
+        </h1>
+        <button
+          onClick={waypointBuilder.openBuilder}
+          className="px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-medium shadow-sm"
+        >
+          + Create Pattern
+        </button>
+      </div>
 
       {/* Filters */}
       <PatternFilters
@@ -236,6 +262,32 @@ export function PatternLibraryPage({
         isOpen={showInsertDialog}
         onClose={handleCloseInsertDialog}
         onInsert={handlePositionSelect}
+      />
+
+      {/* Waypoint Builder Dialog */}
+      <WaypointBuilderDialog
+        waypoints={waypointBuilder.waypoints}
+        patternName={waypointBuilder.patternName}
+        selectedIndex={waypointBuilder.selectedIndex}
+        isOpen={waypointBuilder.isOpen}
+        isSaving={waypointBuilder.isSaving}
+        saveError={waypointBuilder.saveError}
+        isDemoPlaying={waypointBuilder.isDemoPlaying}
+        demoError={waypointBuilder.demoError}
+        canAddWaypoint={waypointBuilder.canAddWaypoint}
+        canRemoveWaypoint={waypointBuilder.canRemoveWaypoint}
+        totalDurationMs={waypointBuilder.totalDurationMs}
+        isDeviceConnected={isDeviceConnected}
+        onClose={waypointBuilder.closeBuilder}
+        onPatternNameChange={waypointBuilder.setPatternName}
+        onAddWaypoint={waypointBuilder.addWaypoint}
+        onUpdateWaypoint={waypointBuilder.updateWaypoint}
+        onRemoveWaypoint={waypointBuilder.removeWaypoint}
+        onSelectWaypoint={waypointBuilder.selectWaypoint}
+        onGenerateActions={waypointBuilder.generateActions}
+        onStartDemo={() => ultra && waypointBuilder.startDemo(ultra)}
+        onStopDemo={() => ultra && waypointBuilder.stopDemo(ultra)}
+        onSave={handleWaypointSave}
       />
     </div>
   );
