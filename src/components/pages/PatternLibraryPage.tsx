@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import type { Ultra } from '@xsense/autoblow-sdk';
 import type { PatternDefinition } from '@/types/patterns';
 import { PATTERN_DEFINITIONS } from '@/lib/patternDefinitions';
 import { usePatternFilters } from '@/hooks/usePatternFilters';
@@ -10,6 +11,8 @@ import { InsertPositionDialog } from '@/components/pattern-library/InsertPositio
 interface PatternLibraryPageProps {
   onInsert: (pattern: PatternDefinition, position: 'cursor' | 'end') => void;
   isCreationMode?: boolean;
+  ultra: Ultra | null;
+  isDeviceConnected: boolean;
 }
 
 /**
@@ -19,6 +22,8 @@ interface PatternLibraryPageProps {
 export function PatternLibraryPage({
   onInsert,
   isCreationMode = false,
+  ultra,
+  isDeviceConnected,
 }: PatternLibraryPageProps) {
   // Filter state
   const {
@@ -69,6 +74,11 @@ export function PatternLibraryPage({
     }
   };
 
+  // Handle quick add (creation mode only)
+  const handleQuickAdd = (pattern: PatternDefinition) => {
+    onInsert(pattern, 'end');
+  };
+
   // Close dialogs
   const handleCloseDetailDialog = () => {
     setShowDetailDialog(false);
@@ -109,6 +119,8 @@ export function PatternLibraryPage({
         totalCount={PATTERN_DEFINITIONS.length}
         onPatternClick={handlePatternClick}
         onClearFilters={clearFilters}
+        isCreationMode={isCreationMode}
+        onQuickAdd={handleQuickAdd}
       />
 
       {/* Detail Dialog */}
@@ -117,6 +129,8 @@ export function PatternLibraryPage({
         isOpen={showDetailDialog}
         onClose={handleCloseDetailDialog}
         onInsert={handleInsertClick}
+        ultra={ultra}
+        isDeviceConnected={isDeviceConnected}
       />
 
       {/* Insert Position Dialog */}

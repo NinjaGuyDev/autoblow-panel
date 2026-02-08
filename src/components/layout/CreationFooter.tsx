@@ -2,6 +2,7 @@ import { useRef, useEffect } from 'react';
 import type { FunscriptAction } from '@/types/funscript';
 
 interface CreationFooterProps {
+  scriptName: string;
   actions: FunscriptAction[];
   onClose: () => void;
   onExport: () => void;
@@ -11,7 +12,7 @@ interface CreationFooterProps {
  * Sticky footer showing timeline for script creation mode
  * Displays actions added via pattern insertion
  */
-export function CreationFooter({ actions, onClose, onExport }: CreationFooterProps) {
+export function CreationFooter({ scriptName, actions, onClose, onExport }: CreationFooterProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Draw mini timeline
@@ -53,18 +54,30 @@ export function CreationFooter({ actions, onClose, onExport }: CreationFooterPro
 
     ctx.stroke();
 
-    // Draw action count
-    ctx.fillStyle = '#a1a1aa'; // zinc-400
+    // Draw action count with background
+    const text = `${actions.length} actions • ${(maxTime / 1000).toFixed(1)}s`;
     ctx.font = '12px sans-serif';
     ctx.textAlign = 'left';
-    ctx.fillText(`${actions.length} actions • ${(maxTime / 1000).toFixed(1)}s`, 10, 20);
+
+    // Measure text to size background
+    const textMetrics = ctx.measureText(text);
+    const textWidth = textMetrics.width;
+    const padding = 6;
+
+    // Draw semi-transparent background
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(10 - padding / 2, 20 - 12 - padding / 2, textWidth + padding, 12 + padding);
+
+    // Draw text
+    ctx.fillStyle = '#a1a1aa'; // zinc-400
+    ctx.fillText(text, 10, 20);
   }, [actions]);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-zinc-900 border-t border-zinc-700 shadow-2xl z-40">
       <div className="px-4 py-2 flex items-center justify-between">
         <div className="flex items-center gap-3 flex-1">
-          <span className="text-sm font-medium text-zinc-200">New Script</span>
+          <span className="text-sm font-medium text-zinc-200">{scriptName || 'Untitled Script'}</span>
           <canvas
             ref={canvasRef}
             width={600}

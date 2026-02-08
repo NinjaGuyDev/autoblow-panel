@@ -1,6 +1,8 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import type { Ultra } from '@xsense/autoblow-sdk';
 import type { PatternDefinition } from '@/types/patterns';
 import { getPatternDirection } from '@/lib/patternDefinitions';
+import { createSmoothTransition } from '@/lib/patternInsertion';
 import { cn } from '@/lib/utils';
 
 interface PatternDetailDialogProps {
@@ -8,6 +10,8 @@ interface PatternDetailDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onInsert: (pattern: PatternDefinition) => void;
+  ultra: Ultra | null;
+  isDeviceConnected: boolean;
 }
 
 /**
@@ -19,10 +23,14 @@ export function PatternDetailDialog({
   isOpen,
   onClose,
   onInsert,
+  ultra,
+  isDeviceConnected,
 }: PatternDetailDialogProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
+  const [isDemoPlaying, setIsDemoPlaying] = useState(false);
+  const [demoError, setDemoError] = useState<string | null>(null);
 
   // Draw pattern with animated playhead
   const drawAnimated = (currentTime: number) => {
@@ -103,6 +111,73 @@ export function PatternDetailDialog({
       startTimeRef.current = null;
     };
   }, [isOpen, pattern]);
+
+  // Demo playback handlers
+  const startDemo = useCallback(async () => {
+    if (!ultra || !pattern) return;
+
+    try {
+      setDemoError(null);
+
+      // Generate pattern actions
+      let actions = pattern.generator();
+
+      // Add smoothing at the end if pattern ends at different position than it starts
+      if (actions.length > 0) {
+        const firstPos = actions[0].pos;
+        const lastAction = actions[actions.length - 1];
+        const lastPos = lastAction.pos;
+        const lastTime = lastAction.at;
+
+        // Add smooth transition back to start position for seamless looping
+        if (firstPos !== lastPos) {
+          const smoothingActions = createSmoothTransition(
+            lastPos,
+            firstPos,
+            lastTime
+          );
+          actions = [...actions, ...smoothingActions];
+        }
+      }
+
+      // Create funscript object with looping
+      const funscript = {
+        version: '1.0',
+        inverted: false,
+        range: 100,
+        actions: actions,
+      };
+
+      // Upload to device
+      await ultra.syncScriptUploadFunscriptFile(funscript);
+
+      // Start playback from beginning (will loop automatically)
+      await ultra.syncScriptStart(0);
+
+      setIsDemoPlaying(true);
+    } catch (err) {
+      setDemoError(err instanceof Error ? err.message : 'Failed to start demo');
+    }
+  }, [ultra, pattern]);
+
+  const stopDemo = useCallback(async () => {
+    if (!ultra) return;
+
+    try {
+      await ultra.syncScriptStop();
+      setIsDemoPlaying(false);
+      setDemoError(null);
+    } catch (err) {
+      setDemoError(err instanceof Error ? err.message : 'Failed to stop demo');
+    }
+  }, [ultra]);
+
+  // Stop demo when dialog closes
+  useEffect(() => {
+    if (!isOpen && isDemoPlaying) {
+      stopDemo();
+    }
+  }, [isOpen, isDemoPlaying, stopDemo]);
 
   if (!isOpen || !pattern) return null;
 
@@ -201,6 +276,13 @@ export function PatternDetailDialog({
           </div>
         </div>
 
+        {/* Error message */}
+        {demoError && (
+          <div className="mb-4 px-3 py-2 bg-red-500/10 border border-red-500/30 rounded text-red-400 text-sm">
+            {demoError}
+          </div>
+        )}
+
         {/* Actions */}
         <div className="flex gap-3">
           <button
@@ -209,6 +291,21 @@ export function PatternDetailDialog({
           >
             Insert Pattern
           </button>
+
+          {isDeviceConnected && (
+            <button
+              onClick={isDemoPlaying ? stopDemo : startDemo}
+              className={cn(
+                'px-4 py-2 rounded font-medium shadow-sm transition-colors',
+                isDemoPlaying
+                  ? 'bg-red-600 text-white hover:bg-red-700'
+                  : 'bg-purple-600 text-white hover:bg-purple-700'
+              )}
+            >
+              {isDemoPlaying ? 'Stop Demo' : 'Demo'}
+            </button>
+          )}
+
           <button
             onClick={onClose}
             className="px-4 py-2 rounded border border-zinc-600 text-zinc-200 hover:bg-zinc-800 transition-colors"

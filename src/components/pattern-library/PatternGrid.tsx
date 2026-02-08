@@ -6,6 +6,8 @@ interface PatternGridProps {
   totalCount: number;
   onPatternClick: (pattern: PatternDefinition) => void;
   onClearFilters: () => void;
+  isCreationMode?: boolean;
+  onQuickAdd?: (pattern: PatternDefinition) => void;
 }
 
 /**
@@ -17,6 +19,8 @@ export function PatternGrid({
   totalCount,
   onPatternClick,
   onClearFilters,
+  isCreationMode = false,
+  onQuickAdd,
 }: PatternGridProps) {
   const isFiltered = patterns.length < totalCount;
 
@@ -48,6 +52,8 @@ export function PatternGrid({
               key={pattern.id}
               pattern={pattern}
               onClick={() => onPatternClick(pattern)}
+              isCreationMode={isCreationMode}
+              onQuickAdd={onQuickAdd ? () => onQuickAdd(pattern) : undefined}
             />
           ))}
         </div>

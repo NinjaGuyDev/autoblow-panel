@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils';
 interface PatternCardProps {
   pattern: PatternDefinition;
   onClick: () => void;
+  isCreationMode?: boolean;
+  onQuickAdd?: () => void;
 }
 
 /**
@@ -14,6 +16,8 @@ interface PatternCardProps {
 export const PatternCard = memo(function PatternCard({
   pattern,
   onClick,
+  isCreationMode = false,
+  onQuickAdd,
 }: PatternCardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -150,6 +154,13 @@ export const PatternCard = memo(function PatternCard({
     onClick();
   };
 
+  const handleQuickAdd = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onQuickAdd) {
+      onQuickAdd();
+    }
+  };
+
   // Intensity badge color
   const intensityColor = {
     low: 'bg-green-500/20 text-green-400 border-green-500/30',
@@ -160,13 +171,36 @@ export const PatternCard = memo(function PatternCard({
   return (
     <div
       className={cn(
-        'border border-muted rounded-lg p-4 bg-card cursor-pointer transition-colors',
+        'border border-muted rounded-lg p-4 bg-card cursor-pointer transition-colors relative',
         'hover:border-primary/50 hover:bg-card/80'
       )}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
     >
+      {/* Quick add button (creation mode only) */}
+      {isCreationMode && (
+        <button
+          onClick={handleQuickAdd}
+          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-lg z-10"
+          title="Quick add to end"
+        >
+          <svg
+            className="w-5 h-5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 4v16m8-8H4"
+            />
+          </svg>
+        </button>
+      )}
+
       {/* Canvas preview */}
       <canvas
         ref={canvasRef}

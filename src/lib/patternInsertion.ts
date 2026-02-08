@@ -16,7 +16,7 @@ function lerp(start: number, end: number, t: number): number {
  * @param endTime Ending time in ms (if provided, overrides spacing calculation)
  * @returns Array of transition actions
  */
-function createSmoothTransition(
+export function createSmoothTransition(
   startPos: number,
   endPos: number,
   startTime: number,

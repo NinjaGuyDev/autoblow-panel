@@ -4,6 +4,7 @@ import { Layout } from '@/components/layout/Layout';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { NavBar } from '@/components/layout/NavBar';
 import { CreationFooter } from '@/components/layout/CreationFooter';
+import { ScriptNameDialog } from '@/components/dialogs/ScriptNameDialog';
 import { VideoSyncPage } from '@/components/pages/VideoSyncPage';
 import { ManualControlPage } from '@/components/pages/ManualControlPage';
 import { DeviceLogPage } from '@/components/pages/DeviceLogPage';
@@ -28,6 +29,8 @@ function App() {
   const [activeTab, setActiveTab] = useState<TabId>('video-sync');
   const [showTimeline, setShowTimeline] = useState(true);
   const [isCreationMode, setIsCreationMode] = useState(false);
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  const [scriptName, setScriptName] = useState<string>('');
   const { logs, addLog, clearLogs } = useDeviceLog();
 
   // Video file state - must come first as videoUrl is used by playback hook
@@ -219,7 +222,12 @@ function App() {
 
   // Export handler
   const handleExport = () => {
-    const filename = funscriptName?.replace('.funscript', '-edited.funscript') ?? 'script.funscript';
+    let filename: string;
+    if (isCreationMode && scriptName) {
+      filename = `${scriptName}.funscript`;
+    } else {
+      filename = funscriptName?.replace('.funscript', '-edited.funscript') ?? 'script.funscript';
+    }
     exportFunscript(editableActions, filename);
   };
 
@@ -234,14 +242,27 @@ function App() {
 
   // New script creation handler
   const handleNewScript = () => {
+    setShowNameDialog(true);
+  };
+
+  // Handle script name confirmation
+  const handleNameConfirm = (name: string) => {
+    setScriptName(name);
+    setShowNameDialog(false);
     setActions([]); // Clear existing actions
     setIsCreationMode(true);
     setActiveTab('pattern-library'); // Navigate to pattern library
   };
 
+  // Handle script name dialog cancel
+  const handleNameCancel = () => {
+    setShowNameDialog(false);
+  };
+
   // Close creation footer
   const handleCloseCreation = () => {
     setIsCreationMode(false);
+    setScriptName('');
   };
 
   return (
@@ -355,13 +376,23 @@ function App() {
             <PatternLibraryPage
               onInsert={handlePatternInsert}
               isCreationMode={isCreationMode}
+              ultra={ultra}
+              isDeviceConnected={connectionState === 'connected'}
             />
           )}
         </Layout>
 
+        {/* Script name dialog */}
+        <ScriptNameDialog
+          isOpen={showNameDialog}
+          onConfirm={handleNameConfirm}
+          onCancel={handleNameCancel}
+        />
+
         {/* Creation mode footer */}
         {isCreationMode && (
           <CreationFooter
+            scriptName={scriptName}
             actions={editableActions}
             onClose={handleCloseCreation}
             onExport={handleExport}
