@@ -63,4 +63,33 @@ export function initializeSchema(db: Database.Database): void {
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_library_custom_pattern ON library_items(isCustomPattern);
   `);
+
+  // Create playlists table
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS playlists (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      description TEXT,
+      createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+      lastModified TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+
+  // Create playlist_items table with foreign keys
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS playlist_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      playlist_id INTEGER NOT NULL,
+      library_item_id INTEGER NOT NULL,
+      position INTEGER NOT NULL,
+      FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
+      FOREIGN KEY (library_item_id) REFERENCES library_items(id) ON DELETE CASCADE
+    );
+  `);
+
+  // Create indexes for playlist queries
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_playlist_items_playlist ON playlist_items(playlist_id, position);
+    CREATE INDEX IF NOT EXISTS idx_playlist_items_library ON playlist_items(library_item_id);
+  `);
 }
