@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.planning/
+*.local
+.env
+.env.*
+
+# Example/test files
+example-funscripts/
+*.funscript
+motions/
