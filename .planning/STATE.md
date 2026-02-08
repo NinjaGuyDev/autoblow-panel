@@ -5,7 +5,7 @@
 See: .planning/PROJECT.md (updated 2026-02-08)
 
 **Core value:** Smooth, privacy-preserving funscript playback synced with local video content.
-**Current focus:** Phase 11 - Script Smoothing (v1.1)
+**Current focus:** Phase 12 - Pattern Editing (v1.1) — COMPLETE
 
 ## Current Position
 
