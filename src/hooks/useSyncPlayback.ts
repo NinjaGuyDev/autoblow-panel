@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, RefObject } from 'react';
+import { useState, useEffect, useRef, type RefObject } from 'react';
 import type { Ultra } from '@xsense/autoblow-sdk';
 import type { ZodFunscript } from '@/lib/schemas';
 import type { SyncStatus, UseSyncPlaybackReturn } from '@/types/sync';
@@ -7,6 +7,7 @@ import { convertToSDKFunscript } from '@/lib/funscriptConverter';
 // Drift detection constants (per 05-RESEARCH.md Pattern 4)
 const DRIFT_CHECK_INTERVAL_MS = 2000; // Check every 2 seconds
 const DRIFT_THRESHOLD_MS = 200; // Correct if > 200ms drift
+const EMBED_DRIFT_THRESHOLD_MS = 500; // Higher threshold for embeds
 const MAX_CORRECTION_MS = 500; // Safety cap on corrections
 
 /**
@@ -32,12 +33,19 @@ const MAX_CORRECTION_MS = 500; // Safety cap on corrections
  * @param ultra - SDK device instance (from useDeviceConnection)
  * @param funscriptData - Parsed funscript (from useFunscriptFile)
  * @param videoUrl - Current video URL (for re-attaching listeners when video changes)
+ * @param embedOptions - Optional embed playback state for non-local videos
  */
 export function useSyncPlayback(
   videoRef: RefObject<HTMLVideoElement | null>,
   ultra: Ultra | null,
   funscriptData: ZodFunscript | null,
-  videoUrl: string | null
+  videoUrl: string | null,
+  embedOptions?: {
+    isEmbed: boolean;
+    currentTime: number;      // seconds, from useEmbedPlayback
+    isPlaying: boolean;        // from useEmbedPlayback
+    manualOffsetMs: number;    // from useManualSync
+  }
 ): UseSyncPlaybackReturn {
   // State
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
@@ -84,14 +92,20 @@ export function useSyncPlayback(
         // Use getState() (network request) not getStateCache per research Pitfall 7
         const deviceState = await ultra.getState();
         const deviceTimeMs = deviceState.syncScriptCurrentTime;
-        const videoTimeMs = videoRef.current.currentTime * 1000;
+
+        // Get video time - either from embed options or video element
+        const videoTimeMs = embedOptions?.isEmbed
+          ? embedOptions.currentTime * 1000
+          : videoRef.current.currentTime * 1000;
+
         const drift = videoTimeMs - deviceTimeMs;
 
         // Update drift state for monitoring
         setDriftMs(drift);
 
-        // Apply correction if drift exceeds threshold
-        if (Math.abs(drift) > DRIFT_THRESHOLD_MS) {
+        // Apply correction if drift exceeds threshold (higher threshold for embeds)
+        const threshold = embedOptions?.isEmbed ? EMBED_DRIFT_THRESHOLD_MS : DRIFT_THRESHOLD_MS;
+        if (Math.abs(drift) > threshold) {
           // Cap correction for safety
           const correction = Math.max(-MAX_CORRECTION_MS, Math.min(drift, MAX_CORRECTION_MS));
           await ultra.syncScriptOffset(correction);
@@ -161,8 +175,11 @@ export function useSyncPlayback(
       });
   }, [ultra]);
 
-  // Effect 3: React to video play/pause/seeked/ended events
+  // Effect 3: React to video play/pause/seeked/ended events (local video)
   useEffect(() => {
+    // Skip event listeners for embed videos
+    if (embedOptions?.isEmbed) return;
+
     const video = videoRef.current;
     if (!video || !ultra || !scriptUploaded) return;
 
@@ -247,7 +264,50 @@ export function useSyncPlayback(
       video.removeEventListener('ended', handleEnded);
       stopDriftLoop();
     };
-  }, [ultra, scriptUploaded, estimatedLatencyMs, videoUrl]); // videoUrl for re-attachment per existing pattern
+  }, [ultra, scriptUploaded, estimatedLatencyMs, videoUrl, embedOptions?.isEmbed]); // videoUrl for re-attachment per existing pattern
+
+  // Effect 3b: React to embed playback state changes
+  useEffect(() => {
+    // Only run for embeds
+    if (!embedOptions?.isEmbed || !ultra || !scriptUploaded) return;
+
+    const handleEmbedPlaybackChange = async () => {
+      const generation = ++generationRef.current;
+
+      if (embedOptions.isPlaying) {
+        // Start sync
+        try {
+          const startTimeMs = Math.round(embedOptions.currentTime * 1000) + estimatedLatencyMs + (embedOptions.manualOffsetMs ?? 0);
+          await ultra.syncScriptStart(startTimeMs);
+
+          if (generation !== generationRef.current) return;
+
+          setSyncStatus('playing');
+          startDriftLoop();
+        } catch (err) {
+          if (generation !== generationRef.current) return;
+          console.error('Failed to start embed sync:', err);
+          setSyncStatus('error');
+          setError(err instanceof Error ? err.message : 'Failed to start sync');
+        }
+      } else {
+        // Stop sync
+        try {
+          await ultra.syncScriptStop();
+
+          if (generation !== generationRef.current) return;
+
+          setSyncStatus('paused');
+          stopDriftLoop();
+        } catch (err) {
+          if (generation !== generationRef.current) return;
+          console.error('Failed to pause embed sync:', err);
+        }
+      }
+    };
+
+    handleEmbedPlaybackChange();
+  }, [embedOptions?.isEmbed, embedOptions?.isPlaying, ultra, scriptUploaded, estimatedLatencyMs]);
 
   // Final cleanup on unmount
   useEffect(() => {

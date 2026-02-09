@@ -4,8 +4,9 @@
  */
 
 import { useState } from 'react';
-import { Search, RefreshCw, Trash2, Play, Video, FileText } from 'lucide-react';
+import { Search, RefreshCw, Trash2, Play, Video, FileText, Globe } from 'lucide-react';
 import { mediaApi } from '@/lib/apiClient';
+import { isEmbedUrl } from '@/lib/videoUtils';
 import type { LibraryItem } from '../../../server/types/shared';
 import type { LibraryFilter } from '@/hooks/useLibrary';
 
@@ -193,8 +194,8 @@ export function LibraryPage({
               key={item.id}
               className="relative bg-card border border-border rounded-lg overflow-hidden hover:border-muted-foreground transition-colors"
             >
-              {/* Thumbnail background — low opacity, centered, covers full card */}
-              {item.videoName && (
+              {/* Thumbnail background — low opacity, centered, covers full card (only for local videos) */}
+              {item.videoName && !isEmbedUrl(item.videoName) && (
                 <img
                   src={mediaApi.thumbnailUrl(item.videoName)}
                   alt=""
@@ -209,10 +210,16 @@ export function LibraryPage({
               <div className="relative p-4">
                 {/* Badges */}
                 <div className="flex gap-2 mb-3">
-                  {item.videoName && (
+                  {item.videoName && !isEmbedUrl(item.videoName) && (
                     <div className="flex items-center gap-1 text-xs bg-muted/80 px-2 py-1 rounded">
                       <Video className="w-3 h-3" />
                       <span>Video</span>
+                    </div>
+                  )}
+                  {item.videoName && isEmbedUrl(item.videoName) && (
+                    <div className="flex items-center gap-1 text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
+                      <Globe className="w-3 h-3" />
+                      <span>Embed</span>
                     </div>
                   )}
                   {item.funscriptName && (
