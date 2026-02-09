@@ -60,11 +60,11 @@ export function TimelineControls({
 
   return (
     <>
-      <div className="flex items-center justify-between px-3 py-2 border-b border-muted bg-card">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-stone-800 bg-stone-900/50">
         {/* Left: Action point toggle and edit mode controls */}
         <div className="flex items-center gap-3">
           {!isEditMode && (
-            <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+            <label className="flex items-center gap-2 text-sm text-stone-500 cursor-pointer">
               <input
                 type="checkbox"
                 checked={showActionPoints}
@@ -76,13 +76,13 @@ export function TimelineControls({
           )}
 
           {isEditMode && onEditModeChange && (
-            <div className="flex items-center gap-1 bg-muted/30 rounded p-1">
+            <div className="flex items-center gap-1 bg-stone-800/30 rounded p-1">
               <button
                 onClick={() => onEditModeChange('select')}
                 className={`px-2 py-1 text-xs rounded transition-colors ${
                   editMode === 'select'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-amber-700 text-white'
+                    : 'text-stone-500 hover:text-stone-200'
                 }`}
                 title="Select mode (V)"
               >
@@ -92,8 +92,8 @@ export function TimelineControls({
                 onClick={() => onEditModeChange('draw')}
                 className={`px-2 py-1 text-xs rounded transition-colors ${
                   editMode === 'draw'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'bg-amber-700 text-white'
+                    : 'text-stone-500 hover:text-stone-200'
                 }`}
                 title="Draw mode (D)"
               >
@@ -107,8 +107,8 @@ export function TimelineControls({
               onClick={onSmoothingToggle}
               className={`px-2 py-1 text-sm rounded transition-colors ${
                 smoothingActive
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  ? 'bg-amber-700 text-white'
+                  : 'text-stone-500 hover:text-stone-200 hover:bg-stone-800'
               }`}
               title="Smooth script"
             >
@@ -123,7 +123,7 @@ export function TimelineControls({
           <button
             onClick={onUndo}
             disabled={!canUndo}
-            className="px-2 py-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="px-2 py-1 text-sm text-stone-500 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             title="Undo (Ctrl+Z)"
           >
             ↶ Undo
@@ -131,7 +131,7 @@ export function TimelineControls({
           <button
             onClick={onRedo}
             disabled={!canRedo}
-            className="px-2 py-1 text-sm text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="px-2 py-1 text-sm text-stone-500 hover:text-stone-200 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             title="Redo (Ctrl+Shift+Z)"
           >
             ↷ Redo
@@ -153,7 +153,7 @@ export function TimelineControls({
         {isEditMode && onExport && (
           <button
             onClick={onExport}
-            className="px-2 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors mr-2"
+            className="px-2 py-1 text-sm text-stone-500 hover:text-stone-200 hover:bg-stone-800 rounded transition-colors mr-2"
             title="Export funscript"
           >
             ↓ Export
@@ -172,7 +172,7 @@ export function TimelineControls({
               </span>
             )}
             {validationSummary.gapCount > 0 && (
-              <span className="text-zinc-400" title={`${validationSummary.gapCount} gap(s) longer than 3 seconds`}>
+              <span className="text-stone-400" title={`${validationSummary.gapCount} gap(s) longer than 3 seconds`}>
                 {validationSummary.gapCount} gap{validationSummary.gapCount !== 1 ? 's' : ''}
               </span>
             )}
@@ -180,21 +180,21 @@ export function TimelineControls({
         )}
         <button
           onClick={onZoomOut}
-          className="px-2 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+          className="px-2 py-1 text-sm text-stone-500 hover:text-stone-200 hover:bg-stone-800 rounded transition-colors"
           title="Zoom out"
         >
           -
         </button>
         <button
           onClick={onZoomFit}
-          className="px-2 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+          className="px-2 py-1 text-sm text-stone-500 hover:text-stone-200 hover:bg-stone-800 rounded transition-colors"
           title="Fit entire script"
         >
           Fit
         </button>
         <button
           onClick={onZoomIn}
-          className="px-2 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+          className="px-2 py-1 text-sm text-stone-500 hover:text-stone-200 hover:bg-stone-800 rounded transition-colors"
           title="Zoom in"
         >
           +
@@ -204,14 +204,14 @@ export function TimelineControls({
 
     {/* Smoothing control strip */}
     {isEditMode && smoothingActive && (
-      <div className="flex items-center justify-between px-3 py-2 border-b border-muted bg-card">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-stone-800 bg-stone-900/50">
         <div className="flex items-center gap-3 flex-1">
           {/* Label */}
           <span className="text-sm font-medium">Smoothing</span>
 
           {/* Intensity slider */}
           <div className="flex items-center gap-2 flex-1 max-w-md">
-            <span className="text-xs text-muted-foreground">Intensity:</span>
+            <span className="text-xs text-stone-500">Intensity:</span>
             <input
               type="range"
               min="0"
@@ -219,14 +219,15 @@ export function TimelineControls({
               value={smoothingIntensity ?? 50}
               onChange={(e) => onSmoothingIntensityChange?.(parseInt(e.target.value))}
               className="flex-1"
+              style={{ accentColor: '#b45309' }}
             />
-            <span className="text-xs text-muted-foreground w-8 text-right">
+            <span className="text-xs text-stone-500 w-8 text-right">
               {smoothingIntensity ?? 50}
             </span>
           </div>
 
           {/* Scope indicator */}
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-stone-500">
             {hasSelection ? `Selection (${selectedCount} points)` : 'Entire script'}
           </span>
         </div>
@@ -235,7 +236,7 @@ export function TimelineControls({
         <div className="flex items-center gap-2">
           {/* Stats display */}
           {isPreviewActive && smoothingStats && (
-            <span className="text-xs text-muted-foreground mr-2">
+            <span className="text-xs text-stone-500 mr-2">
               {smoothingStats.originalCount} → {smoothingStats.smoothedCount} actions
             </span>
           )}
@@ -243,7 +244,7 @@ export function TimelineControls({
           <button
             onClick={onSmoothingPreview}
             disabled={isPreviewActive}
-            className="px-3 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="px-3 py-1 text-sm text-stone-500 hover:text-stone-200 hover:bg-stone-800 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             title="Preview smoothing result"
           >
             Preview
@@ -251,14 +252,14 @@ export function TimelineControls({
           <button
             onClick={onSmoothingApply}
             disabled={!isPreviewActive}
-            className="px-3 py-1 text-sm bg-primary text-primary-foreground hover:bg-primary/90 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            className="px-3 py-1 text-sm bg-amber-700 text-white hover:bg-amber-600 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             title="Apply smoothing"
           >
             Apply
           </button>
           <button
             onClick={onSmoothingCancel}
-            className="px-3 py-1 text-sm text-muted-foreground hover:text-foreground hover:bg-muted rounded transition-colors"
+            className="px-3 py-1 text-sm text-stone-500 hover:text-stone-200 hover:bg-stone-800 rounded transition-colors"
             title="Cancel smoothing"
           >
             Cancel

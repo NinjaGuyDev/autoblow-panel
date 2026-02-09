@@ -41,7 +41,7 @@ export function ManualSyncControls({
           onClick={onToggleScript}
           className={`w-full py-2.5 text-sm font-medium rounded-md transition-colors ${
             isScriptPlaying
-              ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30 border border-red-500/30'
+              ? 'bg-orange-500/20 text-orange-400 hover:bg-orange-500/30 border border-orange-500/30'
               : 'bg-green-500/20 text-green-400 hover:bg-green-500/30 border border-green-500/30'
           }`}
         >
@@ -53,32 +53,32 @@ export function ManualSyncControls({
       <div className="flex items-center justify-center gap-3">
         <button
           onClick={() => onOffsetChange(offsetMs - stepMs)}
-          className="px-3 py-1 text-sm bg-muted text-muted-foreground hover:bg-muted/80 rounded-md transition-colors"
+          className="px-3 py-1 text-sm bg-stone-800/50 text-stone-500 hover:bg-stone-800/80 rounded-md transition-colors"
         >
-          -{stepMs}ms
+          <span style={{ fontFamily: 'var(--font-mono)' }}>-{stepMs}ms</span>
         </button>
 
-        <div className="font-mono text-lg text-foreground min-w-[80px] text-center">
+        <div className="font-mono text-lg text-stone-200 min-w-[80px] text-center" style={{ fontFamily: 'var(--font-mono)' }}>
           {formatOffset(offsetMs)}
         </div>
 
         <button
           onClick={() => onOffsetChange(offsetMs + stepMs)}
-          className="px-3 py-1 text-sm bg-muted text-muted-foreground hover:bg-muted/80 rounded-md transition-colors"
+          className="px-3 py-1 text-sm bg-stone-800/50 text-stone-500 hover:bg-stone-800/80 rounded-md transition-colors"
         >
-          +{stepMs}ms
+          <span style={{ fontFamily: 'var(--font-mono)' }}>+{stepMs}ms</span>
         </button>
 
         <button
           onClick={onReset}
-          className="px-3 py-1 text-sm bg-muted text-muted-foreground hover:bg-muted/80 rounded-md transition-colors"
+          className="px-3 py-1 text-sm bg-stone-800/50 text-stone-500 hover:bg-stone-800/80 rounded-md transition-colors"
         >
           Reset
         </button>
       </div>
 
       {/* Helper text */}
-      <p className="text-xs text-muted-foreground mt-2 text-center">
+      <p className="text-xs text-stone-500 mt-2 text-center">
         Use Up/Down arrow keys to adjust sync timing
       </p>
     </div>

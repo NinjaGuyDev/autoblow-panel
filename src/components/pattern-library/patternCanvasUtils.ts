@@ -42,7 +42,7 @@ export function dataToPixel(
 
 /**
  * Convert canvas pixel coordinates to data-space (time, position).
- * Time is clamped to the given range; position is clamped to 0–100.
+ * Time is clamped to the given range; position is clamped to 0-100.
  */
 export function pixelToData(
   px: number,
@@ -78,7 +78,7 @@ export function pointerToCanvasPixel(
  * Draw dashed horizontal grid lines at 0%, 25%, 50%, 75%, 100% positions.
  */
 export function drawGrid(ctx: CanvasRenderingContext2D, canvasWidth: number): void {
-  ctx.strokeStyle = '#3f3f46'; // zinc-700
+  ctx.strokeStyle = '#44403c'; // stone-700
   ctx.lineWidth = 1;
   ctx.setLineDash([4, 4]);
 
@@ -101,7 +101,7 @@ export function drawTimeAxis(
   tr: TimeRange,
   canvasWidth: number,
 ): void {
-  ctx.fillStyle = '#a1a1aa'; // zinc-400
+  ctx.fillStyle = '#a8a29e'; // stone-400
   ctx.font = '11px monospace';
   ctx.textBaseline = 'top';
 

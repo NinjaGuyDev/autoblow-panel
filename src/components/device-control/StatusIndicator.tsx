@@ -8,12 +8,13 @@ interface StatusIndicatorProps {
 /**
  * Presentation component for connection status
  * Uses text AND color for accessibility (not color alone)
+ * Keep green/yellow/red for STATUS indicators (connected dot, sync status dots)
  */
 export function StatusIndicator({ state, error }: StatusIndicatorProps) {
   const stateConfig: Record<ConnectionState, { color: string; dotColor: string; label: string }> = {
     disconnected: {
-      color: 'text-muted-foreground',
-      dotColor: 'bg-muted',
+      color: 'text-stone-500',
+      dotColor: 'bg-stone-800/50',
       label: 'Disconnected',
     },
     connecting: {

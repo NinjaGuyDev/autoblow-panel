@@ -30,7 +30,7 @@ export function PatternFilters({
   const directionOptions: PatternDirection[] = ['up', 'down', 'neutral'];
 
   return (
-    <div className="space-y-4 mb-6 p-4 border border-muted rounded-lg bg-card/50">
+    <div className="space-y-4 mb-6 p-4 border border-stone-800 rounded-lg bg-stone-900/50">
       {/* Search input */}
       <div>
         <input
@@ -38,7 +38,7 @@ export function PatternFilters({
           placeholder="Search patterns..."
           value={searchText}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="w-full px-3 py-2 rounded border border-muted bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+          className="w-full px-3 py-2 rounded border border-stone-800 bg-stone-950 text-stone-200 placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-700/40"
         />
       </div>
 
@@ -46,7 +46,7 @@ export function PatternFilters({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Intensity filter */}
         <div>
-          <label className="text-sm font-medium text-foreground mb-2 block">
+          <label className="text-sm font-medium text-stone-200 mb-2 block">
             Intensity
           </label>
           <div className="space-y-2">
@@ -59,9 +59,9 @@ export function PatternFilters({
                   type="checkbox"
                   checked={intensities.has(intensity)}
                   onChange={() => onToggleIntensity(intensity)}
-                  className="w-4 h-4 rounded border-muted text-primary focus:ring-primary focus:ring-offset-0"
+                  className="w-4 h-4 rounded border-stone-800 text-amber-700 focus:ring-amber-700/40 focus:ring-offset-0"
                 />
-                <span className="text-sm text-foreground capitalize">
+                <span className="text-sm text-stone-200 capitalize">
                   {intensity}
                 </span>
               </label>
@@ -71,7 +71,7 @@ export function PatternFilters({
 
         {/* Style filter */}
         <div>
-          <label className="text-sm font-medium text-foreground mb-2 block">
+          <label className="text-sm font-medium text-stone-200 mb-2 block">
             Style
           </label>
           <div className="space-y-2 max-h-32 overflow-y-auto">
@@ -84,9 +84,9 @@ export function PatternFilters({
                   type="checkbox"
                   checked={styles.has(style)}
                   onChange={() => onToggleStyle(style)}
-                  className="w-4 h-4 rounded border-muted text-primary focus:ring-primary focus:ring-offset-0"
+                  className="w-4 h-4 rounded border-stone-800 text-amber-700 focus:ring-amber-700/40 focus:ring-offset-0"
                 />
-                <span className="text-sm text-foreground capitalize">
+                <span className="text-sm text-stone-200 capitalize">
                   {style}
                 </span>
               </label>
@@ -96,7 +96,7 @@ export function PatternFilters({
 
         {/* Direction filter */}
         <div>
-          <label className="text-sm font-medium text-foreground mb-2 block">
+          <label className="text-sm font-medium text-stone-200 mb-2 block">
             Direction
           </label>
           <div className="space-y-2">
@@ -109,9 +109,9 @@ export function PatternFilters({
                   type="checkbox"
                   checked={directions.has(direction)}
                   onChange={() => onToggleDirection(direction)}
-                  className="w-4 h-4 rounded border-muted text-primary focus:ring-primary focus:ring-offset-0"
+                  className="w-4 h-4 rounded border-stone-800 text-amber-700 focus:ring-amber-700/40 focus:ring-offset-0"
                 />
-                <span className="text-sm text-foreground capitalize">
+                <span className="text-sm text-stone-200 capitalize">
                   {direction}
                 </span>
               </label>

@@ -57,7 +57,7 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
       );
 
       // Draw all visible action points (small dots)
-      ctx.fillStyle = '#60a5fa';
+      ctx.fillStyle = '#c8956c';
       visibleActions.forEach((action) => {
         // Find global index
         const index = actions.indexOf(action);
@@ -89,7 +89,7 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
           ctx.arc(x, y, 5, 0, Math.PI * 2);
           ctx.stroke();
 
-          ctx.fillStyle = '#60a5fa';
+          ctx.fillStyle = '#c8956c';
           ctx.beginPath();
           ctx.arc(x, y, 3, 0, Math.PI * 2);
           ctx.fill();
@@ -114,8 +114,8 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
         ctx.arc(x, y, 6, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Blue fill
-        ctx.fillStyle = '#60a5fa';
+        // Warm amber fill
+        ctx.fillStyle = '#c8956c';
         ctx.beginPath();
         ctx.arc(x, y, 4, 0, Math.PI * 2);
         ctx.fill();
@@ -147,7 +147,8 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
           ctx.arc(previewX, previewY, 6, 0, Math.PI * 2);
           ctx.stroke();
 
-          ctx.fillStyle = '#60a5fa';
+          // Warm amber fill
+          ctx.fillStyle = '#c8956c';
           ctx.beginPath();
           ctx.arc(previewX, previewY, 4, 0, Math.PI * 2);
           ctx.fill();
@@ -195,11 +196,11 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
         const rectHeight = maxY - minY;
 
         // Fill
-        ctx.fillStyle = 'rgba(96, 165, 250, 0.15)'; // Subtle blue fill
+        ctx.fillStyle = 'rgba(200, 149, 108, 0.15)'; // Subtle warm amber fill
         ctx.fillRect(minX, minY, rectWidth, rectHeight);
 
         // Border
-        ctx.strokeStyle = 'rgba(96, 165, 250, 0.6)'; // Blue border
+        ctx.strokeStyle = 'rgba(200, 149, 108, 0.6)'; // Warm amber border
         ctx.lineWidth = 1;
         ctx.setLineDash([5, 5]); // Dashed
         ctx.strokeRect(minX, minY, rectWidth, rectHeight);
@@ -229,8 +230,8 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
           ctx.arc(x, y, 6, 0, Math.PI * 2);
           ctx.stroke();
 
-          // Blue fill
-          ctx.fillStyle = '#60a5fa';
+          // Warm amber fill
+          ctx.fillStyle = '#c8956c';
           ctx.beginPath();
           ctx.arc(x, y, 4, 0, Math.PI * 2);
           ctx.fill();

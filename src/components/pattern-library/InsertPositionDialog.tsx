@@ -26,28 +26,28 @@ export function InsertPositionDialog({
       className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-zinc-900 border border-zinc-700 rounded-lg max-w-md w-full p-6 shadow-2xl">
-        <h2 className="text-lg font-semibold text-foreground mb-4">
+      <div className="bg-stone-900 border border-stone-700 rounded-lg max-w-md w-full p-6 shadow-2xl">
+        <h2 className="text-lg font-semibold text-stone-200 mb-4" style={{ fontFamily: 'var(--font-display)' }}>
           Where would you like to insert this pattern?
         </h2>
 
         <div className="space-y-3">
           <button
             onClick={() => onInsert('cursor')}
-            className="w-full px-4 py-3 rounded border border-muted bg-background hover:bg-muted/50 transition-colors text-left"
+            className="w-full px-4 py-3 rounded border border-stone-800 bg-stone-950 hover:bg-stone-800/60 transition-colors text-left"
           >
-            <div className="font-medium text-foreground">At Cursor Position</div>
-            <div className="text-sm text-muted-foreground mt-1">
+            <div className="font-medium text-stone-200">At Cursor Position</div>
+            <div className="text-sm text-stone-500 mt-1">
               Insert at current video time and shift existing actions
             </div>
           </button>
 
           <button
             onClick={() => onInsert('end')}
-            className="w-full px-4 py-3 rounded border border-muted bg-background hover:bg-muted/50 transition-colors text-left"
+            className="w-full px-4 py-3 rounded border border-stone-800 bg-stone-950 hover:bg-stone-800/60 transition-colors text-left"
           >
-            <div className="font-medium text-foreground">At End</div>
-            <div className="text-sm text-muted-foreground mt-1">
+            <div className="font-medium text-stone-200">At End</div>
+            <div className="text-sm text-stone-500 mt-1">
               Append pattern after the last action
             </div>
           </button>
@@ -55,7 +55,7 @@ export function InsertPositionDialog({
 
         <button
           onClick={onClose}
-          className="w-full mt-4 text-sm text-muted-foreground hover:text-foreground transition-colors"
+          className="w-full mt-4 text-sm text-stone-500 hover:text-stone-200 transition-colors"
         >
           Cancel
         </button>

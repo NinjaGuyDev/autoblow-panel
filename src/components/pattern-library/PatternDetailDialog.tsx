@@ -54,7 +54,7 @@ export function PatternDetailDialog({
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw pattern line
-    ctx.strokeStyle = '#8b5cf6';
+    ctx.strokeStyle = '#c8956c'; // Warm amber
     ctx.lineWidth = 3;
     ctx.beginPath();
 
@@ -196,9 +196,9 @@ export function PatternDetailDialog({
 
   // Intensity badge color
   const intensityColor = {
-    low: 'bg-green-500/20 text-green-400 border-green-500/30',
-    medium: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    high: 'bg-red-500/20 text-red-400 border-red-500/30',
+    low: 'bg-emerald-900/30 text-emerald-400 border-emerald-800/40',
+    medium: 'bg-amber-900/30 text-amber-400 border-amber-800/40',
+    high: 'bg-orange-900/30 text-orange-400 border-orange-800/40',
   }[pattern.intensity];
 
   const handleBackdropClick = (e: React.MouseEvent) => {
@@ -212,24 +212,24 @@ export function PatternDetailDialog({
       className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-zinc-900 border border-zinc-700 rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-stone-900 border border-stone-700 rounded-lg max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Canvas preview */}
         <canvas
           ref={canvasRef}
           width={400}
           height={200}
-          className="w-full h-auto mb-4 rounded border border-muted/50"
+          className="w-full h-auto mb-4 rounded border border-stone-800/50"
         />
 
         {/* Pattern name */}
-        <h2 className="text-xl font-semibold text-foreground mb-3">
+        <h2 className="text-xl font-semibold text-stone-200 mb-3" style={{ fontFamily: 'var(--font-display)' }}>
           {pattern.name}
         </h2>
 
         {/* Metadata grid */}
         <div className="grid grid-cols-2 gap-4 mb-4">
           <div>
-            <label className="text-xs text-muted-foreground block mb-1">
+            <label className="text-xs text-stone-500 block mb-1">
               Intensity
             </label>
             <span
@@ -243,28 +243,28 @@ export function PatternDetailDialog({
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground block mb-1">
+            <label className="text-xs text-stone-500 block mb-1">
               Duration
             </label>
-            <span className="text-sm text-foreground">
+            <span className="text-sm text-stone-200" style={{ fontFamily: 'var(--font-mono)' }}>
               {(pattern.durationMs / 1000).toFixed(1)}s
             </span>
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground block mb-1">
+            <label className="text-xs text-stone-500 block mb-1">
               Direction
             </label>
-            <span className="text-sm text-foreground capitalize">
+            <span className="text-sm text-stone-200 capitalize">
               {direction}
             </span>
           </div>
 
           <div>
-            <label className="text-xs text-muted-foreground block mb-1">
+            <label className="text-xs text-stone-500 block mb-1">
               Actions
             </label>
-            <span className="text-sm text-foreground">
+            <span className="text-sm text-stone-200">
               {pattern.generator().length}
             </span>
           </div>
@@ -272,14 +272,14 @@ export function PatternDetailDialog({
 
         {/* Tags */}
         <div className="mb-6">
-          <label className="text-xs text-muted-foreground block mb-2">
+          <label className="text-xs text-stone-500 block mb-2">
             Style Tags
           </label>
           <div className="flex flex-wrap gap-2">
             {pattern.tags.map((tag) => (
               <span
                 key={tag}
-                className="text-sm px-2 py-1 rounded bg-muted/50 text-muted-foreground"
+                className="text-sm px-2 py-1 rounded bg-stone-800/60 text-stone-500"
               >
                 {tag}
               </span>
@@ -298,7 +298,7 @@ export function PatternDetailDialog({
         <div className="flex gap-3">
           <button
             onClick={() => onInsert(pattern)}
-            className="flex-1 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium shadow-sm"
+            className="flex-1 px-4 py-2 rounded bg-amber-700 text-white hover:bg-amber-600 transition-colors font-medium shadow-sm"
           >
             Insert Pattern
           </button>
@@ -309,7 +309,7 @@ export function PatternDetailDialog({
                 onEditCopy(pattern);
                 onClose();
               }}
-              className="px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-medium shadow-sm"
+              className="px-4 py-2 rounded bg-stone-700 text-white hover:bg-stone-600 transition-colors font-medium shadow-sm"
             >
               Edit Copy
             </button>
@@ -322,7 +322,7 @@ export function PatternDetailDialog({
                 'px-4 py-2 rounded font-medium shadow-sm transition-colors',
                 isDemoPlaying
                   ? 'bg-red-600 text-white hover:bg-red-700'
-                  : 'bg-purple-600 text-white hover:bg-purple-700'
+                  : 'bg-stone-600 text-white hover:bg-stone-500'
               )}
             >
               {isDemoPlaying ? 'Stop Demo' : 'Demo'}
@@ -331,7 +331,7 @@ export function PatternDetailDialog({
 
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded border border-zinc-600 text-zinc-200 hover:bg-zinc-800 transition-colors"
+            className="px-4 py-2 rounded border border-stone-600 text-stone-200 hover:bg-stone-800 transition-colors"
           >
             Close
           </button>

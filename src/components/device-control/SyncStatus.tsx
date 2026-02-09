@@ -21,13 +21,14 @@ export function SyncStatus({
   hasFunscript,
 }: SyncStatusProps) {
   // Define status configurations
+  // Keep green/yellow/red for STATUS indicators (connected dot, sync status dots)
   const statusConfig: Record<
     SyncStatusType,
     { color: string; dotColor: string; label: string; showDrift?: boolean; pulsing?: boolean }
   > = {
     idle: {
-      color: 'text-muted-foreground',
-      dotColor: 'bg-muted',
+      color: 'text-stone-500',
+      dotColor: 'bg-stone-800/50',
       label: 'Sync idle',
     },
     uploading: {
@@ -48,8 +49,8 @@ export function SyncStatus({
       pulsing: true,
     },
     paused: {
-      color: 'text-muted-foreground',
-      dotColor: 'bg-muted',
+      color: 'text-stone-500',
+      dotColor: 'bg-stone-800/50',
       label: 'Sync paused',
     },
     error: {
@@ -63,8 +64,8 @@ export function SyncStatus({
   if (!isDeviceConnected || !hasFunscript) {
     return (
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Sync Playback</h3>
-        <p className="text-sm text-muted-foreground">
+        <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>Sync Playback</h3>
+        <p className="text-sm text-stone-500">
           Load funscript and connect device to enable sync
         </p>
       </div>
@@ -75,7 +76,7 @@ export function SyncStatus({
 
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Sync Playback</h3>
+      <h3 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>Sync Playback</h3>
 
       <div className="flex items-center gap-2">
         <span
@@ -88,10 +89,12 @@ export function SyncStatus({
 
       {/* Show drift when playing */}
       {config.showDrift && (
-        <div className="text-sm text-muted-foreground">
+        <div className="text-sm text-stone-500">
           <span className="font-medium">Drift:</span>{' '}
-          {driftMs >= 0 ? '+' : ''}
-          {Math.round(driftMs)}ms
+          <span style={{ fontFamily: 'var(--font-mono)' }}>
+            {driftMs >= 0 ? '+' : ''}
+            {Math.round(driftMs)}ms
+          </span>
         </div>
       )}
 

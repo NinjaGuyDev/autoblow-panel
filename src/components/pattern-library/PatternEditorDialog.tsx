@@ -72,8 +72,8 @@ export function PatternEditorDialog({
 
     const tr = computeTimeRange(actions.map((a) => a.at));
 
-    // Solid purple pattern line
-    ctx.strokeStyle = '#8b5cf6'; // purple-500
+    // Solid warm amber pattern line
+    ctx.strokeStyle = '#c8956c'; // warm amber
     ctx.lineWidth = 3;
     ctx.beginPath();
 
@@ -85,8 +85,8 @@ export function PatternEditorDialog({
 
     ctx.stroke();
 
-    // Action points as purple circles
-    ctx.fillStyle = '#8b5cf6'; // purple-500
+    // Action points as warm amber circles
+    ctx.fillStyle = '#c8956c'; // warm amber
     actions.forEach((action) => {
       const { x, y } = dataToPixel(action.at, action.pos, tr, canvas.width);
       ctx.beginPath();
@@ -166,7 +166,7 @@ export function PatternEditorDialog({
       onStartDemo={onStartDemo}
       onStopDemo={onStopDemo}
       header={
-        <h2 className="text-xl font-semibold text-foreground">{pattern.name}</h2>
+        <h2 className="text-xl font-semibold text-stone-200" style={{ fontFamily: 'var(--font-display)' }}>{pattern.name}</h2>
       }
     >
       {/* Canvas */}
@@ -175,7 +175,7 @@ export function PatternEditorDialog({
           ref={canvasRef}
           width={canvasWidth}
           height={CANVAS_HEIGHT}
-          className="w-full h-auto rounded border border-zinc-700 bg-zinc-950 cursor-crosshair"
+          className="w-full h-auto rounded border border-stone-700 bg-stone-950 cursor-crosshair"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -186,7 +186,7 @@ export function PatternEditorDialog({
       {/* Controls row */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
         <div>
-          <label className="text-xs text-muted-foreground block mb-1">Duration (s)</label>
+          <label className="text-xs text-stone-500 block mb-1">Duration (s)</label>
           <input
             type="number"
             step="0.1"
@@ -194,22 +194,22 @@ export function PatternEditorDialog({
             max="300"
             value={(pattern.durationMs / 1000).toFixed(1)}
             onChange={handleDurationChange}
-            className="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full px-3 py-2 rounded bg-stone-800 border border-stone-700 text-white focus:outline-none focus:ring-2 focus:ring-amber-700/40"
           />
         </div>
 
         <div>
-          <label className="text-xs text-muted-foreground block mb-1">Intensity</label>
+          <label className="text-xs text-stone-500 block mb-1">Intensity</label>
           <div className="flex gap-2">
             <button
               onClick={() => onIntensityChange(-10)}
-              className="flex-1 px-3 py-2 rounded bg-zinc-800 border border-zinc-700 text-white hover:bg-zinc-700 transition-colors"
+              className="flex-1 px-3 py-2 rounded bg-stone-800 border border-stone-700 text-white hover:bg-stone-700 transition-colors"
             >
               - Intensity
             </button>
             <button
               onClick={() => onIntensityChange(10)}
-              className="flex-1 px-3 py-2 rounded bg-zinc-800 border border-zinc-700 text-white hover:bg-zinc-700 transition-colors"
+              className="flex-1 px-3 py-2 rounded bg-stone-800 border border-stone-700 text-white hover:bg-stone-700 transition-colors"
             >
               + Intensity
             </button>
@@ -217,8 +217,8 @@ export function PatternEditorDialog({
         </div>
 
         <div>
-          <label className="text-xs text-muted-foreground block mb-1">Action Points</label>
-          <div className="px-3 py-2 rounded bg-zinc-800 border border-zinc-700 text-white">
+          <label className="text-xs text-stone-500 block mb-1">Action Points</label>
+          <div className="px-3 py-2 rounded bg-stone-800 border border-stone-700 text-white">
             {pattern.actions.length}
           </div>
         </div>

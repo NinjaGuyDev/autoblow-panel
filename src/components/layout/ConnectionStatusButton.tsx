@@ -11,7 +11,7 @@ interface ConnectionStatusButtonProps {
 
 /**
  * Connection status icon button with popover for device info.
- * Shows green/red/gray circle based on connection state.
+ * Shows emerald/orange/stone circle based on connection state.
  * Clicking while connected opens popover with device details and disconnect button.
  */
 export function ConnectionStatusButton({
@@ -55,10 +55,10 @@ export function ConnectionStatusButton({
   // Determine button colors
   const buttonColors =
     state === 'connected'
-      ? 'bg-green-500'
+      ? 'bg-emerald-500'
       : state === 'error'
-      ? 'bg-red-500'
-      : 'bg-gray-500';
+      ? 'bg-orange-500'
+      : 'bg-stone-600';
 
   // Determine aria-label
   const ariaLabel =
@@ -77,7 +77,7 @@ export function ConnectionStatusButton({
         aria-expanded={showPopover}
         aria-haspopup="true"
         className={cn(
-          'w-10 h-10 rounded-full flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary',
+          'w-10 h-10 rounded-full flex items-center justify-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-600',
           buttonColors,
           state === 'connecting' && 'animate-pulse'
         )}
@@ -94,30 +94,30 @@ export function ConnectionStatusButton({
       {showPopover && (
         <div
           ref={popoverRef}
-          className="absolute right-0 top-12 bg-card border border-muted rounded-lg shadow-xl p-4 min-w-[220px] z-50"
+          className="absolute right-0 top-12 rounded-xl border border-stone-800 bg-stone-900/95 shadow-xl p-4 min-w-[220px] z-50 backdrop-blur-sm"
         >
           {/* Connected state - show device info */}
           {state === 'connected' && deviceInfo && (
             <div className="space-y-3">
-              <div className="text-sm space-y-1 text-muted-foreground">
+              <div className="text-sm space-y-1 text-stone-400">
                 <p>
-                  <span className="font-medium text-foreground">Device:</span>{' '}
+                  <span className="font-medium text-stone-200">Device:</span>{' '}
                   {deviceInfo.deviceType === 'autoblow-ultra'
                     ? 'Autoblow AI Ultra'
                     : deviceInfo.deviceType}
                 </p>
                 <p>
-                  <span className="font-medium text-foreground">Firmware:</span>{' '}
+                  <span className="font-medium text-stone-200">Firmware:</span>{' '}
                   v{deviceInfo.firmwareVersion}
                 </p>
                 <p>
-                  <span className="font-medium text-foreground">Hardware:</span>{' '}
+                  <span className="font-medium text-stone-200">Hardware:</span>{' '}
                   {deviceInfo.hardwareVersion}
                 </p>
               </div>
               <button
                 onClick={handleDisconnect}
-                className="bg-secondary text-secondary-foreground px-3 py-2 rounded text-sm hover:opacity-90 w-full"
+                className="bg-stone-800 text-stone-300 px-3 py-2 rounded-lg text-sm hover:bg-stone-700 w-full transition-colors"
               >
                 Disconnect
               </button>
@@ -126,7 +126,7 @@ export function ConnectionStatusButton({
 
           {/* Error state - show error message */}
           {(state === 'disconnected' || state === 'error') && error && (
-            <div className="text-sm text-red-500">{error}</div>
+            <div className="text-sm text-orange-400">{error}</div>
           )}
         </div>
       )}

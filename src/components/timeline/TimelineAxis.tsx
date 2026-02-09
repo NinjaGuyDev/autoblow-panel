@@ -90,7 +90,7 @@ export const TimelineAxis = React.memo<TimelineAxisProps>(
 
     return (
       <div
-        className="relative text-xs text-muted-foreground"
+        className="relative text-xs text-stone-500"
         style={{ width: `${width}px`, height: `${height}px` }}
       >
         {ticks.map((tick, index) => (
@@ -105,7 +105,7 @@ export const TimelineAxis = React.memo<TimelineAxisProps>(
             {/* Tick mark */}
             <div className="w-px h-1 bg-current opacity-40 mx-auto" />
             {/* Label */}
-            <div className="mt-0.5 text-center whitespace-nowrap">{tick.label}</div>
+            <div className="mt-0.5 text-center whitespace-nowrap" style={{ fontFamily: 'var(--font-mono)' }}>{tick.label}</div>
           </div>
         ))}
       </div>

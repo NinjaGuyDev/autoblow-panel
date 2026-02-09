@@ -61,12 +61,12 @@ export function DeviceConnection({
             onChange={(e) => setTokenValue(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Enter device token"
-            className="bg-background border border-muted rounded px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-primary"
+            className="bg-stone-950 border border-stone-800 rounded px-3 py-2 text-sm w-full focus:outline-none focus:ring-2 focus:ring-amber-700/40"
           />
           <button
             onClick={handleConnectClick}
             disabled={!tokenValue.trim()}
-            className="bg-primary text-primary-foreground px-4 py-2 rounded text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed w-full"
+            className="bg-amber-700 text-white px-4 py-2 rounded text-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed w-full"
           >
             Connect
           </button>
@@ -75,7 +75,7 @@ export function DeviceConnection({
 
       {/* Connecting state */}
       {connectionState === 'connecting' && (
-        <div className="text-sm text-muted-foreground text-center py-4">
+        <div className="text-sm text-stone-500 text-center py-4">
           Connecting to device...
         </div>
       )}
@@ -83,7 +83,7 @@ export function DeviceConnection({
       {/* Connected state - show device info and disconnect button */}
       {connectionState === 'connected' && deviceInfo && (
         <div className="space-y-3">
-          <div className="text-sm space-y-1 text-muted-foreground">
+          <div className="text-sm space-y-1 text-stone-500">
             <p>
               <span className="font-medium">Device:</span> {deviceInfo.deviceType === 'autoblow-ultra' ? 'Autoblow AI Ultra' : deviceInfo.deviceType}
             </p>
@@ -96,7 +96,7 @@ export function DeviceConnection({
           </div>
           <button
             onClick={onDisconnect}
-            className="bg-secondary text-secondary-foreground px-4 py-2 rounded text-sm hover:opacity-90 w-full"
+            className="bg-stone-800 text-stone-300 px-4 py-2 rounded text-sm hover:opacity-90 w-full"
           >
             Disconnect
           </button>

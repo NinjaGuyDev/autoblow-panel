@@ -39,7 +39,7 @@ export const PatternCard = memo(function PatternCard({
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw pattern line
-    ctx.strokeStyle = '#8b5cf6'; // Primary color
+    ctx.strokeStyle = '#c8956c'; // Warm amber
     ctx.lineWidth = 2;
     ctx.beginPath();
 
@@ -74,7 +74,7 @@ export const PatternCard = memo(function PatternCard({
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Draw pattern line
-    ctx.strokeStyle = '#8b5cf6';
+    ctx.strokeStyle = '#c8956c'; // Warm amber
     ctx.lineWidth = 2;
     ctx.beginPath();
 
@@ -163,16 +163,16 @@ export const PatternCard = memo(function PatternCard({
 
   // Intensity badge color
   const intensityColor = {
-    low: 'bg-green-500/20 text-green-400 border-green-500/30',
-    medium: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
-    high: 'bg-red-500/20 text-red-400 border-red-500/30',
+    low: 'bg-emerald-900/30 text-emerald-400 border-emerald-800/40',
+    medium: 'bg-amber-900/30 text-amber-400 border-amber-800/40',
+    high: 'bg-orange-900/30 text-orange-400 border-orange-800/40',
   }[pattern.intensity];
 
   return (
     <div
       className={cn(
-        'border border-muted rounded-lg p-4 bg-card cursor-pointer transition-colors relative',
-        'hover:border-primary/50 hover:bg-card/80'
+        'border border-stone-800 rounded-lg p-4 bg-stone-900/50 cursor-pointer transition-colors relative',
+        'hover:border-stone-600 hover:bg-stone-900/80'
       )}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -182,7 +182,7 @@ export const PatternCard = memo(function PatternCard({
       {isCreationMode && (
         <button
           onClick={handleQuickAdd}
-          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-lg z-10"
+          className="absolute top-2 right-2 w-8 h-8 rounded-full bg-amber-700 hover:bg-amber-600 text-white flex items-center justify-center transition-colors shadow-lg z-10"
           title="Quick add to end"
         >
           <svg
@@ -206,11 +206,11 @@ export const PatternCard = memo(function PatternCard({
         ref={canvasRef}
         width={240}
         height={120}
-        className="w-full h-auto mb-3 rounded border border-muted/50"
+        className="w-full h-auto mb-3 rounded border border-stone-800/50"
       />
 
       {/* Pattern name */}
-      <h3 className="text-sm font-medium text-foreground mb-2">
+      <h3 className="text-sm font-medium text-stone-200 mb-2">
         {pattern.name}
       </h3>
 
@@ -227,7 +227,7 @@ export const PatternCard = memo(function PatternCard({
         </span>
 
         {/* Duration */}
-        <span className="text-xs text-muted-foreground">
+        <span className="text-xs text-stone-500" style={{ fontFamily: 'var(--font-mono)' }}>
           {(pattern.durationMs / 1000).toFixed(1)}s
         </span>
       </div>
@@ -237,13 +237,13 @@ export const PatternCard = memo(function PatternCard({
         {pattern.tags.slice(0, 3).map((tag) => (
           <span
             key={tag}
-            className="text-xs px-1.5 py-0.5 rounded bg-muted/50 text-muted-foreground"
+            className="text-xs px-1.5 py-0.5 rounded bg-stone-800/60 text-stone-500"
           >
             {tag}
           </span>
         ))}
         {pattern.tags.length > 3 && (
-          <span className="text-xs text-muted-foreground">
+          <span className="text-xs text-stone-500">
             +{pattern.tags.length - 3}
           </span>
         )}

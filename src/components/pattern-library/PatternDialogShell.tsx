@@ -44,13 +44,13 @@ export function PatternDialogShell({
       className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
       onClick={handleBackdropClick}
     >
-      <div className="bg-zinc-900 border border-zinc-700 rounded-lg max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div className="bg-stone-900 border border-stone-700 rounded-lg max-w-3xl w-full p-6 max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header row: caller-provided content + close button */}
         <div className="flex items-start justify-between mb-4 gap-4">
           <div className="flex-1 min-w-0">{header}</div>
           <button
             onClick={onClose}
-            className="text-zinc-400 hover:text-zinc-200 transition-colors shrink-0"
+            className="text-stone-400 hover:text-stone-200 transition-colors shrink-0"
             aria-label="Close"
           >
             <svg
@@ -94,7 +94,7 @@ export function PatternDialogShell({
                 'px-4 py-2 rounded font-medium shadow-sm transition-colors',
                 isDemoPlaying
                   ? 'bg-red-600 text-white hover:bg-red-700'
-                  : 'bg-purple-600 text-white hover:bg-purple-700',
+                  : 'bg-stone-600 text-white hover:bg-stone-500',
               )}
             >
               {isDemoPlaying ? 'Stop Demo' : 'Demo'}
@@ -104,14 +104,14 @@ export function PatternDialogShell({
           <button
             onClick={onSave}
             disabled={isSaving}
-            className="flex-1 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex-1 px-4 py-2 rounded bg-amber-700 text-white hover:bg-amber-600 transition-colors font-medium shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? 'Saving...' : 'Save'}
           </button>
 
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded border border-zinc-600 text-zinc-200 hover:bg-zinc-800 transition-colors"
+            className="px-4 py-2 rounded border border-stone-600 text-stone-200 hover:bg-stone-800 transition-colors"
           >
             Close
           </button>
