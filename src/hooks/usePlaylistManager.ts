@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { playlistApi, libraryApi } from '@/lib/apiClient';
+import { getErrorMessage } from '@/lib/getErrorMessage';
 import type { Playlist, PlaylistItem, LibraryItem } from '../../server/types/shared';
 
 export interface UsePlaylistManagerReturn {
@@ -55,7 +56,7 @@ export function usePlaylistManager(): UsePlaylistManagerReturn {
       const results = await playlistApi.getAll();
       setPlaylists(results);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch playlists';
+      const errorMessage = getErrorMessage(err, 'Failed to fetch playlists');
       setError(errorMessage);
       setPlaylists([]);
     } finally {
@@ -75,7 +76,7 @@ export function usePlaylistManager(): UsePlaylistManagerReturn {
       await refresh();
       return created;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create playlist';
+      const errorMessage = getErrorMessage(err, 'Failed to create playlist');
       setError(errorMessage);
       throw err;
     }
@@ -94,7 +95,7 @@ export function usePlaylistManager(): UsePlaylistManagerReturn {
       }
       await refresh();
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete playlist';
+      const errorMessage = getErrorMessage(err, 'Failed to delete playlist');
       setError(errorMessage);
       throw err;
     }
@@ -111,7 +112,7 @@ export function usePlaylistManager(): UsePlaylistManagerReturn {
       setActivePlaylist(playlist);
       setActiveItems(items);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load playlist';
+      const errorMessage = getErrorMessage(err, 'Failed to load playlist');
       setError(errorMessage);
       throw err;
     }
@@ -138,7 +139,7 @@ export function usePlaylistManager(): UsePlaylistManagerReturn {
       const items = await playlistApi.getItems(activePlaylist.id);
       setActiveItems(items);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to add item to playlist';
+      const errorMessage = getErrorMessage(err, 'Failed to add item to playlist');
       setError(errorMessage);
       throw err;
     }
@@ -157,7 +158,7 @@ export function usePlaylistManager(): UsePlaylistManagerReturn {
       const items = await playlistApi.getItems(activePlaylist.id);
       setActiveItems(items);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to remove item';
+      const errorMessage = getErrorMessage(err, 'Failed to remove item');
       setError(errorMessage);
       throw err;
     }
@@ -190,7 +191,7 @@ export function usePlaylistManager(): UsePlaylistManagerReturn {
     } catch (err) {
       // Revert on error
       setActiveItems(previousItems);
-      const errorMessage = err instanceof Error ? err.message : 'Failed to reorder items';
+      const errorMessage = getErrorMessage(err, 'Failed to reorder items');
       setError(errorMessage);
       throw err;
     }
@@ -208,7 +209,7 @@ export function usePlaylistManager(): UsePlaylistManagerReturn {
       const videoItems = items.filter((item) => item.videoName !== null);
       setLibraryItems(videoItems);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load library items';
+      const errorMessage = getErrorMessage(err, 'Failed to load library items');
       setError(errorMessage);
       throw err;
     }

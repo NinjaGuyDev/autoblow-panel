@@ -3,6 +3,7 @@ import { useDebouncedCallback } from 'use-debounce';
 import type { Ultra } from '@xsense/autoblow-sdk';
 import type { PatternType, ManualControlParams } from '@/types/device';
 import { generatePatternFunscript } from '@/lib/funscriptGenerator';
+import { getErrorMessage } from '@/lib/getErrorMessage';
 
 export interface UseManualControlReturn {
   isRunning: boolean;
@@ -44,7 +45,7 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
       try {
         await ultra.oscillateSet(speed, minY, maxY);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to update oscillation parameters');
+        setError(getErrorMessage(err, 'Failed to update oscillation parameters'));
       }
     },
     150
@@ -91,7 +92,7 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
 
       setIsRunning(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to upload funscript');
+      setError(getErrorMessage(err, 'Failed to upload funscript'));
       setIsRunning(false);
     } finally {
       isUploadingRef.current = false;
@@ -120,7 +121,7 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
         await uploadAndStartFunscript();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start manual control');
+      setError(getErrorMessage(err, 'Failed to start manual control'));
     }
   }, [ultra, patternType, speed, minY, maxY, uploadAndStartFunscript]);
 
@@ -139,7 +140,7 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
         await ultra.syncScriptStop();
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to stop manual control');
+      setError(getErrorMessage(err, 'Failed to stop manual control'));
     } finally {
       setIsRunning(false);
     }

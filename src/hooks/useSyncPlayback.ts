@@ -3,6 +3,7 @@ import type { Ultra } from '@xsense/autoblow-sdk';
 import type { ZodFunscript } from '@/lib/schemas';
 import type { SyncStatus, UseSyncPlaybackReturn } from '@/types/sync';
 import { convertToSDKFunscript } from '@/lib/funscriptConverter';
+import { getErrorMessage } from '@/lib/getErrorMessage';
 
 // Drift detection constants (per 05-RESEARCH.md Pattern 4)
 const DRIFT_CHECK_INTERVAL_MS = 2000; // Check every 2 seconds
@@ -143,7 +144,7 @@ export function useSyncPlayback(
       } catch (err) {
         console.error('Failed to upload funscript:', err);
         setSyncStatus('error');
-        setError(err instanceof Error ? err.message : 'Failed to upload funscript');
+        setError(getErrorMessage(err, 'Failed to upload funscript'));
         setScriptUploaded(false);
       }
     };
@@ -200,7 +201,7 @@ export function useSyncPlayback(
         if (generation !== generationRef.current) return;
         console.error('Failed to start sync:', err);
         setSyncStatus('error');
-        setError(err instanceof Error ? err.message : 'Failed to start sync');
+        setError(getErrorMessage(err, 'Failed to start sync'));
       }
     };
 
@@ -288,7 +289,7 @@ export function useSyncPlayback(
           if (generation !== generationRef.current) return;
           console.error('Failed to start embed sync:', err);
           setSyncStatus('error');
-          setError(err instanceof Error ? err.message : 'Failed to start sync');
+          setError(getErrorMessage(err, 'Failed to start sync'));
         }
       } else {
         // Stop sync

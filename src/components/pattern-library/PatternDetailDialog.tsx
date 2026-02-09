@@ -4,6 +4,7 @@ import type { PatternDefinition } from '@/types/patterns';
 import { getPatternDirection } from '@/lib/patternDefinitions';
 import { createSmoothTransition } from '@/lib/patternInsertion';
 import { cn } from '@/lib/utils';
+import { getErrorMessage } from '@/lib/getErrorMessage';
 
 interface PatternDetailDialogProps {
   pattern: PatternDefinition | null;
@@ -158,7 +159,7 @@ export function PatternDetailDialog({
 
       setIsDemoPlaying(true);
     } catch (err) {
-      setDemoError(err instanceof Error ? err.message : 'Failed to start demo');
+      setDemoError(getErrorMessage(err, 'Failed to start demo'));
     }
   }, [ultra, pattern]);
 
@@ -170,7 +171,7 @@ export function PatternDetailDialog({
       setIsDemoPlaying(false);
       setDemoError(null);
     } catch (err) {
-      setDemoError(err instanceof Error ? err.message : 'Failed to stop demo');
+      setDemoError(getErrorMessage(err, 'Failed to stop demo'));
     }
   }, [ultra]);
 

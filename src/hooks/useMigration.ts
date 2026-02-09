@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/db';
 import { libraryApi } from '@/lib/apiClient';
+import { getErrorMessage } from '@/lib/getErrorMessage';
 import type { CreateLibraryItemRequest } from '@/../server/types/shared';
 
 interface UseMigrationReturn {
@@ -65,7 +66,7 @@ export function useMigration(): UseMigrationReturn {
         setMigrating(false);
       } catch (err) {
         // Graceful error handling - backend may be unreachable
-        const errorMessage = err instanceof Error ? err.message : 'Migration failed';
+        const errorMessage = getErrorMessage(err, 'Migration failed');
         setError(errorMessage);
         setMigrating(false);
         console.warn('Migration failed, app will continue with IndexedDB fallback:', errorMessage);

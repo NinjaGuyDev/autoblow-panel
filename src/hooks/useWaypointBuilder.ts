@@ -5,6 +5,7 @@ import type { WaypointDefinition, CustomPatternDefinition } from '@/types/patter
 import { waypointsToActions } from '@/lib/waypointGenerator';
 import { createLoopTransition } from '@/lib/patternTransform';
 import { customPatternApi } from '@/lib/apiClient';
+import { getErrorMessage } from '@/lib/getErrorMessage';
 
 /**
  * Waypoint builder hook managing waypoint-based pattern creation lifecycle
@@ -186,7 +187,7 @@ export function useWaypointBuilder() {
 
       setIsDemoPlaying(true);
     } catch (err) {
-      setDemoError(err instanceof Error ? err.message : 'Failed to start demo');
+      setDemoError(getErrorMessage(err, 'Failed to start demo'));
     }
   }, [waypoints]);
 
@@ -199,7 +200,7 @@ export function useWaypointBuilder() {
       setIsDemoPlaying(false);
       setDemoError(null);
     } catch (err) {
-      setDemoError(err instanceof Error ? err.message : 'Failed to stop demo');
+      setDemoError(getErrorMessage(err, 'Failed to stop demo'));
     }
   }, []);
 
@@ -243,7 +244,7 @@ export function useWaypointBuilder() {
       setIsSaving(false);
       return savedItem;
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to save pattern');
+      setSaveError(getErrorMessage(err, 'Failed to save pattern'));
       setIsSaving(false);
       throw err;
     }
