@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from 'react';
+import { useState, useCallback, useMemo, useRef } from 'react';
 import type { Ultra } from '@xsense/autoblow-sdk';
 import type { FunscriptAction } from '@/types/funscript';
 import type { WaypointDefinition, CustomPatternDefinition } from '@/types/patterns';
@@ -6,6 +6,7 @@ import { waypointsToActions } from '@/lib/waypointGenerator';
 import { createLoopTransition } from '@/lib/patternTransform';
 import { customPatternApi } from '@/lib/apiClient';
 import { getErrorMessage } from '@/lib/getErrorMessage';
+import { useDemoLoop } from '@/hooks/useDemoLoop';
 
 /**
  * Waypoint builder hook managing waypoint-based pattern creation lifecycle
@@ -27,6 +28,10 @@ export function useWaypointBuilder() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
+  const [scriptDurationMs, setScriptDurationMs] = useState(0);
+  const ultraRef = useRef<Ultra | null>(null);
+
+  useDemoLoop(ultraRef.current, isDemoPlaying, scriptDurationMs);
 
   /**
    * Opens builder with default waypoints
@@ -171,6 +176,10 @@ export function useWaypointBuilder() {
       const loopTransition = createLoopTransition(actions);
       const loopActions = [...actions, ...loopTransition];
 
+      // Track ultra ref and script duration for loop detection
+      ultraRef.current = ultra;
+      setScriptDurationMs(loopActions[loopActions.length - 1].at);
+
       // Create funscript object
       const funscript = {
         version: '1.0',
@@ -198,6 +207,8 @@ export function useWaypointBuilder() {
     try {
       await ultra.syncScriptStop();
       setIsDemoPlaying(false);
+      setScriptDurationMs(0);
+      ultraRef.current = null;
       setDemoError(null);
     } catch (err) {
       setDemoError(getErrorMessage(err, 'Failed to stop demo'));

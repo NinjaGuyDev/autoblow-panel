@@ -1,10 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { Ultra } from '@xsense/autoblow-sdk';
 import type { FunscriptAction } from '@/types/funscript';
 import type { CustomPatternDefinition } from '@/types/patterns';
 import { scalePatternDuration, adjustIntensity, createLoopTransition } from '@/lib/patternTransform';
 import { customPatternApi } from '@/lib/apiClient';
 import { getErrorMessage } from '@/lib/getErrorMessage';
+import { useDemoLoop } from '@/hooks/useDemoLoop';
 
 /**
  * Pattern editor hook managing full editing lifecycle
@@ -17,6 +18,10 @@ export function usePatternEditor() {
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
+  const [scriptDurationMs, setScriptDurationMs] = useState(0);
+  const ultraRef = useRef<Ultra | null>(null);
+
+  useDemoLoop(ultraRef.current, isDemoPlaying, scriptDurationMs);
 
   /**
    * Opens editor with a pattern (typically a copy from preset)
@@ -110,6 +115,10 @@ export function usePatternEditor() {
       const loopTransition = createLoopTransition(actions);
       const loopActions = [...actions, ...loopTransition];
 
+      // Track ultra ref and script duration for loop detection
+      ultraRef.current = ultra;
+      setScriptDurationMs(loopActions[loopActions.length - 1].at);
+
       // Create funscript object
       const funscript = {
         version: '1.0',
@@ -137,6 +146,8 @@ export function usePatternEditor() {
     try {
       await ultra.syncScriptStop();
       setIsDemoPlaying(false);
+      setScriptDurationMs(0);
+      ultraRef.current = null;
       setDemoError(null);
     } catch (err) {
       setDemoError(getErrorMessage(err, 'Failed to stop demo'));
