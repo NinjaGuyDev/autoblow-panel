@@ -13,6 +13,7 @@ import { PatternLibraryPage } from '@/components/pages/PatternLibraryPage';
 import { LibraryPage } from '@/components/pages/LibraryPage';
 import { PlaylistPage } from '@/components/pages/PlaylistPage';
 import { PlaylistControls } from '@/components/playlist/PlaylistControls';
+import { ScriptLibraryPage } from '@/components/pages/ScriptLibraryPage';
 import { getErrorMessage } from '@/lib/getErrorMessage';
 import { Timeline } from '@/components/timeline/Timeline';
 import { useVideoFile } from '@/hooks/useVideoFile';
@@ -24,6 +25,8 @@ import { useUnifiedPlayback } from '@/hooks/useUnifiedPlayback';
 import { useManualControl } from '@/hooks/useManualControl';
 import { useSyncPlayback } from '@/hooks/useSyncPlayback';
 import { useLibrary } from '@/hooks/useLibrary';
+import { useScriptLibrary } from '@/hooks/useScriptLibrary';
+import { useScriptPlayback } from '@/hooks/useScriptPlayback';
 import { usePlaylistManager } from '@/hooks/usePlaylistManager';
 import { usePlaylistPlayback } from '@/hooks/usePlaylistPlayback';
 import { useDeviceButtons } from '@/hooks/useDeviceButtons';
@@ -71,6 +74,10 @@ function AppContent() {
 
   // Playlist state
   const playlistManager = usePlaylistManager();
+
+  // Script Library state
+  const scriptLibrary = useScriptLibrary();
+  const scriptPlayback = useScriptPlayback({ ultra, scripts: scriptLibrary.scripts });
 
   // Video file state
   const {
@@ -186,6 +193,34 @@ function AppContent() {
       }
     }
   }, [isRunning, playback.activeIsPlaying, playback.isEmbed]);
+
+  // Mutual exclusion: Stop script playback when leaving the Script Library tab
+  useEffect(() => {
+    if (activeTab !== 'script-library' && scriptPlayback.isPlaying) {
+      scriptPlayback.stop();
+    }
+  }, [activeTab, scriptPlayback.isPlaying]);
+
+  // Mutual exclusion: Stop script playback when video sync or manual control starts
+  useEffect(() => {
+    if ((syncStatus === 'playing' || isRunning) && scriptPlayback.isPlaying) {
+      scriptPlayback.stop();
+    }
+  }, [syncStatus, isRunning, scriptPlayback.isPlaying]);
+
+  // Mutual exclusion: Stop manual control / pause video when script playback starts
+  useEffect(() => {
+    if (scriptPlayback.isPlaying) {
+      if (isRunning) stop();
+      if (playback.activeIsPlaying) {
+        if (playback.isEmbed) {
+          playback.embedPlayback.togglePlayPause();
+        } else if (videoRef.current) {
+          videoRef.current.pause();
+        }
+      }
+    }
+  }, [scriptPlayback.isPlaying]);
 
   // Device log: Track sync status changes
   useEffect(() => {
@@ -390,6 +425,14 @@ function AppContent() {
           <PlaylistPage
             {...playlistManager}
             onPlayPlaylist={handlePlayPlaylist}
+          />
+        )}
+
+        {activeTab === 'script-library' && (
+          <ScriptLibraryPage
+            {...scriptLibrary}
+            {...scriptPlayback}
+            isDeviceConnected={isDeviceConnected}
           />
         )}
 

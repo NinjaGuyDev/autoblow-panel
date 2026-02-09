@@ -54,14 +54,17 @@ export function useLibrary(): UseLibraryReturn {
    * Apply client-side filter to raw items
    */
   const applyFilter = useCallback((itemsToFilter: LibraryItem[], currentFilter: LibraryFilter): LibraryItem[] => {
+    // Exclude script-only items (no video) from the main Library — those live in Script Library
+    const withVideo = itemsToFilter.filter(item => item.videoName !== null);
+
     switch (currentFilter) {
       case 'has-video':
-        return itemsToFilter.filter(item => item.videoName !== null);
+        return withVideo;
       case 'has-funscript':
-        return itemsToFilter.filter(item => item.funscriptName !== null);
+        return withVideo.filter(item => item.funscriptName !== null);
       case 'all':
       default:
-        return itemsToFilter;
+        return withVideo;
     }
   }, []);
 
