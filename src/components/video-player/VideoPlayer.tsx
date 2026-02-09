@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { VideoControls } from './VideoControls';
 import { EmbedVideoPlayer } from './EmbedVideoPlayer';
 
@@ -52,6 +52,19 @@ export function VideoPlayer({
   onEmbedError,
   onEmbedEnded,
 }: VideoPlayerProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const toggleFullscreen = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    if (document.fullscreenElement) {
+      document.exitFullscreen();
+    } else {
+      el.requestFullscreen();
+    }
+  }, []);
+
   // Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -85,6 +98,10 @@ export function VideoPlayer({
           e.preventDefault();
           onSeek(Math.min(duration, currentTime + 5));
           break;
+        case 'f':
+          e.preventDefault();
+          toggleFullscreen();
+          break;
       }
     };
 
@@ -92,10 +109,10 @@ export function VideoPlayer({
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [onTogglePlayPause, onSeek, currentTime, duration]);
+  }, [onTogglePlayPause, onSeek, currentTime, duration, toggleFullscreen]);
 
   return (
-    <div className="rounded-lg overflow-hidden border border-stone-800">
+    <div ref={containerRef} className="rounded-lg overflow-hidden border border-stone-800 bg-black">
       {/* Conditional video element or embed player */}
       {isEmbed ? (
         <EmbedVideoPlayer
@@ -128,6 +145,7 @@ export function VideoPlayer({
           duration={duration}
           onTogglePlayPause={onTogglePlayPause}
           onSeek={onSeek}
+          onToggleFullscreen={toggleFullscreen}
           error={error}
         />
       )}
