@@ -31,7 +31,7 @@
 
 ### Project Purpose
 
-**Autoblow Panel** is a local-first web application for controlling the Autoblow AI Ultra device. It provides video-device synchronization, funscript editing, pattern creation, playlist management, and manual device control — all running entirely on the user's machine with zero cloud services, uploads, or tracking.
+**Autoblow Panel** is a local-first web application for controlling the Autoblow AI Ultra device. It provides video-device synchronization, funscript editing, pattern creation, playlist management, and manual device control — all running on the user's machine with no uploads, tracking, or analytics. The only external dependency is Autoblow's cloud API (`latency.autoblowapi.com` + cluster endpoints), which the SDK requires for device discovery and command relay.
 
 ### Technology Stack
 
@@ -752,7 +752,7 @@ No LLM calls, no model inference, no training data.
 | Session state | IndexedDB (browser) | No (local only) |
 
 **Data NOT Collected:**
-- No cloud uploads
+- No cloud uploads (device commands routed through Autoblow cloud API by SDK — this is the only external dependency)
 - No user accounts or PII
 - No telemetry or analytics
 - No cookies or tracking
