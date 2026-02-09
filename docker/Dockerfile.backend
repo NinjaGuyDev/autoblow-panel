@@ -1,0 +1,46 @@
+# Multi-stage backend build: TypeScript compile -> Node Alpine runtime
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+# Install dependencies (including devDependencies for TypeScript compilation)
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Copy TypeScript configuration
+COPY tsconfig.server.json ./
+
+# Copy server source
+COPY server/ ./server/
+
+# Compile TypeScript to JavaScript
+RUN npx tsc --project tsconfig.server.json --outDir dist/server --noEmit false
+
+# Production runtime stage
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Copy compiled JavaScript from builder
+COPY --from=builder /app/dist/server ./server/
+
+# Copy package files
+COPY package.json package-lock.json ./
+
+# Install build dependencies for better-sqlite3 native compilation
+RUN apk add --no-cache python3 make g++
+
+# Install production dependencies only (includes better-sqlite3, express, cors, helmet)
+RUN npm ci --omit=dev
+
+# Create runtime directories for volumes
+RUN mkdir -p /app/data /app/media
+
+# Set production environment
+ENV NODE_ENV=production
+ENV DB_PATH=/app/data/autoblow.db
+ENV MEDIA_DIR=/app/media
+
+EXPOSE 3001
+
+CMD ["node", "server/index.js"]

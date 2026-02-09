@@ -17,6 +17,10 @@ export class LibraryController {
   getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        res.status(400).json({ error: 'Invalid id parameter — must be a number' });
+        return;
+      }
       const item = this.service.getItemById(id);
       res.json(item);
     } catch (error) {
@@ -46,6 +50,10 @@ export class LibraryController {
   updateCustomPattern = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        res.status(400).json({ error: 'Invalid id parameter — must be a number' });
+        return;
+      }
       const data = req.body as Partial<CreateLibraryItemRequest>;
       const item = this.service.updateCustomPattern(id, data);
       res.json(item);
@@ -67,6 +75,10 @@ export class LibraryController {
   delete = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        res.status(400).json({ error: 'Invalid id parameter — must be a number' });
+        return;
+      }
       this.service.deleteItem(id);
       res.status(204).send();
     } catch (error) {

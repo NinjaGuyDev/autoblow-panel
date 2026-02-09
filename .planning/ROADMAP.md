@@ -137,10 +137,11 @@ Plans:
   3. CSP headers configured for iframe embed security
   4. Token encryption at rest using Web Crypto API
   5. Production deployment runs on nginx with security headers
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 16-01: TBD
+- [ ] 16-01-PLAN.md — Security middleware (localhost-only, helmet CSP, health endpoint) + Web Crypto token encryption
+- [ ] 16-02-PLAN.md — Docker multi-stage build, docker-compose orchestration, nginx with security headers
 
 ## Progress
 
@@ -164,4 +165,4 @@ Phases execute in numeric order: 10 → 11 → 12 → 13 → 14 → 15 → 16
 | 13. Pattern Builder | v1.1 | 2/2 | Complete | 2026-02-08 |
 | 14. Playlist Management | v1.1 | 4/4 | Complete | 2026-02-08 |
 | 15. Embedded Video Integration | v1.1 | 2/2 | Complete | 2026-02-09 |
-| 16. Security Hardening + Docker Deployment | v1.1 | 0/TBD | Not started | - |
+| 16. Security Hardening + Docker Deployment | v1.1 | 0/2 | Not started | - |
