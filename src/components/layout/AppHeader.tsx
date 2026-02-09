@@ -1,13 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
-import type { ConnectionState, DeviceInfo } from '@/types/device';
+import { useDevice } from '@/contexts/DeviceContext';
 
 interface AppHeaderProps {
-  connectionState: ConnectionState;
-  deviceInfo: DeviceInfo | null;
-  error: string | null;
-  savedToken: string;
-  onConnect: (token: string) => void;
-  onDisconnect: () => void;
   onNewScript: () => void;
   isCreationMode: boolean;
 }
@@ -18,15 +12,10 @@ interface AppHeaderProps {
  * Shows connection status icon button in all states.
  */
 export function AppHeader({
-  connectionState,
-  deviceInfo,
-  error,
-  savedToken,
-  onConnect,
-  onDisconnect,
   onNewScript,
   isCreationMode,
 }: AppHeaderProps) {
+  const { connectionState, deviceInfo, deviceError: error, savedToken, connect, disconnect } = useDevice();
   const [tokenValue, setTokenValue] = useState(savedToken || '');
   const [showPopover, setShowPopover] = useState(false);
   const popoverRef = useRef<HTMLDivElement>(null);
@@ -54,7 +43,7 @@ export function AppHeader({
 
   const handleConnectClick = () => {
     if (tokenValue.trim()) {
-      onConnect(tokenValue.trim());
+      connect(tokenValue.trim());
     }
   };
 
@@ -67,13 +56,13 @@ export function AppHeader({
   };
 
   const handleDisconnect = () => {
-    onDisconnect();
+    disconnect();
     setShowPopover(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && tokenValue.trim()) {
-      onConnect(tokenValue.trim());
+      connect(tokenValue.trim());
     }
   };
 

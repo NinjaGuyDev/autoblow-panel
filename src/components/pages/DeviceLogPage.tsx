@@ -1,14 +1,11 @@
+import { useDevice } from '@/contexts/DeviceContext';
 import type { DeviceLogEntry } from '@/hooks/useDeviceLog';
-
-interface DeviceLogPageProps {
-  logs: DeviceLogEntry[];
-  onClearLogs: () => void;
-}
 
 /**
  * Device Log page - displays device communication log with timestamps
  */
-export function DeviceLogPage({ logs, onClearLogs }: DeviceLogPageProps) {
+export function DeviceLogPage() {
+  const { logs, clearLogs } = useDevice();
   const formatTimestamp = (date: Date): string => {
     const hours = date.getHours().toString().padStart(2, '0');
     const minutes = date.getMinutes().toString().padStart(2, '0');
@@ -60,7 +57,7 @@ export function DeviceLogPage({ logs, onClearLogs }: DeviceLogPageProps) {
             <h2 className="text-xl font-semibold">Device Communication Log</h2>
             {logs.length > 0 && (
               <button
-                onClick={onClearLogs}
+                onClick={clearLogs}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 Clear

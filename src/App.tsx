@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { ThemeProvider } from '@/components/theme-provider';
+import { DeviceProvider, useDevice } from '@/contexts/DeviceContext';
 import { Layout } from '@/components/layout/Layout';
 import { AppHeader } from '@/components/layout/AppHeader';
 import { NavBar } from '@/components/layout/NavBar';
@@ -19,27 +20,40 @@ import { useFunscriptFile } from '@/hooks/useFunscriptFile';
 import { useUndoableActions } from '@/hooks/useUndoableActions';
 import { useMigration } from '@/hooks/useMigration';
 import { useAutoSave } from '@/hooks/useAutoSave';
-import { useVideoPlayback } from '@/hooks/useVideoPlayback';
-import { useDeviceConnection } from '@/hooks/useDeviceConnection';
+import { useUnifiedPlayback } from '@/hooks/useUnifiedPlayback';
 import { useManualControl } from '@/hooks/useManualControl';
 import { useSyncPlayback } from '@/hooks/useSyncPlayback';
-import { useDeviceLog } from '@/hooks/useDeviceLog';
 import { useLibrary } from '@/hooks/useLibrary';
 import { usePlaylistManager } from '@/hooks/usePlaylistManager';
 import { usePlaylistPlayback } from '@/hooks/usePlaylistPlayback';
-import { useEmbedPlayback } from '@/hooks/useEmbedPlayback';
-import { useManualSync } from '@/hooks/useManualSync';
 import { mediaApi } from '@/lib/apiClient';
 import { captureVideoThumbnail } from '@/lib/thumbnailCapture';
 import { exportFunscript } from '@/lib/funscriptExport';
 import { insertPatternAtCursor, insertPatternAtEnd } from '@/lib/patternInsertion';
-import { isEmbedUrl, detectPlatformConfig } from '@/lib/videoUtils';
+import { isEmbedUrl } from '@/lib/videoUtils';
 import type { TabId } from '@/types/navigation';
 import type { PatternDefinition } from '@/types/patterns';
 import type { LibraryItem } from '../server/types/shared';
 import type { Funscript } from '@/types/funscript';
 
+/**
+ * Thin provider shell — wraps AppContent with theme and device contexts.
+ */
 function App() {
+  return (
+    <ThemeProvider defaultTheme="dark">
+      <DeviceProvider>
+        <AppContent />
+      </DeviceProvider>
+    </ThemeProvider>
+  );
+}
+
+/**
+ * Main application content — orchestrates playback, editing, sync,
+ * and cross-cutting coordination effects.
+ */
+function AppContent() {
   const [showSessionHint, setShowSessionHint] = useState(false);
   const [videoLoadHint, setVideoLoadHint] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('library');
@@ -47,7 +61,9 @@ function App() {
   const [isCreationMode, setIsCreationMode] = useState(false);
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [scriptName, setScriptName] = useState<string>('');
-  const { logs, addLog, clearLogs } = useDeviceLog();
+
+  // Device state from context
+  const { ultra, addLog } = useDevice();
 
   // Library state
   const library = useLibrary();
@@ -55,7 +71,7 @@ function App() {
   // Playlist state
   const playlistManager = usePlaylistManager();
 
-  // Video file state - must come first as videoUrl is used by playback hook
+  // Video file state
   const {
     videoFile,
     videoUrl,
@@ -66,37 +82,10 @@ function App() {
     error: videoError,
   } = useVideoFile();
 
-  // Lifted video playback state - shared between VideoPlayer and Timeline
+  // Unified playback (local + embed)
   const videoRef = useRef<HTMLVideoElement>(null);
-  const {
-    isPlaying,
-    currentTime,
-    duration,
-    error: playbackError,
-    togglePlayPause,
-    seek,
-  } = useVideoPlayback(videoRef, videoUrl);
-
-  // Embed playback state
   const embedPlayerRef = useRef<HTMLVideoElement>(null);
-  const isEmbed = isEmbedUrl(videoName);
-  const platformConfig = detectPlatformConfig(isEmbed ? videoUrl : null);
-
-  const embedPlayback = useEmbedPlayback({
-    playerRef: embedPlayerRef,
-    embedUrl: isEmbed ? videoUrl : null,
-  });
-
-  const manualSync = useManualSync(platformConfig.requiresManualOffset && isEmbed);
-  const iframeEmbed = isEmbed && !platformConfig.canPlay;
-
-  // Unified playback values - select between local and embed
-  const activeIsPlaying = isEmbed ? embedPlayback.isPlaying : isPlaying;
-  const activeCurrentTime = isEmbed ? embedPlayback.currentTime : currentTime;
-  const activeDuration = isEmbed ? embedPlayback.duration : duration;
-  const activeTogglePlayPause = isEmbed ? embedPlayback.togglePlayPause : togglePlayPause;
-  const activeSeek = isEmbed ? embedPlayback.seek : seek;
-  const activePlaybackError = isEmbed ? embedPlayback.error : playbackError;
+  const playback = useUnifiedPlayback({ videoRef, videoUrl, videoName, embedPlayerRef });
 
   const {
     funscriptFile,
@@ -116,17 +105,6 @@ function App() {
   useMigration();
 
   const { saveSession, lastSession } = useAutoSave();
-
-  // Device connection state
-  const {
-    connectionState,
-    error: deviceError,
-    deviceInfo,
-    connect,
-    disconnect,
-    ultra,
-    savedToken,
-  } = useDeviceConnection();
 
   // Manual control state
   const {
@@ -149,11 +127,11 @@ function App() {
     scriptUploaded,
     driftMs,
     error: syncError,
-  } = useSyncPlayback(videoRef, ultra, funscriptData, videoUrl, isEmbed ? {
+  } = useSyncPlayback(videoRef, ultra, funscriptData, videoUrl, playback.isEmbed ? {
     isEmbed: true,
-    currentTime: embedPlayback.currentTime,
-    isPlaying: embedPlayback.isPlaying,
-    manualOffsetMs: manualSync.offsetMs,
+    currentTime: playback.embedPlayback.currentTime,
+    isPlaying: playback.embedPlayback.isPlaying,
+    manualOffsetMs: playback.manualSync.offsetMs,
   } : undefined);
 
   // Playlist playback state
@@ -196,41 +174,23 @@ function App() {
 
   // Mutual exclusion: Pause video when manual control starts during playback
   useEffect(() => {
-    if (isRunning && activeIsPlaying) {
-      if (isEmbed) {
-        embedPlayback.togglePlayPause(); // Pause embed
+    if (isRunning && playback.activeIsPlaying) {
+      if (playback.isEmbed) {
+        playback.embedPlayback.togglePlayPause();
       } else if (videoRef.current) {
         videoRef.current.pause();
       }
     }
-  }, [isRunning, activeIsPlaying, isEmbed]);
+  }, [isRunning, playback.activeIsPlaying, playback.isEmbed]);
 
-  // Device log integration: Track connection state changes
-  const prevConnectionStateRef = useRef<typeof connectionState>('disconnected');
-  useEffect(() => {
-    if (connectionState === 'connected' && prevConnectionStateRef.current !== 'connected') {
-      addLog('info', 'Device connected');
-    } else if (connectionState === 'disconnected' && prevConnectionStateRef.current === 'connected') {
-      addLog('info', 'Device disconnected');
-    }
-    prevConnectionStateRef.current = connectionState;
-  }, [connectionState, addLog]);
-
-  // Device log integration: Track device errors
-  useEffect(() => {
-    if (deviceError) {
-      addLog('error', deviceError);
-    }
-  }, [deviceError, addLog]);
-
-  // Device log integration: Track sync status changes
+  // Device log: Track sync status changes
   useEffect(() => {
     if (syncStatus !== 'idle') {
       addLog('info', `Sync status: ${syncStatus}`);
     }
   }, [syncStatus, addLog]);
 
-  // Device log integration: Track sync errors
+  // Device log: Track sync errors
   useEffect(() => {
     if (syncError) {
       addLog('error', syncError);
@@ -318,7 +278,7 @@ function App() {
     if (position === 'end') {
       setActions(insertPatternAtEnd(editableActions, pattern));
     } else {
-      setActions(insertPatternAtCursor(editableActions, pattern, currentTime * 1000));
+      setActions(insertPatternAtCursor(editableActions, pattern, playback.activeCurrentTime * 1000));
     }
   };
 
@@ -356,7 +316,7 @@ function App() {
   // Handle embed URL submission
   const handleEmbedUrlLoad = (url: string) => {
     loadVideoFromUrl(url, url); // name = url for embeds
-    manualSync.resetOffset();   // Reset offset for new video
+    playback.manualSync.resetOffset(); // Reset offset for new video
   };
 
   // Load item from library
@@ -400,128 +360,50 @@ function App() {
   };
 
   return (
-    <ThemeProvider defaultTheme="dark">
-      <div
-        onDrop={handleFileDrop}
-        onDragOver={handleDragOver}
-        className={isCreationMode ? 'pb-24' : ''}
+    <div
+      onDrop={handleFileDrop}
+      onDragOver={handleDragOver}
+      className={isCreationMode ? 'pb-24' : ''}
+    >
+      <Layout
+        header={
+          <AppHeader
+            onNewScript={handleNewScript}
+            isCreationMode={isCreationMode}
+          />
+        }
+        navbar={<NavBar activeTab={activeTab} onTabChange={setActiveTab} />}
       >
-        <Layout
-          header={
-            <AppHeader
-              connectionState={connectionState}
-              deviceInfo={deviceInfo}
-              error={deviceError}
-              savedToken={savedToken}
-              onConnect={connect}
-              onDisconnect={disconnect}
-              onNewScript={handleNewScript}
-              isCreationMode={isCreationMode}
-            />
-          }
-          navbar={<NavBar activeTab={activeTab} onTabChange={setActiveTab} />}
-        >
-          {/* Conditional page rendering based on active tab */}
-          {activeTab === 'library' && (
-            <LibraryPage
-              {...library}
-              onLoadItem={handleLoadFromLibrary}
-            />
-          )}
+        {/* Conditional page rendering based on active tab */}
+        {activeTab === 'library' && (
+          <LibraryPage
+            {...library}
+            onLoadItem={handleLoadFromLibrary}
+          />
+        )}
 
-          {activeTab === 'playlists' && (
-            <PlaylistPage
-              {...playlistManager}
-              onPlayPlaylist={handlePlayPlaylist}
-            />
-          )}
+        {activeTab === 'playlists' && (
+          <PlaylistPage
+            {...playlistManager}
+            onPlayPlaylist={handlePlayPlaylist}
+          />
+        )}
 
-          {activeTab === 'video-sync' && (
-            <>
-              {playlistPlayback.isPlaylistMode && (
-                <PlaylistControls
-                  currentIndex={playlistPlayback.currentIndex}
-                  totalItems={playlistPlayback.totalItems}
-                  currentItem={playlistPlayback.currentItem}
-                  isFirstItem={playlistPlayback.isFirstItem}
-                  isLastItem={playlistPlayback.isLastItem}
-                  onPrevious={playlistPlayback.previousItem}
-                  onNext={playlistPlayback.nextItem}
-                  onStop={playlistPlayback.stopPlaylist}
-                />
-              )}
-              <VideoSyncPage
-                videoFile={videoFile}
-                videoUrl={videoUrl}
-                videoName={videoName}
-                onVideoLoad={handleVideoLoad}
-                onVideoClear={handleVideoClear}
-                videoError={videoError}
-                videoRef={videoRef}
-                isPlaying={activeIsPlaying}
-                currentTime={activeCurrentTime}
-                duration={activeDuration}
-                playbackError={activePlaybackError}
-                onTogglePlayPause={activeTogglePlayPause}
-                onSeek={activeSeek}
-                funscriptFile={funscriptFile}
-                funscriptData={funscriptData}
-                funscriptName={funscriptName}
-                onFunscriptLoad={handleFunscriptLoad}
-                onFunscriptClear={handleFunscriptClear}
-                funscriptError={funscriptError}
-                isLoading={isLoading}
-                syncStatus={syncStatus}
-                scriptUploaded={scriptUploaded}
-                driftMs={driftMs}
-                syncError={syncError}
-                isDeviceConnected={connectionState === 'connected'}
-                hasFunscript={funscriptData !== null}
-                showTimeline={showTimeline}
-                onToggleTimeline={() => setShowTimeline(!showTimeline)}
-                videoLoadHint={videoLoadHint}
-                isEmbed={isEmbed}
-                iframeEmbed={iframeEmbed}
-                platformConfig={platformConfig}
-                onEmbedUrlSubmit={handleEmbedUrlLoad}
-                embedPlayerRef={embedPlayerRef}
-                embedPlaying={embedPlayback.isPlaying}
-                onEmbedReady={embedPlayback.onReady}
-                onEmbedPlay={embedPlayback.onPlay}
-                onEmbedPause={embedPlayback.onPause}
-                onEmbedProgress={embedPlayback.onProgress}
-                onEmbedDuration={embedPlayback.onDuration}
-                onEmbedError={embedPlayback.onError}
-                onEmbedEnded={embedPlayback.onEnded}
-                manualSyncOffset={manualSync.offsetMs}
-                onManualSyncOffsetChange={manualSync.setOffsetMs}
-                onManualSyncReset={manualSync.resetOffset}
-                manualSyncStepMs={manualSync.OFFSET_STEP_MS}
-                isScriptPlaying={embedPlayback.isPlaying}
-                onToggleScript={embedPlayback.togglePlayPause}
-                timelineElement={
-                  showTimeline && videoUrl ? (
-                    <Timeline
-                      actions={editableActions}
-                      currentTimeMs={activeCurrentTime * 1000}
-                      durationMs={activeDuration * 1000}
-                      isPlaying={activeIsPlaying}
-                      onSeek={activeSeek}
-                      onActionsChange={setActions}
-                      onUndo={undo}
-                      onRedo={redo}
-                      canUndo={canUndo}
-                      canRedo={canRedo}
-                      onExport={handleExport}
-                    />
-                  ) : null
-                }
+        {activeTab === 'video-sync' && (
+          <>
+            {playlistPlayback.isPlaylistMode && (
+              <PlaylistControls
+                currentIndex={playlistPlayback.currentIndex}
+                totalItems={playlistPlayback.totalItems}
+                currentItem={playlistPlayback.currentItem}
+                isFirstItem={playlistPlayback.isFirstItem}
+                isLastItem={playlistPlayback.isLastItem}
+                onPrevious={playlistPlayback.previousItem}
+                onNext={playlistPlayback.nextItem}
+                onStop={playlistPlayback.stopPlaylist}
               />
-            </>
-          )}
-
-          {activeTab === 'manual-control' && (
-            <ManualControlPage
+            )}
+            <VideoSyncPage
               videoFile={videoFile}
               videoUrl={videoUrl}
               videoName={videoName}
@@ -529,59 +411,125 @@ function App() {
               onVideoClear={handleVideoClear}
               videoError={videoError}
               videoRef={videoRef}
-              isPlaying={isPlaying}
-              currentTime={currentTime}
-              duration={duration}
-              playbackError={playbackError}
-              onTogglePlayPause={togglePlayPause}
-              onSeek={seek}
-              isRunning={isRunning}
-              patternType={patternType}
-              speed={speed}
-              minY={minY}
-              maxY={maxY}
-              increment={increment}
-              variability={variability}
-              isConnected={connectionState === 'connected'}
-              onStart={start}
-              onStop={stop}
-              onParamChange={updateParams}
-              onPatternTypeChange={setPatternType}
+              isPlaying={playback.activeIsPlaying}
+              currentTime={playback.activeCurrentTime}
+              duration={playback.activeDuration}
+              playbackError={playback.activePlaybackError}
+              onTogglePlayPause={playback.activeTogglePlayPause}
+              onSeek={playback.activeSeek}
+              funscriptFile={funscriptFile}
+              funscriptData={funscriptData}
+              funscriptName={funscriptName}
+              onFunscriptLoad={handleFunscriptLoad}
+              onFunscriptClear={handleFunscriptClear}
+              funscriptError={funscriptError}
+              isLoading={isLoading}
+              syncStatus={syncStatus}
+              scriptUploaded={scriptUploaded}
+              driftMs={driftMs}
+              syncError={syncError}
+              hasFunscript={funscriptData !== null}
+              showTimeline={showTimeline}
+              onToggleTimeline={() => setShowTimeline(!showTimeline)}
+              videoLoadHint={videoLoadHint}
+              isEmbed={playback.isEmbed}
+              iframeEmbed={playback.iframeEmbed}
+              platformConfig={playback.platformConfig}
+              onEmbedUrlSubmit={handleEmbedUrlLoad}
+              embedPlayerRef={embedPlayerRef}
+              embedPlaying={playback.embedPlayback.isPlaying}
+              onEmbedReady={playback.embedPlayback.onReady}
+              onEmbedPlay={playback.embedPlayback.onPlay}
+              onEmbedPause={playback.embedPlayback.onPause}
+              onEmbedProgress={playback.embedPlayback.onProgress}
+              onEmbedDuration={playback.embedPlayback.onDuration}
+              onEmbedError={playback.embedPlayback.onError}
+              onEmbedEnded={playback.embedPlayback.onEnded}
+              manualSyncOffset={playback.manualSync.offsetMs}
+              onManualSyncOffsetChange={playback.manualSync.setOffsetMs}
+              onManualSyncReset={playback.manualSync.resetOffset}
+              manualSyncStepMs={playback.manualSync.OFFSET_STEP_MS}
+              isScriptPlaying={playback.embedPlayback.isPlaying}
+              onToggleScript={playback.embedPlayback.togglePlayPause}
+              timelineElement={
+                showTimeline && videoUrl ? (
+                  <Timeline
+                    actions={editableActions}
+                    currentTimeMs={playback.activeCurrentTime * 1000}
+                    durationMs={playback.activeDuration * 1000}
+                    isPlaying={playback.activeIsPlaying}
+                    onSeek={playback.activeSeek}
+                    onActionsChange={setActions}
+                    onUndo={undo}
+                    onRedo={redo}
+                    canUndo={canUndo}
+                    canRedo={canRedo}
+                    onExport={handleExport}
+                  />
+                ) : null
+              }
             />
-          )}
+          </>
+        )}
 
-          {activeTab === 'device-log' && (
-            <DeviceLogPage logs={logs} onClearLogs={clearLogs} />
-          )}
-
-          {activeTab === 'pattern-library' && (
-            <PatternLibraryPage
-              onInsert={handlePatternInsert}
-              isCreationMode={isCreationMode}
-              ultra={ultra}
-              isDeviceConnected={connectionState === 'connected'}
-            />
-          )}
-        </Layout>
-
-        {/* Script name dialog */}
-        <ScriptNameDialog
-          isOpen={showNameDialog}
-          onConfirm={handleNameConfirm}
-          onCancel={handleNameCancel}
-        />
-
-        {/* Creation mode footer */}
-        {isCreationMode && (
-          <CreationFooter
-            scriptName={scriptName}
-            actions={editableActions}
-            onClose={handleCloseCreation}
-            onExport={handleExport}
+        {activeTab === 'manual-control' && (
+          <ManualControlPage
+            videoFile={videoFile}
+            videoUrl={videoUrl}
+            videoName={videoName}
+            onVideoLoad={handleVideoLoad}
+            onVideoClear={handleVideoClear}
+            videoError={videoError}
+            videoRef={videoRef}
+            isPlaying={playback.localPlayback.isPlaying}
+            currentTime={playback.localPlayback.currentTime}
+            duration={playback.localPlayback.duration}
+            playbackError={playback.localPlayback.error}
+            onTogglePlayPause={playback.localPlayback.togglePlayPause}
+            onSeek={playback.localPlayback.seek}
+            isRunning={isRunning}
+            patternType={patternType}
+            speed={speed}
+            minY={minY}
+            maxY={maxY}
+            increment={increment}
+            variability={variability}
+            onStart={start}
+            onStop={stop}
+            onParamChange={updateParams}
+            onPatternTypeChange={setPatternType}
           />
         )}
-      </div>
-    </ThemeProvider>
+
+        {activeTab === 'device-log' && (
+          <DeviceLogPage />
+        )}
+
+        {activeTab === 'pattern-library' && (
+          <PatternLibraryPage
+            onInsert={handlePatternInsert}
+            isCreationMode={isCreationMode}
+          />
+        )}
+      </Layout>
+
+      {/* Script name dialog */}
+      <ScriptNameDialog
+        isOpen={showNameDialog}
+        onConfirm={handleNameConfirm}
+        onCancel={handleNameCancel}
+      />
+
+      {/* Creation mode footer */}
+      {isCreationMode && (
+        <CreationFooter
+          scriptName={scriptName}
+          actions={editableActions}
+          onClose={handleCloseCreation}
+          onExport={handleExport}
+        />
+      )}
+    </div>
   );
 }
 

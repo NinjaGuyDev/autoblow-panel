@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import type { Ultra } from '@xsense/autoblow-sdk';
 import type { PatternDefinition, CustomPatternDefinition, AnyPattern } from '@/types/patterns';
 import { PATTERN_DEFINITIONS } from '@/lib/patternDefinitions';
 import { usePatternFilters } from '@/hooks/usePatternFilters';
 import { usePatternEditor } from '@/hooks/usePatternEditor';
 import { useWaypointBuilder } from '@/hooks/useWaypointBuilder';
+import { useDevice } from '@/contexts/DeviceContext';
 import { PatternFilters } from '@/components/pattern-library/PatternFilters';
 import { PatternGrid } from '@/components/pattern-library/PatternGrid';
 import { PatternDetailDialog } from '@/components/pattern-library/PatternDetailDialog';
@@ -18,8 +18,6 @@ import type { LibraryItem } from '../../../server/types/shared';
 interface PatternLibraryPageProps {
   onInsert: (pattern: AnyPattern, position: 'cursor' | 'end') => void;
   isCreationMode?: boolean;
-  ultra: Ultra | null;
-  isDeviceConnected: boolean;
 }
 
 /**
@@ -51,9 +49,8 @@ function itemToCustomPattern(item: LibraryItem): CustomPatternDefinition {
 export function PatternLibraryPage({
   onInsert,
   isCreationMode = false,
-  ultra,
-  isDeviceConnected,
 }: PatternLibraryPageProps) {
+  const { ultra, isDeviceConnected } = useDevice();
   // Custom patterns state
   const [customPatterns, setCustomPatterns] = useState<CustomPatternDefinition[]>([]);
 
