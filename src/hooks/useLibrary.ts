@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { libraryApi } from '@/lib/apiClient';
-import { getErrorMessage } from '@/lib/getErrorMessage';
+import { useAsyncOperation } from '@/hooks/useAsyncOperation';
 import type { LibraryItem } from '../../server/types/shared';
 
 export type LibraryFilter = 'all' | 'has-video' | 'has-funscript';
@@ -27,8 +27,7 @@ interface UseLibraryReturn {
  */
 export function useLibrary(): UseLibraryReturn {
   const [items, setItems] = useState<LibraryItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { loading, error, run, execute } = useAsyncOperation(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [filter, setFilter] = useState<LibraryFilter>('all');
   const [rawItems, setRawItems] = useState<LibraryItem[]>([]);
@@ -41,22 +40,15 @@ export function useLibrary(): UseLibraryReturn {
    */
   const fetchItems = useCallback(async (query: string) => {
     try {
-      setLoading(true);
-      setError(null);
-      
-      const results = query.trim() === '' 
-        ? await libraryApi.getAll() 
-        : await libraryApi.search(query);
-      
+      const results = await run(
+        () => query.trim() === '' ? libraryApi.getAll() : libraryApi.search(query),
+        'Failed to fetch library items',
+      );
       setRawItems(results);
-    } catch (err) {
-      const errorMessage = getErrorMessage(err, 'Failed to fetch library items');
-      setError(errorMessage);
+    } catch {
       setRawItems([]);
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  }, [run]);
 
   /**
    * Apply client-side filter to raw items
@@ -114,14 +106,11 @@ export function useLibrary(): UseLibraryReturn {
    * Delete item and refresh list
    */
   const deleteItem = async (id: number): Promise<void> => {
-    try {
-      await libraryApi.deleteItem(id);
-      await fetchItems(searchQuery);
-    } catch (err) {
-      const errorMessage = getErrorMessage(err, 'Failed to delete item');
-      setError(errorMessage);
-      throw err;
-    }
+    await execute(
+      () => libraryApi.deleteItem(id),
+      'Failed to delete item',
+    );
+    await fetchItems(searchQuery);
   };
 
   /**

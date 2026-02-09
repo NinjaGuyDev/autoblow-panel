@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { playlistApi, libraryApi } from '@/lib/apiClient';
-import { getErrorMessage } from '@/lib/getErrorMessage';
+import { useAsyncOperation } from '@/hooks/useAsyncOperation';
 import type { Playlist, PlaylistItem, LibraryItem } from '../../server/types/shared';
 
 export interface UsePlaylistManagerReturn {
@@ -40,8 +40,7 @@ export interface UsePlaylistManagerReturn {
  */
 export function usePlaylistManager(): UsePlaylistManagerReturn {
   const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  const { loading, error, run, execute } = useAsyncOperation(true);
   const [activePlaylist, setActivePlaylist] = useState<Playlist | null>(null);
   const [activeItems, setActiveItems] = useState<PlaylistItem[]>([]);
   const [libraryItems, setLibraryItems] = useState<LibraryItem[]>([]);
@@ -51,71 +50,54 @@ export function usePlaylistManager(): UsePlaylistManagerReturn {
    */
   const refresh = useCallback(async () => {
     try {
-      setLoading(true);
-      setError(null);
-      const results = await playlistApi.getAll();
+      const results = await run(
+        () => playlistApi.getAll(),
+        'Failed to fetch playlists',
+      );
       setPlaylists(results);
-    } catch (err) {
-      const errorMessage = getErrorMessage(err, 'Failed to fetch playlists');
-      setError(errorMessage);
+    } catch {
       setPlaylists([]);
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  }, [run]);
 
   /**
    * Create a new playlist
    */
   const createPlaylist = async (name: string, description?: string): Promise<Playlist> => {
-    try {
-      const created = await playlistApi.create({
-        name,
-        description: description || null,
-      });
-      await refresh();
-      return created;
-    } catch (err) {
-      const errorMessage = getErrorMessage(err, 'Failed to create playlist');
-      setError(errorMessage);
-      throw err;
-    }
+    const created = await execute(
+      () => playlistApi.create({ name, description: description || null }),
+      'Failed to create playlist',
+    );
+    await refresh();
+    return created;
   };
 
   /**
    * Delete a playlist
    */
   const deletePlaylist = async (id: number): Promise<void> => {
-    try {
-      await playlistApi.deletePlaylist(id);
-      // If deleting the active playlist, close it
-      if (activePlaylist?.id === id) {
-        setActivePlaylist(null);
-        setActiveItems([]);
-      }
-      await refresh();
-    } catch (err) {
-      const errorMessage = getErrorMessage(err, 'Failed to delete playlist');
-      setError(errorMessage);
-      throw err;
+    await execute(
+      () => playlistApi.deletePlaylist(id),
+      'Failed to delete playlist',
+    );
+    // If deleting the active playlist, close it
+    if (activePlaylist?.id === id) {
+      setActivePlaylist(null);
+      setActiveItems([]);
     }
+    await refresh();
   };
 
   /**
    * Select a playlist for editing
    */
   const selectPlaylist = async (id: number): Promise<void> => {
-    try {
-      setError(null);
-      const playlist = await playlistApi.getById(id);
-      const items = await playlistApi.getItems(id);
-      setActivePlaylist(playlist);
-      setActiveItems(items);
-    } catch (err) {
-      const errorMessage = getErrorMessage(err, 'Failed to load playlist');
-      setError(errorMessage);
-      throw err;
-    }
+    const [playlist, items] = await execute(
+      () => Promise.all([playlistApi.getById(id), playlistApi.getItems(id)]),
+      'Failed to load playlist',
+    );
+    setActivePlaylist(playlist);
+    setActiveItems(items);
   };
 
   /**
@@ -132,17 +114,14 @@ export function usePlaylistManager(): UsePlaylistManagerReturn {
   const addItem = async (libraryItemId: number): Promise<void> => {
     if (!activePlaylist) return;
 
-    try {
-      setError(null);
-      await playlistApi.addItem(activePlaylist.id, libraryItemId);
-      // Refresh items to get updated list with joined data
-      const items = await playlistApi.getItems(activePlaylist.id);
-      setActiveItems(items);
-    } catch (err) {
-      const errorMessage = getErrorMessage(err, 'Failed to add item to playlist');
-      setError(errorMessage);
-      throw err;
-    }
+    await execute(
+      async () => {
+        await playlistApi.addItem(activePlaylist.id, libraryItemId);
+        const items = await playlistApi.getItems(activePlaylist.id);
+        setActiveItems(items);
+      },
+      'Failed to add item to playlist',
+    );
   };
 
   /**
@@ -151,17 +130,14 @@ export function usePlaylistManager(): UsePlaylistManagerReturn {
   const removeItem = async (itemId: number): Promise<void> => {
     if (!activePlaylist) return;
 
-    try {
-      setError(null);
-      await playlistApi.removeItem(activePlaylist.id, itemId);
-      // Refresh items to get compacted positions
-      const items = await playlistApi.getItems(activePlaylist.id);
-      setActiveItems(items);
-    } catch (err) {
-      const errorMessage = getErrorMessage(err, 'Failed to remove item');
-      setError(errorMessage);
-      throw err;
-    }
+    await execute(
+      async () => {
+        await playlistApi.removeItem(activePlaylist.id, itemId);
+        const items = await playlistApi.getItems(activePlaylist.id);
+        setActiveItems(items);
+      },
+      'Failed to remove item',
+    );
   };
 
   /**
@@ -183,17 +159,17 @@ export function usePlaylistManager(): UsePlaylistManagerReturn {
     setActiveItems(reorderedItems);
 
     try {
-      setError(null);
-      await playlistApi.reorderItems(activePlaylist.id, itemIds);
-      // Refresh to sync with backend (in case of concurrent edits)
-      const items = await playlistApi.getItems(activePlaylist.id);
-      setActiveItems(items);
-    } catch (err) {
+      await execute(
+        async () => {
+          await playlistApi.reorderItems(activePlaylist.id, itemIds);
+          const items = await playlistApi.getItems(activePlaylist.id);
+          setActiveItems(items);
+        },
+        'Failed to reorder items',
+      );
+    } catch {
       // Revert on error
       setActiveItems(previousItems);
-      const errorMessage = getErrorMessage(err, 'Failed to reorder items');
-      setError(errorMessage);
-      throw err;
     }
   };
 
@@ -202,17 +178,12 @@ export function usePlaylistManager(): UsePlaylistManagerReturn {
    * Filters to only items with videoName (playlists are video-focused)
    */
   const loadLibraryItems = async (): Promise<void> => {
-    try {
-      setError(null);
-      const items = await libraryApi.getAll();
-      // Filter to video-associated items only
-      const videoItems = items.filter((item) => item.videoName !== null);
-      setLibraryItems(videoItems);
-    } catch (err) {
-      const errorMessage = getErrorMessage(err, 'Failed to load library items');
-      setError(errorMessage);
-      throw err;
-    }
+    const items = await execute(
+      () => libraryApi.getAll(),
+      'Failed to load library items',
+    );
+    const videoItems = items.filter((item) => item.videoName !== null);
+    setLibraryItems(videoItems);
   };
 
   /**
