@@ -17,6 +17,10 @@ export class PlaylistController {
   getById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        res.status(400).json({ error: 'Invalid id parameter — must be a number' });
+        return;
+      }
       const playlist = this.service.getPlaylistById(id);
       res.json(playlist);
     } catch (error) {
@@ -27,6 +31,10 @@ export class PlaylistController {
   getItems = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        res.status(400).json({ error: 'Invalid id parameter — must be a number' });
+        return;
+      }
       const items = this.service.getPlaylistItems(id);
       res.json(items);
     } catch (error) {
@@ -47,6 +55,10 @@ export class PlaylistController {
   update = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        res.status(400).json({ error: 'Invalid id parameter — must be a number' });
+        return;
+      }
       const data = req.body as UpdatePlaylistRequest;
       const playlist = this.service.updatePlaylist(id, data);
       res.json(playlist);
@@ -58,6 +70,10 @@ export class PlaylistController {
   delete = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        res.status(400).json({ error: 'Invalid id parameter — must be a number' });
+        return;
+      }
       this.service.deletePlaylist(id);
       res.status(204).send();
     } catch (error) {
@@ -68,6 +84,10 @@ export class PlaylistController {
   addItem = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        res.status(400).json({ error: 'Invalid id parameter — must be a number' });
+        return;
+      }
       const { libraryItemId } = req.body as AddPlaylistItemRequest;
       const item = this.service.addItem(id, libraryItemId);
       res.status(201).json(item);
@@ -79,6 +99,10 @@ export class PlaylistController {
   removeItem = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const itemId = parseInt(req.params.itemId, 10);
+      if (isNaN(itemId)) {
+        res.status(400).json({ error: 'Invalid itemId parameter — must be a number' });
+        return;
+      }
       this.service.removeItem(itemId);
       res.status(204).send();
     } catch (error) {
@@ -89,6 +113,10 @@ export class PlaylistController {
   reorderItems = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        res.status(400).json({ error: 'Invalid id parameter — must be a number' });
+        return;
+      }
       const { itemIds } = req.body as ReorderPlaylistItemsRequest;
       this.service.reorderItems(id, itemIds);
       res.status(204).send();
