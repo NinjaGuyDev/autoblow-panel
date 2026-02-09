@@ -1,3 +1,4 @@
+import type { SyntheticEvent } from 'react';
 import ReactPlayer from 'react-player';
 
 interface EmbedVideoPlayerProps {
@@ -10,12 +11,12 @@ interface EmbedVideoPlayerProps {
   onDuration: (duration: number) => void;
   onError: (e: unknown) => void;
   onEnded: () => void;
-  playerRef: React.RefObject<ReactPlayer | null>;
+  playerRef: React.RefObject<HTMLVideoElement | null>;
 }
 
 /**
- * Wrapper component for ReactPlayer with custom configuration
- * Provides consistent API for embedded video platforms (YouTube, Vimeo, etc.)
+ * Wrapper component for ReactPlayer v3 with custom configuration
+ * Adapts native video element events to v2-style callbacks for useEmbedPlayback
  */
 export function EmbedVideoPlayer({
   url,
@@ -29,6 +30,17 @@ export function EmbedVideoPlayer({
   onEnded,
   playerRef,
 }: EmbedVideoPlayerProps) {
+  const handleTimeUpdate = (e: SyntheticEvent<HTMLVideoElement>) => {
+    onProgress({ playedSeconds: e.currentTarget.currentTime });
+  };
+
+  const handleDurationChange = (e: SyntheticEvent<HTMLVideoElement>) => {
+    const dur = e.currentTarget.duration;
+    if (dur && isFinite(dur)) {
+      onDuration(dur);
+    }
+  };
+
   return (
     <div
       className="w-full bg-black rounded-t-lg overflow-hidden"
@@ -36,31 +48,25 @@ export function EmbedVideoPlayer({
     >
       <ReactPlayer
         ref={playerRef}
-        url={url}
+        src={url}
         playing={playing}
         controls={false}
         width="100%"
         height="100%"
-        style={{ aspectRatio: '16/9' }}
-        progressInterval={250}
         onReady={onReady}
         onPlay={onPlay}
         onPause={onPause}
-        onProgress={onProgress}
-        onDuration={onDuration}
+        onTimeUpdate={handleTimeUpdate}
+        onDurationChange={handleDurationChange}
         onError={onError}
         onEnded={onEnded}
         config={{
           youtube: {
-            playerVars: {
-              modestbranding: 1,
-            },
+            modestbranding: 1,
           },
           vimeo: {
-            playerOptions: {
-              byline: false,
-              title: false,
-            },
+            byline: false,
+            title: false,
           },
         }}
       />

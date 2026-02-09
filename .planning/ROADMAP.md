@@ -109,7 +109,7 @@ Plans:
 - [x] 14-01-PLAN.md — Backend API + database schema for playlist CRUD
 - [x] 14-02-PLAN.md — Playlist management UI with drag-and-drop reordering
 - [x] 14-03-PLAN.md — Sequential playlist playback with preloading
-- [ ] 14-04-PLAN.md — Fix stale closure bug in initial playlist playback (gap closure)
+- [x] 14-04-PLAN.md — Fix stale closure bug in initial playlist playback (gap closure)
 
 #### Phase 15: Embedded Video Integration
 **Goal**: Users can play third-party videos with funscript sync
@@ -121,10 +121,11 @@ Plans:
   3. User can store embed links in library with associated funscripts
   4. Same playback controls (play/pause/seek) work for both local and embedded videos
   5. Platform detection switches between auto-sync (YouTube/Vimeo) and manual-sync (unsupported)
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 15-01: TBD
+- [x] 15-01-PLAN.md — Foundation: types, utils, react-player, EmbedVideoPlayer, useEmbedPlayback, useManualSync, ManualSyncControls
+- [x] 15-02-PLAN.md — Integration: update VideoPlayer/VideoLoader, useSyncPlayback, VideoSyncPage, App.tsx, LibraryPage for embed support
 
 #### Phase 16: Security Hardening + Docker Deployment
 **Goal**: Production-ready deployment with security hardening
@@ -161,6 +162,6 @@ Phases execute in numeric order: 10 → 11 → 12 → 13 → 14 → 15 → 16
 | 11. Script Smoothing | v1.1 | 2/2 | Complete | 2026-02-08 |
 | 12. Pattern Editing | v1.1 | 2/2 | Complete | 2026-02-08 |
 | 13. Pattern Builder | v1.1 | 2/2 | Complete | 2026-02-08 |
-| 14. Playlist Management | v1.1 | 3/4 | Gap closure | - |
-| 15. Embedded Video Integration | v1.1 | 0/TBD | Not started | - |
+| 14. Playlist Management | v1.1 | 4/4 | Complete | 2026-02-08 |
+| 15. Embedded Video Integration | v1.1 | 2/2 | Complete | 2026-02-09 |
 | 16. Security Hardening + Docker Deployment | v1.1 | 0/TBD | Not started | - |

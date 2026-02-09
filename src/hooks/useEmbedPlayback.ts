@@ -1,5 +1,4 @@
 import { useState, useEffect, type RefObject } from 'react';
-import type ReactPlayer from 'react-player';
 
 interface UseEmbedPlaybackReturn {
   isPlaying: boolean;
@@ -9,7 +8,7 @@ interface UseEmbedPlaybackReturn {
   isReady: boolean;
   togglePlayPause: () => void;
   seek: (time: number) => void;
-  // Callbacks for ReactPlayer props
+  // Callbacks for EmbedVideoPlayer (v2-style adapter interface)
   onReady: () => void;
   onPlay: () => void;
   onPause: () => void;
@@ -20,7 +19,7 @@ interface UseEmbedPlaybackReturn {
 }
 
 interface UseEmbedPlaybackProps {
-  playerRef: RefObject<ReactPlayer | null>;
+  playerRef: RefObject<HTMLVideoElement | null>;
   embedUrl: string | null;
 }
 
@@ -52,8 +51,8 @@ export function useEmbedPlayback({
   };
 
   const seek = (time: number) => {
-    if (!isReady) return;
-    playerRef.current?.seekTo(time, 'seconds');
+    if (!isReady || !playerRef.current) return;
+    playerRef.current.currentTime = time;
   };
 
   // ReactPlayer callback handlers

@@ -1,5 +1,4 @@
 import { useEffect } from 'react';
-import ReactPlayer from 'react-player';
 import { VideoControls } from './VideoControls';
 import { EmbedVideoPlayer } from './EmbedVideoPlayer';
 
@@ -15,7 +14,7 @@ interface VideoPlayerProps {
   // Embed support
   isEmbed?: boolean;
   // Embed-specific props (only used when isEmbed=true)
-  embedPlayerRef?: React.RefObject<ReactPlayer | null>;
+  embedPlayerRef?: React.RefObject<HTMLVideoElement | null>;
   embedPlaying?: boolean;
   onEmbedReady?: () => void;
   onEmbedPlay?: () => void;

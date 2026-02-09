@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import ReactPlayer from 'react-player';
 import { FileDropzone } from './FileDropzone';
 import { VideoPlayer } from '../video-player/VideoPlayer';
 
@@ -20,7 +19,7 @@ interface VideoLoaderProps {
   // Embed support
   isEmbed?: boolean;
   onEmbedUrlSubmit?: (url: string) => void;
-  embedPlayerRef?: React.RefObject<ReactPlayer | null>;
+  embedPlayerRef?: React.RefObject<HTMLVideoElement | null>;
   embedPlaying?: boolean;
   onEmbedReady?: () => void;
   onEmbedPlay?: () => void;

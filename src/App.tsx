@@ -1,5 +1,4 @@
 import { useEffect, useState, useRef } from 'react';
-import type ReactPlayer from 'react-player';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Layout } from '@/components/layout/Layout';
 import { AppHeader } from '@/components/layout/AppHeader';
@@ -78,7 +77,7 @@ function App() {
   } = useVideoPlayback(videoRef, videoUrl);
 
   // Embed playback state
-  const embedPlayerRef = useRef<ReactPlayer>(null);
+  const embedPlayerRef = useRef<HTMLVideoElement>(null);
   const isEmbed = isEmbedUrl(videoName);
   const platformConfig = detectPlatformConfig(isEmbed ? videoUrl : null);
 

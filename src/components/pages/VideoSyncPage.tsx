@@ -1,4 +1,3 @@
-import type ReactPlayer from 'react-player';
 import { VideoLoader } from '@/components/file-loader/VideoLoader';
 import { FunscriptLoader } from '@/components/file-loader/FunscriptLoader';
 import { SyncStatus } from '@/components/device-control/SyncStatus';
@@ -53,7 +52,7 @@ interface VideoSyncPageProps {
   platformConfig?: PlatformConfig;
   onEmbedUrlSubmit?: (url: string) => void;
   // Embed player callbacks (forwarded to VideoLoader -> VideoPlayer -> EmbedVideoPlayer)
-  embedPlayerRef?: React.RefObject<ReactPlayer | null>;
+  embedPlayerRef?: React.RefObject<HTMLVideoElement | null>;
   embedPlaying?: boolean;
   onEmbedReady?: () => void;
   onEmbedPlay?: () => void;
