@@ -89,6 +89,121 @@ describe('thinOscillations', () => {
     expect(result.length).toBe(3);
   });
 
+  it('should thin long mixed-speed segment where rapid oscillations are diluted by slow edges', () => {
+    // Real data from a funscript with a long mixed-speed segment (28.5s–44.5s)
+    // Mean interval = 468ms (above 450ms threshold), median = 210ms (below threshold)
+    // The rapid 168-210ms oscillations at 33-35.5s should trigger thinning
+    const actions = [
+      makeAction(28555, 100),
+      makeAction(30326, 0),    // 1771ms gap (slow)
+      makeAction(32246, 100),  // 1920ms gap (slow)
+      makeAction(32414, 78),
+      makeAction(32666, 100),
+      makeAction(32834, 78),
+      makeAction(32950, 100),
+      makeAction(33118, 89),
+      makeAction(33286, 100),
+      makeAction(33496, 78),   // Rapid oscillation region starts
+      makeAction(33664, 100),  // 168ms
+      makeAction(33874, 78),   // 210ms
+      makeAction(34084, 100),  // 210ms
+      makeAction(34252, 78),   // 168ms
+      makeAction(34420, 100),  // 168ms
+      makeAction(34630, 78),   // 210ms
+      makeAction(34840, 100),  // 210ms
+      makeAction(35008, 78),   // 168ms
+      makeAction(35176, 100),  // 168ms - Rapid region ends
+      makeAction(35723, 56),   // 547ms gap (slow)
+      makeAction(36773, 100),  // 1050ms gap (slow)
+      makeAction(37613, 56),
+      makeAction(38537, 100),
+      makeAction(39461, 56),
+      makeAction(40091, 100),
+      makeAction(40301, 56),
+      makeAction(41309, 100),
+      makeAction(42085, 44),
+      makeAction(43409, 100),
+      makeAction(43619, 78),
+      makeAction(43871, 100),
+      makeAction(44123, 78),
+      makeAction(44314, 100),
+      makeAction(44440, 78),
+      makeAction(44482, 100),
+    ];
+
+    const result = smoothFunscript(actions, {
+      ...DEFAULT_SMOOTHING_OPTIONS,
+      speedCapping: { ...DEFAULT_SMOOTHING_OPTIONS.speedCapping, maxSpeed: 1000 },
+      spikeRemoval: { ...DEFAULT_SMOOTHING_OPTIONS.spikeRemoval, minSpeed: 1000 },
+    });
+
+    // Should thin — the segment has 33 reversals, range 100, median interval 210ms
+    expect(result.length).toBeLessThan(actions.length);
+  });
+
+  it('should thin synthetic mixed-speed segment with rapid core and slow edges', () => {
+    // Synthetic segment: slow 2000ms edges + rapid 150ms core
+    // Mean interval = (2000+2000+150*8) / 11 = 472ms (above threshold)
+    // Median interval = 150ms (below threshold)
+    const actions = [
+      makeAction(0, 0),
+      makeAction(2000, 100),    // 2000ms (slow edge)
+      makeAction(4000, 0),      // 2000ms (slow edge)
+      makeAction(4150, 100),    // 150ms (rapid)
+      makeAction(4300, 0),      // 150ms
+      makeAction(4450, 100),    // 150ms
+      makeAction(4600, 0),      // 150ms
+      makeAction(4750, 100),    // 150ms
+      makeAction(4900, 0),      // 150ms
+      makeAction(5050, 100),    // 150ms
+      makeAction(5200, 0),      // 150ms
+      makeAction(5350, 100),    // 150ms
+      makeAction(7350, 0),      // 2000ms (slow edge)
+    ];
+
+    const result = smoothFunscript(actions, {
+      ...DEFAULT_SMOOTHING_OPTIONS,
+      speedCapping: { ...DEFAULT_SMOOTHING_OPTIONS.speedCapping, maxSpeed: 1000 },
+      spikeRemoval: { ...DEFAULT_SMOOTHING_OPTIONS.spikeRemoval, minSpeed: 1000 },
+    });
+
+    expect(result.length).toBeLessThan(actions.length);
+  });
+
+  it('should split segments at large time gaps (maxIntervalMs)', () => {
+    // Two rapid oscillation clusters separated by a 1500ms gap
+    // Without splitting: one 14-action segment, sub-threshold reversals in each half
+    // With splitting: two independent segments, each evaluated on its own merits
+    const rapidCluster1 = [
+      makeAction(0, 0),
+      makeAction(150, 100),
+      makeAction(300, 0),
+      makeAction(450, 100),
+      makeAction(600, 0),
+      makeAction(750, 100),
+      makeAction(900, 0),
+    ];
+    const rapidCluster2 = [
+      makeAction(2400, 100),  // 1500ms gap from previous — exceeds maxIntervalMs (400)
+      makeAction(2550, 0),
+      makeAction(2700, 100),
+      makeAction(2850, 0),
+      makeAction(3000, 100),
+      makeAction(3150, 0),
+      makeAction(3300, 100),
+    ];
+    const actions = [...rapidCluster1, ...rapidCluster2];
+
+    const result = smoothFunscript(actions, {
+      ...DEFAULT_SMOOTHING_OPTIONS,
+      speedCapping: { ...DEFAULT_SMOOTHING_OPTIONS.speedCapping, maxSpeed: 1000 },
+      spikeRemoval: { ...DEFAULT_SMOOTHING_OPTIONS.spikeRemoval, minSpeed: 1000 },
+    });
+
+    // Both clusters should be independently detected and thinned
+    expect(result.length).toBeLessThan(actions.length);
+  });
+
   it('should handle empty array', () => {
     const result = smoothFunscript([]);
     expect(result).toEqual([]);
