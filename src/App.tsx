@@ -64,7 +64,7 @@ function AppContent() {
   const [scriptName, setScriptName] = useState<string>('');
 
   // Device state from context
-  const { ultra, addLog } = useDevice();
+  const { ultra, addLog, isDeviceConnected } = useDevice();
 
   // Library state
   const library = useLibrary();
@@ -531,6 +531,8 @@ function AppContent() {
           actions={editableActions}
           onClose={handleCloseCreation}
           onExport={handleExport}
+          ultra={ultra}
+          isDeviceConnected={isDeviceConnected}
         />
       )}
     </div>
