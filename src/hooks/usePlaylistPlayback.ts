@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, RefObject } from 'react';
+import { useState, useEffect, useRef, type RefObject } from 'react';
 import { playlistApi, libraryApi } from '@/lib/apiClient';
 import type { PlaylistItem } from '../../server/types/shared';
 import type { Funscript } from '@/types/funscript';
@@ -76,13 +76,14 @@ export function usePlaylistPlayback({
   }, [currentIndex]);
 
   // Load current item's video and funscript
-  const loadCurrentItem = async (index: number) => {
-    if (index < 0 || index >= items.length) return;
+  const loadCurrentItem = async (index: number, itemsOverride?: PlaylistItem[]) => {
+    const activeItems = itemsOverride ?? items;
+    if (index < 0 || index >= activeItems.length) return;
 
     transitioningRef.current = true;
 
     try {
-      const item = items[index];
+      const item = activeItems[index];
 
       // Fetch full library item to get funscriptData
       const libraryItem = await libraryApi.getById(item.libraryItemId);
@@ -103,7 +104,7 @@ export function usePlaylistPlayback({
       );
 
       // Trigger preload of next item after loading completes
-      preloadNextVideo(index);
+      preloadNextVideo(index, activeItems);
     } catch (err) {
       console.error('Failed to load playlist item:', err);
     } finally {
@@ -112,14 +113,14 @@ export function usePlaylistPlayback({
   };
 
   // Preload next video using hidden element
-  const preloadNextVideo = (currentIdx: number) => {
+  const preloadNextVideo = (currentIdx: number, activeItems: PlaylistItem[]) => {
     const nextIdx = currentIdx + 1;
-    if (nextIdx >= items.length) {
+    if (nextIdx >= activeItems.length) {
       setIsPreloading(false);
       return;
     }
 
-    const nextItem = items[nextIdx];
+    const nextItem = activeItems[nextIdx];
     if (!nextItem?.videoName) {
       setIsPreloading(false);
       return;
@@ -159,7 +160,7 @@ export function usePlaylistPlayback({
       setPlaylistId(id);
       setItems(playlistItems);
       setCurrentIndex(0);
-      await loadCurrentItem(0);
+      await loadCurrentItem(0, playlistItems);
     } catch (err) {
       console.error('Failed to start playlist:', err);
       throw err;
