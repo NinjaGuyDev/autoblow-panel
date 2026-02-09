@@ -13,6 +13,7 @@ interface VideoPlayerProps {
   onSeek: (time: number) => void;
   // Embed support
   isEmbed?: boolean;
+  iframeEmbed?: boolean;
   // Embed-specific props (only used when isEmbed=true)
   embedPlayerRef?: React.RefObject<HTMLVideoElement | null>;
   embedPlaying?: boolean;
@@ -40,6 +41,7 @@ export function VideoPlayer({
   onTogglePlayPause,
   onSeek,
   isEmbed = false,
+  iframeEmbed = false,
   embedPlayerRef,
   embedPlaying,
   onEmbedReady,
@@ -117,15 +119,17 @@ export function VideoPlayer({
         />
       )}
 
-      {/* Custom controls */}
-      <VideoControls
-        isPlaying={isPlaying}
-        currentTime={currentTime}
-        duration={duration}
-        onTogglePlayPause={onTogglePlayPause}
-        onSeek={onSeek}
-        error={error}
-      />
+      {/* Custom controls - hidden for iframe embeds (no programmatic control) */}
+      {!iframeEmbed && (
+        <VideoControls
+          isPlaying={isPlaying}
+          currentTime={currentTime}
+          duration={duration}
+          onTogglePlayPause={onTogglePlayPause}
+          onSeek={onSeek}
+          error={error}
+        />
+      )}
     </div>
   );
 }

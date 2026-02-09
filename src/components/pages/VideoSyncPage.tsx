@@ -49,6 +49,7 @@ interface VideoSyncPageProps {
 
   // Embed support props
   isEmbed?: boolean;
+  iframeEmbed?: boolean;
   platformConfig?: PlatformConfig;
   onEmbedUrlSubmit?: (url: string) => void;
   // Embed player callbacks (forwarded to VideoLoader -> VideoPlayer -> EmbedVideoPlayer)
@@ -66,6 +67,8 @@ interface VideoSyncPageProps {
   onManualSyncOffsetChange?: (offset: number) => void;
   onManualSyncReset?: () => void;
   manualSyncStepMs?: number;
+  isScriptPlaying?: boolean;
+  onToggleScript?: () => void;
 }
 
 /**
@@ -103,6 +106,7 @@ export function VideoSyncPage({
   timelineElement,
   videoLoadHint,
   isEmbed,
+  iframeEmbed,
   platformConfig,
   onEmbedUrlSubmit,
   embedPlayerRef,
@@ -118,6 +122,8 @@ export function VideoSyncPage({
   onManualSyncOffsetChange,
   onManualSyncReset,
   manualSyncStepMs,
+  isScriptPlaying,
+  onToggleScript,
 }: VideoSyncPageProps) {
   return (
     <div role="tabpanel" id="panel-video-sync" aria-labelledby="tab-video-sync">
@@ -146,6 +152,7 @@ export function VideoSyncPage({
             onTogglePlayPause={onTogglePlayPause}
             onSeek={onSeek}
             isEmbed={isEmbed}
+            iframeEmbed={iframeEmbed}
             onEmbedUrlSubmit={onEmbedUrlSubmit}
             embedPlayerRef={embedPlayerRef}
             embedPlaying={embedPlaying}
@@ -180,6 +187,8 @@ export function VideoSyncPage({
               onOffsetChange={onManualSyncOffsetChange!}
               onReset={onManualSyncReset!}
               stepMs={manualSyncStepMs ?? 50}
+              isScriptPlaying={isScriptPlaying}
+              onToggleScript={onToggleScript}
             />
           </div>
         )}

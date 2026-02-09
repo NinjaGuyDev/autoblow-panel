@@ -18,6 +18,7 @@ interface VideoLoaderProps {
   onSeek: (time: number) => void;
   // Embed support
   isEmbed?: boolean;
+  iframeEmbed?: boolean;
   onEmbedUrlSubmit?: (url: string) => void;
   embedPlayerRef?: React.RefObject<HTMLVideoElement | null>;
   embedPlaying?: boolean;
@@ -45,6 +46,7 @@ export function VideoLoader({
   onTogglePlayPause,
   onSeek,
   isEmbed = false,
+  iframeEmbed = false,
   onEmbedUrlSubmit,
   embedPlayerRef,
   embedPlaying,
@@ -127,6 +129,7 @@ export function VideoLoader({
           onTogglePlayPause={onTogglePlayPause}
           onSeek={onSeek}
           isEmbed={isEmbed}
+          iframeEmbed={iframeEmbed}
           embedPlayerRef={embedPlayerRef}
           embedPlaying={embedPlaying}
           onEmbedReady={onEmbedReady}

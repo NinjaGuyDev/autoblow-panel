@@ -87,6 +87,7 @@ function App() {
   });
 
   const manualSync = useManualSync(platformConfig.requiresManualOffset && isEmbed);
+  const iframeEmbed = isEmbed && !platformConfig.canPlay;
 
   // Unified playback values - select between local and embed
   const activeIsPlaying = isEmbed ? embedPlayback.isPlaying : isPlaying;
@@ -479,6 +480,7 @@ function App() {
                 onToggleTimeline={() => setShowTimeline(!showTimeline)}
                 videoLoadHint={videoLoadHint}
                 isEmbed={isEmbed}
+                iframeEmbed={iframeEmbed}
                 platformConfig={platformConfig}
                 onEmbedUrlSubmit={handleEmbedUrlLoad}
                 embedPlayerRef={embedPlayerRef}
@@ -494,6 +496,8 @@ function App() {
                 onManualSyncOffsetChange={manualSync.setOffsetMs}
                 onManualSyncReset={manualSync.resetOffset}
                 manualSyncStepMs={manualSync.OFFSET_STEP_MS}
+                isScriptPlaying={embedPlayback.isPlaying}
+                onToggleScript={embedPlayback.togglePlayPause}
                 timelineElement={
                   showTimeline && videoUrl ? (
                     <Timeline
