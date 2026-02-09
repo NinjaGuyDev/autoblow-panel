@@ -44,7 +44,7 @@ export const TimelineSeekBar = React.memo<TimelineSeekBarProps>(
     if (durationMs === 0 || width === 0) {
       return (
         <div
-          className="bg-zinc-900 border-t border-muted"
+          className="bg-stone-950 border-t border-stone-800"
           style={{ height: `${SEEKBAR_HEIGHT}px` }}
         />
       );
@@ -106,7 +106,7 @@ export const TimelineSeekBar = React.memo<TimelineSeekBarProps>(
 
     return (
       <div
-        className="relative bg-zinc-900 border-t border-muted cursor-pointer"
+        className="relative bg-stone-950 border-t border-stone-800 cursor-pointer"
         style={{ height: `${SEEKBAR_HEIGHT}px`, width: `${width}px` }}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
@@ -115,7 +115,7 @@ export const TimelineSeekBar = React.memo<TimelineSeekBarProps>(
       >
         {/* Viewport window indicator */}
         <div
-          className="absolute top-0 bottom-0 bg-blue-500/30 border-l border-r border-blue-400/50"
+          className="absolute top-0 bottom-0 bg-amber-500/30 border-l border-r border-amber-400/50"
           style={{
             left: `${viewportLeft}px`,
             width: `${viewportWidth}px`,

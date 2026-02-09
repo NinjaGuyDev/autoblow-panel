@@ -17,8 +17,8 @@ export function DeviceLogPage() {
   const getTypeBadge = (type: DeviceLogEntry['type']) => {
     const configs = {
       sent: {
-        bg: 'bg-blue-500/20',
-        text: 'text-blue-400',
+        bg: 'bg-amber-500/20',
+        text: 'text-amber-400',
         label: 'SENT',
       },
       received: {
@@ -27,8 +27,8 @@ export function DeviceLogPage() {
         label: 'RECV',
       },
       info: {
-        bg: 'bg-muted',
-        text: 'text-muted-foreground',
+        bg: 'bg-stone-800/50',
+        text: 'text-stone-500',
         label: 'INFO',
       },
       error: {
@@ -51,14 +51,14 @@ export function DeviceLogPage() {
   return (
     <div role="tabpanel" id="panel-device-log" aria-labelledby="tab-device-log">
       <div className="max-w-6xl mx-auto">
-        <div className="bg-card border border-muted rounded-lg p-6">
+        <div className="bg-stone-900/50 border border-stone-800 rounded-xl p-6">
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Device Communication Log</h2>
+            <h2 className="text-xl font-semibold text-stone-200" style={{ fontFamily: 'var(--font-display)' }}>Device Communication Log</h2>
             {logs.length > 0 && (
               <button
                 onClick={clearLogs}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
+                className="text-sm text-stone-500 hover:text-stone-200 transition-colors"
               >
                 Clear
               </button>
@@ -67,18 +67,18 @@ export function DeviceLogPage() {
 
           {/* Log display */}
           {logs.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-stone-500">
               No device communication logs yet. Connect a device and interact with it to see logs.
             </p>
           ) : (
             <div className="font-mono text-sm space-y-1 max-h-[600px] overflow-y-auto">
               {logs.map((entry, index) => (
                 <div key={index} className="flex gap-2">
-                  <span className="text-primary shrink-0">
+                  <span className="text-amber-500 shrink-0" style={{ fontFamily: 'var(--font-mono)' }}>
                     [{formatTimestamp(entry.timestamp)}]
                   </span>
                   {getTypeBadge(entry.type)}
-                  <span className="text-foreground">{entry.message}</span>
+                  <span className="text-stone-200">{entry.message}</span>
                 </div>
               ))}
             </div>

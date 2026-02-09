@@ -47,11 +47,11 @@ export function ManualControls({
   return (
     <div className="space-y-4">
       {/* Header */}
-      <h2 className="text-lg font-semibold">Manual Control</h2>
+      <h2 className="text-lg font-semibold" style={{ fontFamily: 'var(--font-display)' }}>Manual Control</h2>
 
       {/* Not connected message */}
       {!isConnected && (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-stone-500">
           Connect device to use manual controls
         </p>
       )}
@@ -68,8 +68,8 @@ export function ManualControls({
               className={`
                 flex-1 px-3 py-1.5 text-xs rounded border font-medium
                 ${patternType === type
-                  ? 'bg-blue-600 text-white border-blue-600 shadow-md ring-2 ring-blue-400/50'
-                  : 'bg-zinc-800 text-zinc-400 border-zinc-700 hover:text-zinc-200 hover:border-zinc-600'
+                  ? 'bg-amber-700 text-white border-amber-700 shadow-md ring-2 ring-amber-400/50'
+                  : 'bg-stone-800 text-stone-400 border-stone-700 hover:text-stone-200 hover:border-stone-600'
                 }
                 disabled:opacity-50 disabled:cursor-not-allowed
                 transition-all
@@ -88,8 +88,8 @@ export function ManualControls({
         className={`
           w-full px-4 py-2 rounded text-sm font-medium
           ${isRunning
-            ? 'bg-red-600 hover:bg-red-700 text-white'
-            : 'bg-green-600 hover:bg-green-700 text-white'
+            ? 'bg-orange-700 hover:bg-orange-600 text-white'
+            : 'bg-amber-700 hover:bg-amber-600 text-white'
           }
           disabled:opacity-50 disabled:cursor-not-allowed
           transition-colors
@@ -101,7 +101,7 @@ export function ManualControls({
       {/* Speed Slider */}
       <div>
         <label className="text-sm font-medium mb-2 block">
-          Speed: {speed}
+          Speed: <span style={{ fontFamily: 'var(--font-mono)' }}>{speed}</span>
         </label>
         <input
           type="range"
@@ -110,14 +110,15 @@ export function ManualControls({
           value={speed}
           onChange={(e) => onParamChange({ speed: parseInt(e.target.value) })}
           disabled={!isConnected}
-          className="w-full accent-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ accentColor: '#b45309' }}
         />
       </div>
 
       {/* Min Position Slider */}
       <div>
         <label className="text-sm font-medium mb-2 block">
-          Min Position: {minY}%
+          Min Position: <span style={{ fontFamily: 'var(--font-mono)' }}>{minY}%</span>
         </label>
         <input
           type="range"
@@ -126,14 +127,15 @@ export function ManualControls({
           value={minY}
           onChange={(e) => onParamChange({ minY: parseInt(e.target.value) })}
           disabled={!isConnected}
-          className="w-full accent-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ accentColor: '#b45309' }}
         />
       </div>
 
       {/* Max Position Slider */}
       <div>
         <label className="text-sm font-medium mb-2 block">
-          Max Position: {maxY}%
+          Max Position: <span style={{ fontFamily: 'var(--font-mono)' }}>{maxY}%</span>
         </label>
         <input
           type="range"
@@ -142,16 +144,17 @@ export function ManualControls({
           value={maxY}
           onChange={(e) => onParamChange({ maxY: parseInt(e.target.value) })}
           disabled={!isConnected}
-          className="w-full accent-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ accentColor: '#b45309' }}
         />
       </div>
 
       {/* Increment Slider */}
       <div>
         <label className="text-sm font-medium mb-2 block">
-          Step Size: {increment}
+          Step Size: <span style={{ fontFamily: 'var(--font-mono)' }}>{increment}</span>
           {patternType === 'oscillation' && (
-            <span className="text-xs text-muted-foreground ml-2">
+            <span className="text-xs text-stone-500 ml-2">
               (SDK oscillation uses fixed steps)
             </span>
           )}
@@ -163,16 +166,17 @@ export function ManualControls({
           value={increment}
           onChange={(e) => onParamChange({ increment: parseInt(e.target.value) })}
           disabled={incrementDisabled}
-          className="w-full accent-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ accentColor: '#b45309' }}
         />
       </div>
 
       {/* Variability Slider */}
       <div>
         <label className="text-sm font-medium mb-2 block">
-          Variability: {variability}%
+          Variability: <span style={{ fontFamily: 'var(--font-mono)' }}>{variability}%</span>
           {patternType === 'oscillation' && (
-            <span className="text-xs text-muted-foreground ml-2">
+            <span className="text-xs text-stone-500 ml-2">
               (SDK oscillation has no variability)
             </span>
           )}
@@ -184,7 +188,8 @@ export function ManualControls({
           value={variability}
           onChange={(e) => onParamChange({ variability: parseInt(e.target.value) })}
           disabled={variabilityDisabled}
-          className="w-full accent-primary disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full disabled:opacity-50 disabled:cursor-not-allowed"
+          style={{ accentColor: '#b45309' }}
         />
       </div>
     </div>

@@ -71,11 +71,11 @@ function SortablePlaylistItem({
     <div
       ref={setNodeRef}
       style={style}
-      className="flex items-center gap-3 bg-card border border-border rounded-lg p-3 hover:border-muted-foreground transition-colors"
+      className="flex items-center gap-3 bg-stone-900/50 border border-stone-800 rounded-lg p-3 hover:border-stone-500 transition-colors"
     >
       {/* Drag handle */}
       <button
-        className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground"
+        className="cursor-grab active:cursor-grabbing text-stone-500 hover:text-stone-200"
         {...attributes}
         {...listeners}
       >
@@ -83,31 +83,31 @@ function SortablePlaylistItem({
       </button>
 
       {/* Position number */}
-      <div className="flex-shrink-0 w-8 text-center text-sm font-medium text-muted-foreground">
+      <div className="flex-shrink-0 w-8 text-center text-sm font-medium text-stone-500" style={{ fontFamily: 'var(--font-mono)' }}>
         {position + 1}
       </div>
 
       {/* Item details */}
       <div className="flex-1 min-w-0">
-        <div className="font-medium text-foreground truncate">
+        <div className="font-medium text-stone-200 truncate">
           {item.videoName || 'Unknown video'}
         </div>
         {item.funscriptName && (
-          <div className="text-sm text-muted-foreground truncate">
+          <div className="text-sm text-stone-500 truncate">
             {item.funscriptName}
           </div>
         )}
       </div>
 
       {/* Duration */}
-      <div className="flex-shrink-0 text-sm text-muted-foreground">
+      <div className="flex-shrink-0 text-sm text-stone-500" style={{ fontFamily: 'var(--font-mono)' }}>
         {formatDuration(item.duration ?? null)}
       </div>
 
       {/* Remove button */}
       <button
         onClick={() => onRemove(item.id)}
-        className="flex-shrink-0 p-1 text-destructive hover:bg-destructive hover:text-destructive-foreground rounded transition-colors"
+        className="flex-shrink-0 p-1 text-orange-400 hover:bg-orange-700 hover:text-white rounded transition-colors"
         title="Remove from playlist"
       >
         <X className="w-4 h-4" />
@@ -177,21 +177,21 @@ export function PlaylistEditor({
         <div className="flex items-center gap-4">
           <button
             onClick={onClose}
-            className="p-2 hover:bg-muted rounded-md transition-colors"
+            className="p-2 hover:bg-stone-800/50 rounded-md transition-colors"
             title="Back to playlists"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-foreground">{playlist.name}</h1>
+            <h1 className="text-2xl font-bold text-stone-200" style={{ fontFamily: 'var(--font-display)' }}>{playlist.name}</h1>
             {playlist.description && (
-              <p className="text-sm text-muted-foreground mt-1">{playlist.description}</p>
+              <p className="text-sm text-stone-500 mt-1">{playlist.description}</p>
             )}
           </div>
         </div>
         <button
           onClick={() => onPlay(playlist.id)}
-          className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-2 px-4 py-2 bg-amber-700 text-white rounded-md hover:bg-amber-600 transition-colors"
         >
           <Play className="w-4 h-4" />
           <span>Play Playlist</span>
@@ -201,15 +201,15 @@ export function PlaylistEditor({
       {/* Items list */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-foreground">
+          <h2 className="text-lg font-semibold text-stone-200" style={{ fontFamily: 'var(--font-display)' }}>
             Playlist Items ({items.length})
           </h2>
         </div>
 
         {items.length === 0 ? (
-          <div className="text-center py-12 bg-card border border-border rounded-lg">
-            <p className="text-muted-foreground">No videos in this playlist yet.</p>
-            <p className="text-sm text-muted-foreground mt-1">
+          <div className="text-center py-12 bg-stone-900/50 border border-stone-800 rounded-lg">
+            <p className="text-stone-500">No videos in this playlist yet.</p>
+            <p className="text-sm text-stone-500 mt-1">
               Add videos from your library below.
             </p>
           </div>
@@ -239,10 +239,10 @@ export function PlaylistEditor({
       </div>
 
       {/* Add videos section */}
-      <div className="bg-card border border-border rounded-lg p-4">
+      <div className="bg-stone-900/50 border border-stone-800 rounded-lg p-4">
         <button
           onClick={() => setShowAddSection(!showAddSection)}
-          className="flex items-center gap-2 text-foreground font-medium hover:text-primary transition-colors"
+          className="flex items-center gap-2 text-stone-200 font-medium hover:text-amber-500 transition-colors"
         >
           <Plus className="w-5 h-5" />
           <span>Add Videos to Playlist</span>
@@ -251,7 +251,7 @@ export function PlaylistEditor({
         {showAddSection && (
           <div className="mt-4">
             {availableItems.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-stone-500">
                 {libraryItems.length === 0
                   ? 'No videos in your library. Add videos to your library first.'
                   : 'All available videos are already in this playlist.'}
@@ -261,25 +261,25 @@ export function PlaylistEditor({
                 {availableItems.map((libItem) => (
                   <div
                     key={libItem.id}
-                    className="flex items-center gap-3 bg-muted/50 rounded-lg p-3 hover:bg-muted transition-colors"
+                    className="flex items-center gap-3 bg-stone-800/50 rounded-lg p-3 hover:bg-stone-800 transition-colors"
                   >
                     <div className="flex-1 min-w-0">
-                      <div className="font-medium text-foreground truncate">
+                      <div className="font-medium text-stone-200 truncate">
                         {libItem.videoName || 'Unknown video'}
                       </div>
                       {libItem.funscriptName && (
-                        <div className="text-sm text-muted-foreground truncate">
+                        <div className="text-sm text-stone-500 truncate">
                           {libItem.funscriptName}
                         </div>
                       )}
                     </div>
-                    <div className="flex-shrink-0 text-sm text-muted-foreground">
+                    <div className="flex-shrink-0 text-sm text-stone-500" style={{ fontFamily: 'var(--font-mono)' }}>
                       {formatDuration(libItem.duration)}
                     </div>
                     <button
                       onClick={() => handleAddItem(libItem.id)}
                       disabled={isAdding}
-                      className="flex-shrink-0 px-3 py-1 text-sm bg-primary text-primary-foreground rounded hover:bg-primary/90 transition-colors disabled:opacity-50"
+                      className="flex-shrink-0 px-3 py-1 text-sm bg-amber-700 text-white rounded hover:bg-amber-600 transition-colors disabled:opacity-50"
                     >
                       Add
                     </button>

@@ -29,11 +29,11 @@ export function PlaylistControls({
   const currentVideoName = currentItem?.videoName || currentItem?.funscriptName || 'Unknown';
 
   return (
-    <div className="bg-card border border-border rounded-lg px-4 py-2 flex items-center justify-between gap-4 mb-4">
+    <div className="bg-stone-900/50 border border-stone-800 rounded-lg px-4 py-2 flex items-center justify-between gap-4 mb-4">
       {/* Left: Stop button */}
       <button
         onClick={onStop}
-        className="hover:bg-muted rounded-md p-2 transition-colors"
+        className="hover:bg-stone-800/50 rounded-md p-2 transition-colors"
         title="Stop playlist"
       >
         <X className="h-4 w-4" />
@@ -44,7 +44,7 @@ export function PlaylistControls({
         <button
           onClick={onPrevious}
           disabled={isFirstItem}
-          className={`hover:bg-muted rounded-md p-2 transition-colors ${
+          className={`hover:bg-stone-800/50 rounded-md p-2 transition-colors ${
             isFirstItem ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           title="Previous video"
@@ -53,8 +53,8 @@ export function PlaylistControls({
         </button>
 
         <div className="flex items-center gap-2 text-sm font-medium">
-          <ListMusic className="h-4 w-4 text-muted-foreground" />
-          <span>
+          <ListMusic className="h-4 w-4 text-stone-500" />
+          <span style={{ fontFamily: 'var(--font-mono)' }}>
             {currentIndex + 1} of {totalItems}
           </span>
         </div>
@@ -62,7 +62,7 @@ export function PlaylistControls({
         <button
           onClick={onNext}
           disabled={isLastItem}
-          className={`hover:bg-muted rounded-md p-2 transition-colors ${
+          className={`hover:bg-stone-800/50 rounded-md p-2 transition-colors ${
             isLastItem ? 'opacity-50 cursor-not-allowed' : ''
           }`}
           title="Next video"
@@ -72,7 +72,7 @@ export function PlaylistControls({
       </div>
 
       {/* Right: Current video name */}
-      <div className="text-sm text-muted-foreground truncate max-w-xs">
+      <div className="text-sm text-stone-500 truncate max-w-xs">
         {currentVideoName}
       </div>
     </div>

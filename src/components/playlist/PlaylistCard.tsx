@@ -59,27 +59,27 @@ export function PlaylistCard({
   const itemCount = playlist.itemCount ?? 0;
 
   return (
-    <div className="relative bg-card border border-border rounded-lg p-4 hover:border-muted-foreground transition-colors">
+    <div className="relative bg-stone-900/50 border border-stone-800 rounded-lg p-4 hover:border-stone-500 transition-colors">
       {/* Icon and title */}
       <div className="flex items-start gap-3 mb-3">
-        <div className="flex-shrink-0 w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
-          <ListMusic className="w-5 h-5 text-primary" />
+        <div className="flex-shrink-0 w-10 h-10 bg-amber-700/20 rounded-lg flex items-center justify-center">
+          <ListMusic className="w-5 h-5 text-amber-500" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-lg font-semibold text-foreground truncate" title={playlist.name}>
+          <h3 className="text-lg font-semibold text-stone-200 truncate" title={playlist.name} style={{ fontFamily: 'var(--font-display)' }}>
             {playlist.name}
           </h3>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground mt-1">
+          <div className="flex items-center gap-2 text-xs text-stone-500 mt-1">
             <span>{itemCount} {itemCount === 1 ? 'video' : 'videos'}</span>
             <span>•</span>
-            <span>{formatRelativeTime(playlist.lastModified)}</span>
+            <span style={{ fontFamily: 'var(--font-mono)' }}>{formatRelativeTime(playlist.lastModified)}</span>
           </div>
         </div>
       </div>
 
       {/* Description */}
       {playlist.description && (
-        <p className="text-sm text-muted-foreground mb-4 line-clamp-2" title={playlist.description}>
+        <p className="text-sm text-stone-500 mb-4 line-clamp-2" title={playlist.description}>
           {playlist.description}
         </p>
       )}
@@ -88,14 +88,14 @@ export function PlaylistCard({
       <div className="flex gap-2 mt-4">
         <button
           onClick={() => onSelect(playlist.id)}
-          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-amber-700 text-white rounded-md hover:bg-amber-600 transition-colors"
         >
           <Edit className="w-4 h-4" />
           <span>Edit</span>
         </button>
         <button
           onClick={() => onPlay(playlist.id)}
-          className="px-3 py-2 border border-border rounded-md hover:bg-muted transition-colors"
+          className="px-3 py-2 border border-stone-800 rounded-md hover:bg-stone-800/50 transition-colors"
           title="Play playlist"
         >
           <Play className="w-4 h-4" />
@@ -103,7 +103,7 @@ export function PlaylistCard({
         <button
           onClick={handleDelete}
           disabled={isDeleting}
-          className="px-3 py-2 border border-destructive text-destructive rounded-md hover:bg-destructive hover:text-destructive-foreground transition-colors disabled:opacity-50"
+          className="px-3 py-2 border border-orange-700 text-orange-400 rounded-md hover:bg-orange-700 hover:text-white transition-colors disabled:opacity-50"
           title="Delete playlist"
         >
           <Trash2 className="w-4 h-4" />

@@ -63,15 +63,15 @@ export function CreatePlaylistDialog({
       onClick={handleBackdropClick}
       onKeyDown={handleKeyDown}
     >
-      <div className="bg-zinc-900 border border-zinc-700 rounded-lg max-w-md w-full p-6 shadow-2xl">
-        <h2 className="text-lg font-semibold text-zinc-200 mb-4">
+      <div className="bg-stone-900 border border-stone-700 rounded-lg max-w-md w-full p-6 shadow-2xl">
+        <h2 className="text-lg font-semibold text-stone-200 mb-4" style={{ fontFamily: 'var(--font-display)' }}>
           Create New Playlist
         </h2>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-4">
-            <label className="block text-sm text-zinc-400 mb-2">
-              Playlist Name <span className="text-red-500">*</span>
+            <label className="block text-sm text-stone-400 mb-2">
+              Playlist Name <span className="text-orange-400">*</span>
             </label>
             <input
               ref={nameInputRef}
@@ -79,13 +79,13 @@ export function CreatePlaylistDialog({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter playlist name..."
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-700 rounded text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 bg-stone-950 border border-stone-700 rounded text-stone-200 placeholder-stone-600 focus:outline-none focus:ring-2 focus:ring-amber-700/40"
               maxLength={100}
             />
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm text-zinc-400 mb-2">
+            <label className="block text-sm text-stone-400 mb-2">
               Description (optional)
             </label>
             <textarea
@@ -93,7 +93,7 @@ export function CreatePlaylistDialog({
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe this playlist..."
               rows={3}
-              className="w-full px-3 py-2 bg-zinc-950 border border-zinc-700 rounded text-zinc-200 placeholder-zinc-600 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+              className="w-full px-3 py-2 bg-stone-950 border border-stone-700 rounded text-stone-200 placeholder-stone-600 focus:outline-none focus:ring-2 focus:ring-amber-700/40 resize-none"
               maxLength={500}
             />
           </div>
@@ -102,14 +102,14 @@ export function CreatePlaylistDialog({
             <button
               type="submit"
               disabled={!name.trim()}
-              className="flex-1 px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-2 rounded bg-amber-700 text-white hover:bg-amber-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Create Playlist
             </button>
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 rounded border border-zinc-600 text-zinc-300 hover:bg-zinc-800 transition-colors"
+              className="px-4 py-2 rounded border border-stone-600 text-stone-300 hover:bg-stone-800 transition-colors"
             >
               Cancel
             </button>

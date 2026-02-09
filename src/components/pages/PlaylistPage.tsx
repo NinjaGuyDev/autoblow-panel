@@ -95,8 +95,8 @@ export function PlaylistPage({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-foreground">Playlists</h1>
-          <span className="px-2 py-1 text-sm bg-muted text-muted-foreground rounded-full">
+          <h1 className="text-2xl font-bold text-stone-200" style={{ fontFamily: 'var(--font-display)' }}>Playlists</h1>
+          <span className="px-2 py-1 text-sm bg-stone-800/50 text-stone-500 rounded-lg" style={{ fontFamily: 'var(--font-mono)' }}>
             {playlists.length} {playlists.length === 1 ? 'playlist' : 'playlists'}
           </span>
         </div>
@@ -104,14 +104,14 @@ export function PlaylistPage({
           <button
             onClick={() => refresh()}
             disabled={loading}
-            className="p-2 hover:bg-muted rounded-md transition-colors disabled:opacity-50"
+            className="p-2 hover:bg-stone-800/50 rounded-lg transition-colors disabled:opacity-50"
             title="Refresh playlists"
           >
             <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
           </button>
           <button
             onClick={() => setShowCreateDialog(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-600 transition-colors"
           >
             <Plus className="w-5 h-5" />
             <span>New Playlist</span>
@@ -121,14 +121,14 @@ export function PlaylistPage({
 
       {/* Error state */}
       {error && (
-        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-md mb-4">
+        <div className="bg-orange-700/10 border border-orange-700 text-orange-400 px-4 py-3 rounded-lg mb-4">
           {error}
         </div>
       )}
 
       {/* Loading state */}
       {loading && playlists.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
+        <div className="text-center py-12 text-stone-500">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2" />
           <p>Loading playlists...</p>
         </div>
@@ -137,16 +137,16 @@ export function PlaylistPage({
       {/* Empty state */}
       {!loading && playlists.length === 0 && (
         <div className="text-center py-12">
-          <ListMusic className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-xl font-semibold text-foreground mb-2">
+          <ListMusic className="w-16 h-16 mx-auto mb-4 text-stone-500" />
+          <h2 className="text-xl font-semibold text-stone-200 mb-2" style={{ fontFamily: 'var(--font-display)' }}>
             No playlists yet
           </h2>
-          <p className="text-muted-foreground mb-4">
+          <p className="text-stone-500 mb-4">
             Create your first playlist to organize your videos.
           </p>
           <button
             onClick={() => setShowCreateDialog(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-600 transition-colors"
           >
             <Plus className="w-5 h-5" />
             <span>Create Playlist</span>

@@ -7,9 +7,9 @@ interface AppHeaderProps {
 }
 
 /**
- * App header with title, device connection controls, and status indicator.
+ * App header with amber gradient logo, device connection controls, and status indicator.
  * Shows token input + connect button when disconnected.
- * Shows connection status icon button in all states.
+ * Shows animated connected indicator when connected.
  */
 export function AppHeader({
   onNewScript,
@@ -75,28 +75,48 @@ export function AppHeader({
       .join(' ');
   };
 
-  return (
-    <div className="flex items-center px-4 py-3">
-      {/* Left: App title */}
-      <h1 className="text-xl font-bold flex-shrink-0">Autoblow Panel</h1>
+  const connected = connectionState === 'connected';
 
-      {/* Center: New Script button */}
-      <div className="flex-1 flex justify-center">
-        <button
-          onClick={onNewScript}
-          className={`px-4 py-2 rounded font-medium transition-colors ${
-            isCreationMode
-              ? 'bg-green-600 text-white hover:bg-green-700'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
+  return (
+    <div className="flex items-center justify-between px-4 sm:px-6 lg:px-8 h-16">
+      {/* Left: Logo + title */}
+      <div className="flex items-center gap-3">
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+          style={{
+            background: 'linear-gradient(135deg, #c8956c 0%, #a07050 100%)',
+            fontFamily: 'var(--font-display)',
+          }}
         >
-          {isCreationMode ? '✓ Creating Script' : '+ New Script'}
-        </button>
+          A
+        </div>
+        <span
+          className="text-lg font-semibold text-stone-100 tracking-tight hidden sm:inline"
+          style={{ fontFamily: 'var(--font-display)' }}
+        >
+          Autoblow Panel
+        </span>
       </div>
 
       {/* Right: Connection controls */}
-      <div className="flex items-center gap-3 relative">
-        {/* Token input - shown when disconnected or error */}
+      <div className="flex items-center gap-3">
+        {/* Connected indicator badge */}
+        {connected && (
+          <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-md bg-emerald-950/40 border border-emerald-800/30">
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60 animate-ping" />
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-400" />
+            </span>
+            <span
+              className="text-[11px] font-semibold text-emerald-400 tracking-wide"
+              style={{ fontFamily: 'var(--font-mono)' }}
+            >
+              CONNECTED
+            </span>
+          </div>
+        )}
+
+        {/* Token input */}
         {(connectionState === 'disconnected' || connectionState === 'error') && (
           <input
             type="text"
@@ -104,13 +124,14 @@ export function AppHeader({
             onChange={(e) => setTokenValue(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Device Token"
-            className="bg-background border border-muted rounded px-3 py-1.5 text-sm w-64 focus:outline-none focus:ring-2 focus:ring-primary"
+            className="w-36 sm:w-48 rounded-lg border border-stone-800 bg-stone-900/60 px-3 py-2.5 text-sm text-stone-200 placeholder:text-stone-600 outline-none focus:ring-1 focus:ring-amber-700/40 focus:border-amber-800/60 transition-colors"
+            style={{ fontFamily: 'var(--font-mono)' }}
           />
         )}
 
         {/* Connecting state */}
         {connectionState === 'connecting' && (
-          <span className="text-sm text-muted-foreground">Connecting...</span>
+          <span className="text-sm text-stone-500">Connecting...</span>
         )}
 
         {/* Plug icon button */}
@@ -118,17 +139,17 @@ export function AppHeader({
           <button
             onClick={handlePlugClick}
             disabled={connectionState === 'connecting' || (connectionState !== 'connected' && !tokenValue.trim())}
-            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background ${
-              connectionState === 'connected'
-                ? 'bg-green-500 hover:bg-green-600 text-white'
+            className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all duration-200 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+              connected
+                ? 'bg-emerald-950/30 border border-emerald-700/60 text-emerald-400 hover:bg-emerald-950/50'
                 : connectionState === 'error'
-                ? 'bg-red-500 hover:bg-red-600 text-white'
+                ? 'bg-orange-900/30 border border-orange-700/60 text-orange-400 hover:bg-orange-900/50'
                 : connectionState === 'connecting'
-                ? 'bg-gray-500 text-white cursor-not-allowed'
-                : 'bg-primary hover:bg-primary/90 text-primary-foreground disabled:opacity-50 disabled:cursor-not-allowed'
+                ? 'bg-stone-800 border border-stone-700 text-stone-500 cursor-not-allowed animate-pulse'
+                : 'bg-transparent border border-stone-800 text-stone-400 hover:bg-stone-800 hover:text-stone-200'
             }`}
             aria-label={
-              connectionState === 'connected'
+              connected
                 ? `Connected to ${formatDeviceType(deviceInfo?.deviceType)}`
                 : connectionState === 'connecting'
                 ? 'Connecting...'
@@ -139,29 +160,34 @@ export function AppHeader({
             aria-expanded={showPopover}
             aria-haspopup="true"
           >
-            <span className="text-xl" aria-hidden="true">🔌</span>
+            <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="inline-block shrink-0">
+              <path d="M12 22v-5" />
+              <path d="M9 8V2" />
+              <path d="M15 8V2" />
+              <path d="M18 8v5a6 6 0 0 1-12 0V8z" />
+            </svg>
           </button>
 
           {/* Popover for connected state */}
-          {showPopover && connectionState === 'connected' && deviceInfo && (
-            <div className="absolute right-0 top-12 bg-card border border-muted rounded-lg shadow-xl p-4 min-w-[220px] z-50">
+          {showPopover && connected && deviceInfo && (
+            <div className="absolute right-0 top-12 rounded-xl border border-stone-800 bg-stone-900/95 shadow-xl p-4 min-w-[220px] z-50 backdrop-blur-sm">
               <div className="space-y-2">
                 <div>
-                  <p className="text-xs text-muted-foreground">Device Type</p>
-                  <p className="text-sm font-medium">{formatDeviceType(deviceInfo.deviceType)}</p>
+                  <p className="text-xs text-stone-500">Device Type</p>
+                  <p className="text-sm font-medium text-stone-200">{formatDeviceType(deviceInfo.deviceType)}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Firmware</p>
-                  <p className="text-sm">{deviceInfo.firmwareVersion}</p>
+                  <p className="text-xs text-stone-500">Firmware</p>
+                  <p className="text-sm text-stone-300">{deviceInfo.firmwareVersion}</p>
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground">Hardware</p>
-                  <p className="text-sm">{deviceInfo.hardwareVersion}</p>
+                  <p className="text-xs text-stone-500">Hardware</p>
+                  <p className="text-sm text-stone-300">{deviceInfo.hardwareVersion}</p>
                 </div>
               </div>
               <button
                 onClick={handleDisconnect}
-                className="w-full mt-4 px-3 py-2 bg-secondary text-secondary-foreground rounded hover:bg-secondary/80 text-sm transition-colors"
+                className="w-full mt-4 px-3 py-2 bg-stone-800 text-stone-300 rounded-lg hover:bg-stone-700 text-sm transition-colors"
               >
                 Disconnect
               </button>
@@ -170,8 +196,8 @@ export function AppHeader({
 
           {/* Error popover */}
           {showPopover && connectionState === 'error' && error && (
-            <div className="absolute right-0 top-12 bg-card border border-destructive rounded-lg shadow-xl p-4 min-w-[220px] z-50">
-              <p className="text-sm text-destructive">{error}</p>
+            <div className="absolute right-0 top-12 rounded-xl border border-orange-800/50 bg-stone-900/95 shadow-xl p-4 min-w-[220px] z-50 backdrop-blur-sm">
+              <p className="text-sm text-orange-400">{error}</p>
             </div>
           )}
         </div>

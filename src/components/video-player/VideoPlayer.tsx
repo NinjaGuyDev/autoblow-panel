@@ -95,7 +95,7 @@ export function VideoPlayer({
   }, [onTogglePlayPause, onSeek, currentTime, duration]);
 
   return (
-    <div className="rounded-lg overflow-hidden border border-muted">
+    <div className="rounded-lg overflow-hidden border border-stone-800">
       {/* Conditional video element or embed player */}
       {isEmbed ? (
         <EmbedVideoPlayer

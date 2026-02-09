@@ -74,11 +74,11 @@ export function VideoLoader({
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold">Video</h2>
+        <h2 className="text-xl font-semibold" style={{ fontFamily: 'var(--font-display)' }}>Video</h2>
         {videoUrl && (
           <button
             onClick={onVideoClear}
-            className="px-3 py-1 text-sm bg-red-500/10 text-red-500 hover:bg-red-500/20 rounded-md transition-colors"
+            className="px-3 py-1 text-sm bg-orange-500/10 text-orange-400 hover:bg-orange-500/20 rounded-md transition-colors"
           >
             Remove
           </button>
@@ -97,9 +97,9 @@ export function VideoLoader({
 
           {/* URL input section */}
           <div className="flex items-center gap-2 my-3">
-            <div className="flex-1 h-px bg-border"></div>
-            <span className="text-xs text-muted-foreground uppercase">or paste URL</span>
-            <div className="flex-1 h-px bg-border"></div>
+            <div className="flex-1 h-px bg-stone-800"></div>
+            <span className="text-xs text-stone-500 uppercase">or paste URL</span>
+            <div className="flex-1 h-px bg-stone-800"></div>
           </div>
           <form onSubmit={handleUrlSubmit} className="flex gap-2">
             <input
@@ -107,12 +107,12 @@ export function VideoLoader({
               value={urlInput}
               onChange={(e) => setUrlInput(e.target.value)}
               placeholder="https://youtube.com/watch?v=..."
-              className="flex-1 px-3 py-2 bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring text-sm"
+              className="flex-1 px-3 py-2 bg-stone-900/50 border border-stone-800 rounded-md text-stone-200 placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-700/40 text-sm"
             />
             <button
               type="submit"
               disabled={!urlInput.trim()}
-              className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 text-sm"
+              className="px-4 py-2 bg-amber-700 text-white rounded-md hover:bg-amber-600 transition-colors disabled:opacity-50 text-sm"
             >
               Load
             </button>

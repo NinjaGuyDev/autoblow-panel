@@ -67,7 +67,7 @@ export function ManualControlPage({
     <div role="tabpanel" id="panel-manual-control" aria-labelledby="tab-manual-control">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
         {/* Left column: Video */}
-        <div className="bg-card border border-muted rounded-lg p-6">
+        <div className="bg-stone-900/50 border border-stone-800 rounded-xl p-6">
           <VideoLoader
             videoFile={videoFile}
             videoUrl={videoUrl}
@@ -86,7 +86,7 @@ export function ManualControlPage({
         </div>
 
         {/* Right column: Manual controls */}
-        <div className="bg-card border border-muted rounded-lg p-6">
+        <div className="bg-stone-900/50 border border-stone-800 rounded-xl p-6">
           <ManualControls
             isRunning={isRunning}
             patternType={patternType}

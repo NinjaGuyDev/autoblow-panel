@@ -38,20 +38,20 @@ export function FileDropzone({
 
   // Determine border and background styles based on state
   const getBorderClass = () => {
-    if (error) return 'border-red-500';
-    if (isDragActive) return 'border-primary';
-    return 'border-muted';
+    if (error) return 'border-orange-500';
+    if (isDragActive) return 'border-amber-700';
+    return 'border-stone-800';
   };
 
   const getBgClass = () => {
-    if (disabled) return 'bg-muted/20';
-    if (isDragActive) return 'bg-muted/50';
-    return 'bg-muted/10';
+    if (disabled) return 'bg-stone-800/20';
+    if (isDragActive) return 'bg-stone-800/50';
+    return 'bg-stone-800/10';
   };
 
   const getTextClass = () => {
-    if (disabled) return 'text-muted-foreground/50';
-    return 'text-muted-foreground';
+    if (disabled) return 'text-stone-500/50';
+    return 'text-stone-500';
   };
 
   return (
@@ -63,7 +63,7 @@ export function FileDropzone({
           cursor-pointer transition-all
           ${getBorderClass()}
           ${getBgClass()}
-          ${disabled ? 'cursor-not-allowed' : 'hover:bg-muted/30'}
+          ${disabled ? 'cursor-not-allowed' : 'hover:bg-stone-800/30'}
         `}
       >
         <input {...getInputProps()} />
@@ -71,7 +71,7 @@ export function FileDropzone({
           {icon && <div className="text-4xl mb-2">{icon}</div>}
           <p className="text-lg font-semibold">{label}</p>
           {isDragActive ? (
-            <p className="text-sm text-primary">Drop file here...</p>
+            <p className="text-sm text-amber-500">Drop file here...</p>
           ) : (
             <>
               <p className={`text-sm ${getTextClass()}`}>
@@ -87,7 +87,7 @@ export function FileDropzone({
 
       {/* Show error messages */}
       {error && (
-        <p className="text-sm text-red-500 mt-2">{error}</p>
+        <p className="text-sm text-orange-400 mt-2">{error}</p>
       )}
 
       {/* Show file rejection errors */}
@@ -96,7 +96,7 @@ export function FileDropzone({
           {fileRejections.map(({ file, errors }) => (
             <div key={file.name}>
               {errors.map(e => (
-                <p key={e.code} className="text-sm text-red-500">
+                <p key={e.code} className="text-sm text-orange-400">
                   {file.name}: {e.message}
                 </p>
               ))}

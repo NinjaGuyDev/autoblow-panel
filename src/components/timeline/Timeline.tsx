@@ -259,10 +259,10 @@ export function Timeline({
     return (
       <div
         ref={containerRef}
-        className="bg-card border border-muted rounded-lg overflow-hidden"
+        className="bg-stone-900/50 border border-stone-800 rounded-lg overflow-hidden"
       >
         <div
-          className="flex items-center justify-center text-muted-foreground"
+          className="flex items-center justify-center text-stone-500"
           style={{ height: CANVAS_HEIGHT }}
         >
           Load a funscript to see the timeline
@@ -272,7 +272,7 @@ export function Timeline({
   }
 
   return (
-    <div ref={containerRef} className="bg-card border border-muted rounded-lg overflow-hidden">
+    <div ref={containerRef} className="bg-stone-900/50 border border-stone-800 rounded-lg overflow-hidden">
       <TimelineControls
         showActionPoints={isEditMode || showActionPoints}
         onToggleActionPoints={() => setShowActionPoints(!showActionPoints)}

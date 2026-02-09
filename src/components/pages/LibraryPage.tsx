@@ -39,7 +39,7 @@ function formatRelativeTime(isoString: string): string {
   if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
   if (diffDays === 1) return 'Yesterday';
   if (diffDays < 7) return `${diffDays} days ago`;
-  
+
   // Format as date for older items
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
@@ -95,15 +95,15 @@ export function LibraryPage({
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold text-foreground">Content Library</h1>
-          <span className="px-2 py-1 text-sm bg-muted text-muted-foreground rounded-full">
+          <h1 className="text-2xl font-bold text-stone-200" style={{ fontFamily: 'var(--font-display)' }}>Content Library</h1>
+          <span className="px-2 py-1 text-sm bg-stone-800/50 text-stone-500 rounded-lg" style={{ fontFamily: 'var(--font-mono)' }}>
             {items.length} {items.length === 1 ? 'item' : 'items'}
           </span>
         </div>
         <button
           onClick={() => refresh()}
           disabled={loading}
-          className="p-2 hover:bg-muted rounded-md transition-colors disabled:opacity-50"
+          className="p-2 hover:bg-stone-800/50 rounded-lg transition-colors disabled:opacity-50"
           title="Refresh library"
         >
           <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
@@ -112,13 +112,13 @@ export function LibraryPage({
 
       {/* Search bar */}
       <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-stone-500" />
         <input
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           placeholder="Search by video or script name..."
-          className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-md text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          className="w-full pl-10 pr-4 py-2 bg-stone-900/50 border border-stone-800 rounded-lg text-stone-200 placeholder:text-stone-500 focus:outline-none focus:ring-2 focus:ring-amber-700/40"
         />
       </div>
 
@@ -126,30 +126,30 @@ export function LibraryPage({
       <div className="flex gap-2 mb-6">
         <button
           onClick={() => setFilter('all')}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             filter === 'all'
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              ? 'bg-amber-700 text-white'
+              : 'bg-stone-800/50 text-stone-500 hover:bg-stone-800/80'
           }`}
         >
           All
         </button>
         <button
           onClick={() => setFilter('has-video')}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             filter === 'has-video'
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              ? 'bg-amber-700 text-white'
+              : 'bg-stone-800/50 text-stone-500 hover:bg-stone-800/80'
           }`}
         >
           Has Video
         </button>
         <button
           onClick={() => setFilter('has-funscript')}
-          className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
             filter === 'has-funscript'
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              ? 'bg-amber-700 text-white'
+              : 'bg-stone-800/50 text-stone-500 hover:bg-stone-800/80'
           }`}
         >
           Has Funscript
@@ -158,14 +158,14 @@ export function LibraryPage({
 
       {/* Error state */}
       {error && (
-        <div className="bg-destructive/10 border border-destructive text-destructive px-4 py-3 rounded-md mb-4">
+        <div className="bg-orange-700/10 border border-orange-700 text-orange-400 px-4 py-3 rounded-lg mb-4">
           {error}
         </div>
       )}
 
       {/* Loading state */}
       {loading && items.length === 0 && (
-        <div className="text-center py-12 text-muted-foreground">
+        <div className="text-center py-12 text-stone-500">
           <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2" />
           <p>Loading library...</p>
         </div>
@@ -174,12 +174,12 @@ export function LibraryPage({
       {/* Empty state */}
       {!loading && items.length === 0 && (
         <div className="text-center py-12">
-          <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-xl font-semibold text-foreground mb-2">
+          <FileText className="w-16 h-16 mx-auto mb-4 text-stone-500" />
+          <h2 className="text-xl font-semibold text-stone-200 mb-2" style={{ fontFamily: 'var(--font-display)' }}>
             {searchQuery ? `No results for "${searchQuery}"` : 'No items in your library yet'}
           </h2>
           {!searchQuery && (
-            <p className="text-muted-foreground">
+            <p className="text-stone-500">
               Load a video or funscript to get started.
             </p>
           )}
@@ -192,7 +192,7 @@ export function LibraryPage({
           {items.map((item) => (
             <div
               key={item.id}
-              className="relative bg-card border border-border rounded-lg overflow-hidden hover:border-muted-foreground transition-colors"
+              className="relative bg-stone-900/50 border border-stone-800 rounded-xl overflow-hidden hover:border-stone-600 transition-colors"
             >
               {/* Thumbnail background — low opacity, centered, covers full card (only for local videos) */}
               {item.videoName && !isEmbedUrl(item.videoName) && (
@@ -211,52 +211,52 @@ export function LibraryPage({
                 {/* Badges */}
                 <div className="flex gap-2 mb-3">
                   {item.videoName && !isEmbedUrl(item.videoName) && (
-                    <div className="flex items-center gap-1 text-xs bg-muted/80 px-2 py-1 rounded">
+                    <div className="flex items-center gap-1 text-xs bg-stone-800/80 px-2 py-1 rounded">
                       <Video className="w-3 h-3" />
                       <span>Video</span>
                     </div>
                   )}
                   {item.videoName && isEmbedUrl(item.videoName) && (
-                    <div className="flex items-center gap-1 text-xs bg-blue-500/20 text-blue-400 px-2 py-1 rounded">
+                    <div className="flex items-center gap-1 text-xs bg-amber-500/20 text-amber-400 px-2 py-1 rounded">
                       <Globe className="w-3 h-3" />
                       <span>Embed</span>
                     </div>
                   )}
                   {item.funscriptName && (
-                    <div className="flex items-center gap-1 text-xs bg-muted/80 px-2 py-1 rounded">
+                    <div className="flex items-center gap-1 text-xs bg-stone-800/80 px-2 py-1 rounded">
                       <FileText className="w-3 h-3" />
                       <span>Script</span>
                     </div>
                   )}
                   {item.duration && (
-                    <div className="ml-auto text-xs bg-muted/80 px-2 py-1 rounded">
+                    <div className="ml-auto text-xs bg-stone-800/80 px-2 py-1 rounded" style={{ fontFamily: 'var(--font-mono)' }}>
                       {formatDuration(item.duration)}
                     </div>
                   )}
                 </div>
 
                 {/* Video name (title) */}
-                <h3 className="text-lg font-semibold text-foreground mb-1 truncate" title={item.videoName || 'No video'}>
+                <h3 className="text-lg font-semibold text-stone-200 mb-1 truncate" title={item.videoName || 'No video'}>
                   {item.videoName || item.funscriptName || 'Unnamed'}
                 </h3>
 
                 {/* Funscript name (subtitle) */}
                 {item.funscriptName && item.videoName && (
-                  <p className="text-sm text-muted-foreground mb-2 truncate" title={item.funscriptName}>
+                  <p className="text-sm text-stone-500 mb-2 truncate" title={item.funscriptName}>
                     {item.funscriptName}
                   </p>
                 )}
 
                 {/* Metadata */}
-                <div className="text-xs text-muted-foreground mb-4">
-                  <span>{formatRelativeTime(item.lastModified)}</span>
+                <div className="text-xs text-stone-500 mb-4">
+                  <span style={{ fontFamily: 'var(--font-mono)' }}>{formatRelativeTime(item.lastModified)}</span>
                 </div>
 
                 {/* Action buttons */}
                 <div className="flex gap-2">
                   <button
                     onClick={() => onLoadItem(item)}
-                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                    className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-amber-700 text-white rounded-lg hover:bg-amber-600 transition-colors"
                   >
                     <Play className="w-4 h-4" />
                     <span>Load</span>
@@ -264,7 +264,7 @@ export function LibraryPage({
                   <button
                     onClick={() => handleDelete(item.id, item.videoName || item.funscriptName || 'this item')}
                     disabled={deletingId === item.id}
-                    className="px-3 py-2 border border-destructive text-destructive rounded-md hover:bg-destructive hover:text-destructive-foreground transition-colors disabled:opacity-50"
+                    className="px-3 py-2 border border-orange-700 text-orange-400 rounded-lg hover:bg-orange-700 hover:text-white transition-colors disabled:opacity-50"
                     title="Delete item"
                   >
                     <Trash2 className="w-4 h-4" />

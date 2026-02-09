@@ -192,12 +192,12 @@ export function PatternLibraryPage({
       className="container mx-auto px-4 py-6"
     >
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">
+        <h1 className="text-2xl font-bold text-stone-200" style={{ fontFamily: 'var(--font-display)' }}>
           Pattern Library
         </h1>
         <button
           onClick={waypointBuilder.openBuilder}
-          className="px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 transition-colors font-medium shadow-sm"
+          className="px-4 py-2 rounded-lg bg-amber-700 text-white hover:bg-amber-600 transition-colors font-medium shadow-sm"
         >
           + Create Pattern
         </button>

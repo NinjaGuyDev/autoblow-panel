@@ -28,7 +28,7 @@ export function PatternGrid({
   return (
     <div>
       {/* Pattern count */}
-      <div className="mb-4 text-sm text-muted-foreground">
+      <div className="mb-4 text-sm text-stone-500">
         {isFiltered
           ? `${patterns.length} of ${totalCount} patterns`
           : `${totalCount} patterns`}
@@ -37,10 +37,10 @@ export function PatternGrid({
       {/* Empty state */}
       {patterns.length === 0 ? (
         <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">No patterns found</p>
+          <p className="text-stone-500 mb-4">No patterns found</p>
           <button
             onClick={onClearFilters}
-            className="px-4 py-2 rounded bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+            className="px-4 py-2 rounded bg-amber-700 text-white hover:bg-amber-600 transition-colors"
           >
             Clear Filters
           </button>
@@ -57,7 +57,7 @@ export function PatternGrid({
                 onQuickAdd={onQuickAdd ? () => onQuickAdd(pattern) : undefined}
               />
               {isCustomPattern(pattern) && (
-                <div className="absolute top-2 right-2 bg-emerald-600 text-white text-xs px-1.5 py-0.5 rounded shadow-sm pointer-events-none">
+                <div className="absolute top-2 right-2 bg-amber-700 text-white text-xs px-1.5 py-0.5 rounded shadow-sm pointer-events-none">
                   Custom
                 </div>
               )}

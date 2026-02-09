@@ -104,7 +104,7 @@ export const ValidationOverlay = React.memo<ValidationOverlayProps>(
         const midY = height / 2;
 
         // Dashed horizontal line
-        ctx.strokeStyle = 'rgba(161, 161, 170, 0.5)';
+        ctx.strokeStyle = 'rgba(168, 162, 158, 0.5)';
         ctx.lineWidth = 1.5;
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
@@ -120,7 +120,7 @@ export const ValidationOverlay = React.memo<ValidationOverlayProps>(
 
         ctx.font = '10px system-ui';
         ctx.textAlign = 'center';
-        ctx.fillStyle = 'rgba(161, 161, 170, 0.8)';
+        ctx.fillStyle = 'rgba(168, 162, 158, 0.8)';
         ctx.fillText(durationText, labelX, labelY);
       });
     }, [actions, segments, gaps, viewStart, viewEnd, width, height]);

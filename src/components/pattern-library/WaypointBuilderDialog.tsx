@@ -91,9 +91,9 @@ export function WaypointBuilderDialog({
 
     const tr = computeTimeRange(waypoints.map((w) => w.timeMs));
 
-    // Generated actions as dashed purple line
+    // Generated actions as dashed warm amber line
     if (generatedActions.length > 0) {
-      ctx.strokeStyle = '#a78bfa'; // purple-400
+      ctx.strokeStyle = '#c8956c'; // warm amber
       ctx.lineWidth = 2;
       ctx.setLineDash([4, 2]);
       ctx.beginPath();
@@ -217,12 +217,12 @@ export function WaypointBuilderDialog({
       onStopDemo={onStopDemo}
       header={
         <div>
-          <label className="text-xs text-muted-foreground block mb-1">Pattern Name</label>
+          <label className="text-xs text-stone-500 block mb-1">Pattern Name</label>
           <input
             type="text"
             value={patternName}
             onChange={(e) => onPatternNameChange(e.target.value)}
-            className="w-full px-3 py-2 rounded bg-zinc-800 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full px-3 py-2 rounded bg-stone-800 border border-stone-700 text-white focus:outline-none focus:ring-2 focus:ring-amber-700/40"
           />
         </div>
       }
@@ -233,7 +233,7 @@ export function WaypointBuilderDialog({
           ref={canvasRef}
           width={canvasWidth}
           height={CANVAS_HEIGHT}
-          className="w-full h-auto rounded border border-zinc-700 bg-zinc-950 cursor-crosshair"
+          className="w-full h-auto rounded border border-stone-700 bg-stone-950 cursor-crosshair"
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
           onPointerUp={handlePointerUp}
@@ -243,19 +243,19 @@ export function WaypointBuilderDialog({
 
       {/* Selected waypoint controls */}
       {selectedWaypoint !== null && selectedIndex !== null && (
-        <div className="mb-4 p-4 rounded bg-zinc-800 border border-zinc-700">
+        <div className="mb-4 p-4 rounded bg-stone-800 border border-stone-700">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">
+              <label className="text-xs text-stone-500 block mb-1">
                 Point {selectedIndex + 1}
               </label>
-              <div className="px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white text-sm">
+              <div className="px-3 py-2 rounded bg-stone-900 border border-stone-700 text-white text-sm">
                 pos={selectedWaypoint.pos}, time={selectedWaypoint.timeMs}ms
               </div>
             </div>
 
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">Interpolation</label>
+              <label className="text-xs text-stone-500 block mb-1">Interpolation</label>
               <select
                 value={selectedWaypoint.interpolation}
                 onChange={(e) =>
@@ -267,7 +267,7 @@ export function WaypointBuilderDialog({
                 title={
                   selectedIndex === 0 ? 'First waypoint has no preceding segment' : undefined
                 }
-                className="w-full px-3 py-2 rounded bg-zinc-900 border border-zinc-700 text-white focus:outline-none focus:ring-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full px-3 py-2 rounded bg-stone-900 border border-stone-700 text-white focus:outline-none focus:ring-2 focus:ring-amber-700/40 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="linear">Linear</option>
                 <option value="easeIn">Ease In</option>
@@ -289,8 +289,9 @@ export function WaypointBuilderDialog({
       )}
 
       {/* Info bar */}
-      <div className="mb-4 px-3 py-2 rounded bg-zinc-800 border border-zinc-700 text-sm text-zinc-300">
-        {waypoints.length} waypoints | Duration: {(totalDurationMs / 1000).toFixed(1)}s |{' '}
+      <div className="mb-4 px-3 py-2 rounded bg-stone-800 border border-stone-700 text-sm text-stone-300">
+        {waypoints.length} waypoints | Duration:{' '}
+        <span style={{ fontFamily: 'var(--font-mono)' }}>{(totalDurationMs / 1000).toFixed(1)}s</span> |{' '}
         {generatedActions.length} action points
       </div>
     </PatternDialogShell>

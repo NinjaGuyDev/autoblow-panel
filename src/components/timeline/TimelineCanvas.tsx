@@ -74,13 +74,13 @@ export const TimelineCanvas = React.memo<TimelineCanvasProps>(
       ctx.scale(dpr, dpr);
 
       // Clear canvas with dark background
-      ctx.fillStyle = 'hsl(240, 10%, 10%)';
+      ctx.fillStyle = 'hsl(20, 6%, 5%)';
       ctx.fillRect(0, 0, width, height);
 
       if (visibleActions.length === 0) return;
 
       // Draw horizontal grid lines at percentage marks
-      ctx.strokeStyle = 'rgba(161, 161, 170, 0.1)';
+      ctx.strokeStyle = 'rgba(168, 162, 158, 0.1)';
       ctx.lineWidth = 1;
       [0, 25, 50, 75, 100].forEach((percent) => {
         const y = posToY(percent, height);
@@ -91,7 +91,7 @@ export const TimelineCanvas = React.memo<TimelineCanvasProps>(
       });
 
       // Draw Y-axis labels
-      ctx.fillStyle = 'rgba(161, 161, 170, 0.7)';
+      ctx.fillStyle = 'rgba(168, 162, 158, 0.7)';
       ctx.font = '11px system-ui, sans-serif';
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
@@ -122,7 +122,7 @@ export const TimelineCanvas = React.memo<TimelineCanvasProps>(
       ctx.fill();
 
       // Draw line stroke on top of area
-      ctx.strokeStyle = 'rgba(96, 165, 250, 0.9)';
+      ctx.strokeStyle = 'rgba(200, 149, 108, 0.9)';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
 
@@ -140,7 +140,7 @@ export const TimelineCanvas = React.memo<TimelineCanvasProps>(
 
       // Draw action point dots if enabled
       if (showActionPoints) {
-        ctx.fillStyle = '#60a5fa';
+        ctx.fillStyle = '#c8956c';
         visibleActions.forEach((action) => {
           const x = timeToX(action.at, viewStart, viewEnd, width);
           const y = posToY(action.pos, height);
