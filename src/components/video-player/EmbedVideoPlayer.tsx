@@ -1,4 +1,4 @@
-import type { SyntheticEvent } from 'react';
+import { useEffect, type SyntheticEvent } from 'react';
 import ReactPlayer from 'react-player';
 
 interface EmbedVideoPlayerProps {
@@ -15,29 +15,61 @@ interface EmbedVideoPlayerProps {
 }
 
 /**
- * Wrapper component for ReactPlayer v3 with custom configuration
- * Adapts native video element events to v2-style callbacks for useEmbedPlayback
+ * Wrapper component for embedded video platforms
+ * Uses ReactPlayer for supported platforms (YouTube, Vimeo, etc.)
+ * Falls back to iframe for unsupported platforms (Pornhub, etc.)
  */
 export function EmbedVideoPlayer({
   url,
-  playing,
+  playing: _playing,
   onReady,
-  onPlay,
-  onPause,
-  onProgress,
-  onDuration,
-  onError,
-  onEnded,
+  onPlay: _onPlay,
+  onPause: _onPause,
+  onProgress: _onProgress,
+  onDuration: _onDuration,
+  onError: _onError,
+  onEnded: _onEnded,
   playerRef,
 }: EmbedVideoPlayerProps) {
+  const canPlay = ReactPlayer.canPlay(url);
+
+  // Iframe fallback: signal ready once mounted so manual sync controls activate
+  useEffect(() => {
+    if (!canPlay) {
+      onReady();
+    }
+  }, [canPlay, onReady]);
+
+  // Iframe fallback for platforms without a JS API (Pornhub, etc.)
+  // User controls playback via the embedded player's own controls.
+  // Funscript sync requires manual offset adjustment.
+  if (!canPlay) {
+    return (
+      <div
+        className="w-full bg-black rounded-t-lg overflow-hidden"
+        style={{ aspectRatio: '16/9' }}
+      >
+        <iframe
+          src={url}
+          width="100%"
+          height="100%"
+          allowFullScreen
+          allow="autoplay; encrypted-media"
+          style={{ border: 'none', aspectRatio: '16/9' }}
+          title="Embedded video"
+        />
+      </div>
+    );
+  }
+
   const handleTimeUpdate = (e: SyntheticEvent<HTMLVideoElement>) => {
-    onProgress({ playedSeconds: e.currentTarget.currentTime });
+    _onProgress({ playedSeconds: e.currentTarget.currentTime });
   };
 
   const handleDurationChange = (e: SyntheticEvent<HTMLVideoElement>) => {
     const dur = e.currentTarget.duration;
     if (dur && isFinite(dur)) {
-      onDuration(dur);
+      _onDuration(dur);
     }
   };
 
@@ -49,17 +81,17 @@ export function EmbedVideoPlayer({
       <ReactPlayer
         ref={playerRef}
         src={url}
-        playing={playing}
+        playing={_playing}
         controls={false}
         width="100%"
         height="100%"
         onReady={onReady}
-        onPlay={onPlay}
-        onPause={onPause}
+        onPlay={_onPlay}
+        onPause={_onPause}
         onTimeUpdate={handleTimeUpdate}
         onDurationChange={handleDurationChange}
-        onError={onError}
-        onEnded={onEnded}
+        onError={_onError}
+        onEnded={_onEnded}
         config={{
           youtube: {
             modestbranding: 1,
