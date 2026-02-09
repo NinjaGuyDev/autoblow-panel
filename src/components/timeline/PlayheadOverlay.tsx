@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import type { FunscriptAction } from '@/types/funscript';
+import { timeToX, posToY } from '@/lib/timelineHitDetection';
 
 interface PlayheadOverlayProps {
   currentTimeMs: number;
@@ -9,9 +9,6 @@ interface PlayheadOverlayProps {
   height: number;
   actions: Array<{ pos: number; at: number }>;
 }
-
-const TOP_PADDING = 20;
-const BOTTOM_PADDING = 30;
 
 /**
  * Binary search to find the action closest to the given time
@@ -64,18 +61,6 @@ export const PlayheadOverlay = React.memo<PlayheadOverlayProps>(
       return findClosestAction(actions, currentTimeMs);
     }, [actions, currentTimeMs]);
 
-    // Helper: map position to y coordinate (100 = top, 0 = bottom)
-    const posToY = (pos: number): number => {
-      const chartHeight = height - TOP_PADDING - BOTTOM_PADDING;
-      return TOP_PADDING + chartHeight * (1 - pos / 100);
-    };
-
-    // Helper: map time to x coordinate
-    const timeToX = (timeMs: number): number => {
-      const ratio = (timeMs - viewStart) / (viewEnd - viewStart);
-      return ratio * width;
-    };
-
     // Calculate current action position if visible
     const currentActionPos = useMemo(() => {
       if (!currentAction) return null;
@@ -83,8 +68,8 @@ export const PlayheadOverlay = React.memo<PlayheadOverlayProps>(
         return null; // Action not in viewport
       }
       return {
-        x: timeToX(currentAction.at),
-        y: posToY(currentAction.pos),
+        x: timeToX(currentAction.at, viewStart, viewEnd, width),
+        y: posToY(currentAction.pos, height),
       };
     }, [currentAction, viewStart, viewEnd, width, height]);
 

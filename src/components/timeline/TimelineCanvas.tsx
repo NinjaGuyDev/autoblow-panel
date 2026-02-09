@@ -1,5 +1,5 @@
 import React, { useRef, useEffect, useMemo } from 'react';
-import type { FunscriptAction } from '@/types/funscript';
+import { timeToX, posToY, TOP_PADDING, BOTTOM_PADDING } from '@/lib/timelineHitDetection';
 
 interface TimelineCanvasProps {
   actions: Array<{ pos: number; at: number }>;
@@ -10,26 +10,11 @@ interface TimelineCanvasProps {
   height: number;
 }
 
-const TOP_PADDING = 20;
-const BOTTOM_PADDING = 30;
-
 export const TimelineCanvas = React.memo<TimelineCanvasProps>(
   ({ actions, viewStart, viewEnd, showActionPoints, width, height }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const gradientRef = useRef<CanvasGradient | null>(null);
     const lastHeightRef = useRef<number>(0);
-
-    // Helper: map time to x coordinate
-    const timeToX = (timeMs: number): number => {
-      const ratio = (timeMs - viewStart) / (viewEnd - viewStart);
-      return ratio * width;
-    };
-
-    // Helper: map position to y coordinate (100 = top, 0 = bottom)
-    const posToY = (pos: number): number => {
-      const chartHeight = height - TOP_PADDING - BOTTOM_PADDING;
-      return TOP_PADDING + chartHeight * (1 - pos / 100);
-    };
 
     // Filter visible actions with buffer for smooth edge rendering
     const visibleActions = useMemo(() => {
@@ -98,7 +83,7 @@ export const TimelineCanvas = React.memo<TimelineCanvasProps>(
       ctx.strokeStyle = 'rgba(161, 161, 170, 0.1)';
       ctx.lineWidth = 1;
       [0, 25, 50, 75, 100].forEach((percent) => {
-        const y = posToY(percent);
+        const y = posToY(percent, height);
         ctx.beginPath();
         ctx.moveTo(0, y);
         ctx.lineTo(width, y);
@@ -111,7 +96,7 @@ export const TimelineCanvas = React.memo<TimelineCanvasProps>(
       ctx.textAlign = 'right';
       ctx.textBaseline = 'middle';
       [0, 25, 50, 75, 100].forEach((percent) => {
-        const y = posToY(percent);
+        const y = posToY(percent, height);
         ctx.fillText(`${percent}%`, 35, y);
       });
 
@@ -120,19 +105,19 @@ export const TimelineCanvas = React.memo<TimelineCanvasProps>(
       ctx.beginPath();
 
       // Start at bottom of first action
-      const firstX = timeToX(visibleActions[0].at);
-      ctx.moveTo(firstX, posToY(0));
+      const firstX = timeToX(visibleActions[0].at, viewStart, viewEnd, width);
+      ctx.moveTo(firstX, posToY(0, height));
 
       // Trace through all actions
       visibleActions.forEach((action) => {
-        const x = timeToX(action.at);
-        const y = posToY(action.pos);
+        const x = timeToX(action.at, viewStart, viewEnd, width);
+        const y = posToY(action.pos, height);
         ctx.lineTo(x, y);
       });
 
       // Close path at bottom of last action
-      const lastX = timeToX(visibleActions[visibleActions.length - 1].at);
-      ctx.lineTo(lastX, posToY(0));
+      const lastX = timeToX(visibleActions[visibleActions.length - 1].at, viewStart, viewEnd, width);
+      ctx.lineTo(lastX, posToY(0, height));
       ctx.closePath();
       ctx.fill();
 
@@ -142,8 +127,8 @@ export const TimelineCanvas = React.memo<TimelineCanvasProps>(
       ctx.beginPath();
 
       visibleActions.forEach((action, index) => {
-        const x = timeToX(action.at);
-        const y = posToY(action.pos);
+        const x = timeToX(action.at, viewStart, viewEnd, width);
+        const y = posToY(action.pos, height);
         if (index === 0) {
           ctx.moveTo(x, y);
         } else {
@@ -157,8 +142,8 @@ export const TimelineCanvas = React.memo<TimelineCanvasProps>(
       if (showActionPoints) {
         ctx.fillStyle = '#60a5fa';
         visibleActions.forEach((action) => {
-          const x = timeToX(action.at);
-          const y = posToY(action.pos);
+          const x = timeToX(action.at, viewStart, viewEnd, width);
+          const y = posToY(action.pos, height);
           ctx.beginPath();
           ctx.arc(x, y, 3, 0, Math.PI * 2);
           ctx.fill();

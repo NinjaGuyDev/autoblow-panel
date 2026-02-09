@@ -1,7 +1,6 @@
 import type { FunscriptAction } from '@/types/funscript';
 import type { HitTestResult, SelectionRect } from '@/types/timeline';
 
-// Constants matching TimelineCanvas.tsx
 export const HIT_RADIUS_PX = 8;
 export const TOP_PADDING = 20;
 export const BOTTOM_PADDING = 30;
