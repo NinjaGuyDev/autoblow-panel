@@ -1,8 +1,11 @@
+import type ReactPlayer from 'react-player';
 import { VideoLoader } from '@/components/file-loader/VideoLoader';
 import { FunscriptLoader } from '@/components/file-loader/FunscriptLoader';
 import { SyncStatus } from '@/components/device-control/SyncStatus';
+import { ManualSyncControls } from '@/components/video-player/ManualSyncControls';
 import type { ZodFunscript } from '@/lib/schemas';
 import type { SyncStatus as SyncStatusType } from '@/types/sync';
+import type { PlatformConfig } from '@/types/video';
 
 interface VideoSyncPageProps {
   // Video props
@@ -44,6 +47,26 @@ interface VideoSyncPageProps {
 
   // Library load hint
   videoLoadHint: string | null;
+
+  // Embed support props
+  isEmbed?: boolean;
+  platformConfig?: PlatformConfig;
+  onEmbedUrlSubmit?: (url: string) => void;
+  // Embed player callbacks (forwarded to VideoLoader -> VideoPlayer -> EmbedVideoPlayer)
+  embedPlayerRef?: React.RefObject<ReactPlayer | null>;
+  embedPlaying?: boolean;
+  onEmbedReady?: () => void;
+  onEmbedPlay?: () => void;
+  onEmbedPause?: () => void;
+  onEmbedProgress?: (state: { playedSeconds: number }) => void;
+  onEmbedDuration?: (duration: number) => void;
+  onEmbedError?: (e: unknown) => void;
+  onEmbedEnded?: () => void;
+  // Manual sync props
+  manualSyncOffset?: number;
+  onManualSyncOffsetChange?: (offset: number) => void;
+  onManualSyncReset?: () => void;
+  manualSyncStepMs?: number;
 }
 
 /**
@@ -80,6 +103,22 @@ export function VideoSyncPage({
   onToggleTimeline,
   timelineElement,
   videoLoadHint,
+  isEmbed,
+  platformConfig,
+  onEmbedUrlSubmit,
+  embedPlayerRef,
+  embedPlaying,
+  onEmbedReady,
+  onEmbedPlay,
+  onEmbedPause,
+  onEmbedProgress,
+  onEmbedDuration,
+  onEmbedError,
+  onEmbedEnded,
+  manualSyncOffset,
+  onManualSyncOffsetChange,
+  onManualSyncReset,
+  manualSyncStepMs,
 }: VideoSyncPageProps) {
   return (
     <div role="tabpanel" id="panel-video-sync" aria-labelledby="tab-video-sync">
@@ -107,8 +146,44 @@ export function VideoSyncPage({
             playbackError={playbackError}
             onTogglePlayPause={onTogglePlayPause}
             onSeek={onSeek}
+            isEmbed={isEmbed}
+            onEmbedUrlSubmit={onEmbedUrlSubmit}
+            embedPlayerRef={embedPlayerRef}
+            embedPlaying={embedPlaying}
+            onEmbedReady={onEmbedReady}
+            onEmbedPlay={onEmbedPlay}
+            onEmbedPause={onEmbedPause}
+            onEmbedProgress={onEmbedProgress}
+            onEmbedDuration={onEmbedDuration}
+            onEmbedError={onEmbedError}
+            onEmbedEnded={onEmbedEnded}
           />
         </div>
+
+        {/* Platform info badge - show when embed is active */}
+        {isEmbed && platformConfig && (
+          <div className="flex items-center gap-2 px-4 py-2 bg-card border border-muted rounded-lg text-sm">
+            <span className="text-muted-foreground">Source:</span>
+            <span className="font-medium text-foreground capitalize">{platformConfig.platform.replace('-', ' ')}</span>
+            <span className="text-muted-foreground">|</span>
+            <span className="text-muted-foreground">Sync:</span>
+            <span className={`font-medium ${platformConfig.syncMode === 'auto' ? 'text-green-400' : 'text-yellow-400'}`}>
+              {platformConfig.syncMode === 'auto' ? 'Auto' : 'Manual'}
+            </span>
+          </div>
+        )}
+
+        {/* Manual sync controls - show when manual offset is needed */}
+        {platformConfig?.requiresManualOffset && manualSyncOffset !== undefined && (
+          <div className="bg-card border border-muted rounded-lg p-4">
+            <ManualSyncControls
+              offsetMs={manualSyncOffset}
+              onOffsetChange={onManualSyncOffsetChange!}
+              onReset={onManualSyncReset!}
+              stepMs={manualSyncStepMs ?? 50}
+            />
+          </div>
+        )}
 
         {/* Timeline section - same width as video */}
         {timelineElement && (
