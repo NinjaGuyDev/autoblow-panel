@@ -4,6 +4,7 @@ import type { FunscriptAction } from '@/types/funscript';
 import type { CustomPatternDefinition } from '@/types/patterns';
 import { scalePatternDuration, adjustIntensity, createLoopTransition } from '@/lib/patternTransform';
 import { customPatternApi } from '@/lib/apiClient';
+import { getErrorMessage } from '@/lib/getErrorMessage';
 
 /**
  * Pattern editor hook managing full editing lifecycle
@@ -125,7 +126,7 @@ export function usePatternEditor() {
 
       setIsDemoPlaying(true);
     } catch (err) {
-      setDemoError(err instanceof Error ? err.message : 'Failed to start demo');
+      setDemoError(getErrorMessage(err, 'Failed to start demo'));
     }
   }, [editedPattern]);
 
@@ -138,7 +139,7 @@ export function usePatternEditor() {
       setIsDemoPlaying(false);
       setDemoError(null);
     } catch (err) {
-      setDemoError(err instanceof Error ? err.message : 'Failed to stop demo');
+      setDemoError(getErrorMessage(err, 'Failed to stop demo'));
     }
   }, []);
 
@@ -197,7 +198,7 @@ export function usePatternEditor() {
 
       setIsSaving(false);
     } catch (err) {
-      setSaveError(err instanceof Error ? err.message : 'Failed to save pattern');
+      setSaveError(getErrorMessage(err, 'Failed to save pattern'));
       setIsSaving(false);
     }
   }, [editedPattern]);

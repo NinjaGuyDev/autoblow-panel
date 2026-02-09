@@ -1,4 +1,5 @@
 import { useState, useEffect, type RefObject } from 'react';
+import { getErrorMessage } from '@/lib/getErrorMessage';
 
 interface UseEmbedPlaybackReturn {
   isPlaying: boolean;
@@ -77,7 +78,7 @@ export function useEmbedPlayback({
   };
 
   const onError = (e: unknown) => {
-    const errorMessage = e instanceof Error ? e.message : 'Failed to load embedded video';
+    const errorMessage = getErrorMessage(e, 'Failed to load embedded video');
     setError(errorMessage);
   };
 

@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { libraryApi } from '@/lib/apiClient';
+import { getErrorMessage } from '@/lib/getErrorMessage';
 import type { LibraryItem } from '../../server/types/shared';
 
 export type LibraryFilter = 'all' | 'has-video' | 'has-funscript';
@@ -49,7 +50,7 @@ export function useLibrary(): UseLibraryReturn {
       
       setRawItems(results);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch library items';
+      const errorMessage = getErrorMessage(err, 'Failed to fetch library items');
       setError(errorMessage);
       setRawItems([]);
     } finally {
@@ -117,7 +118,7 @@ export function useLibrary(): UseLibraryReturn {
       await libraryApi.deleteItem(id);
       await fetchItems(searchQuery);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to delete item';
+      const errorMessage = getErrorMessage(err, 'Failed to delete item');
       setError(errorMessage);
       throw err;
     }

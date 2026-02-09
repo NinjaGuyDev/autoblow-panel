@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { parseFunscriptFile, type ZodFunscript } from '@/lib/schemas';
+import { getErrorMessage } from '@/lib/getErrorMessage';
 
 interface UseFunscriptFileReturn {
   funscriptFile: File | null;
@@ -27,7 +28,7 @@ export function useFunscriptFile(): UseFunscriptFileReturn {
       setFunscriptFile(file);
       setFunscriptData(data);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load funscript';
+      const errorMessage = getErrorMessage(err, 'Failed to load funscript');
       setError(errorMessage);
       setFunscriptFile(null);
       setFunscriptData(null);

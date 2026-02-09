@@ -12,6 +12,7 @@ import { PatternLibraryPage } from '@/components/pages/PatternLibraryPage';
 import { LibraryPage } from '@/components/pages/LibraryPage';
 import { PlaylistPage } from '@/components/pages/PlaylistPage';
 import { PlaylistControls } from '@/components/playlist/PlaylistControls';
+import { getErrorMessage } from '@/lib/getErrorMessage';
 import { Timeline } from '@/components/timeline/Timeline';
 import { useVideoFile } from '@/hooks/useVideoFile';
 import { useFunscriptFile } from '@/hooks/useFunscriptFile';
@@ -393,7 +394,7 @@ function App() {
         addLog('info', `Loaded from library: ${item.funscriptName || 'Unnamed'}`);
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load library item';
+      const errorMessage = getErrorMessage(err, 'Failed to load library item');
       addLog('error', errorMessage);
     }
   };
