@@ -3,6 +3,7 @@ import type { Ultra } from '@xsense/autoblow-sdk';
 import type { FunscriptAction } from '@/types/funscript';
 import { createSmoothTransition } from '@/lib/patternInsertion';
 import { getErrorMessage } from '@/lib/getErrorMessage';
+import { libraryApi } from '@/lib/apiClient';
 import { useDemoLoop } from '@/hooks/useDemoLoop';
 import { cn } from '@/lib/utils';
 
@@ -11,6 +12,7 @@ interface CreationFooterProps {
   actions: FunscriptAction[];
   onClose: () => void;
   onExport: () => void;
+  onSavedToLibrary?: () => void;
   ultra: Ultra | null;
   isDeviceConnected: boolean;
 }
@@ -25,6 +27,7 @@ export function CreationFooter({
   actions,
   onClose,
   onExport,
+  onSavedToLibrary,
   ultra,
   isDeviceConnected,
 }: CreationFooterProps) {
@@ -32,6 +35,8 @@ export function CreationFooter({
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
   const [scriptDurationMs, setScriptDurationMs] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
 
   useDemoLoop(ultra, isDemoPlaying, scriptDurationMs);
 
@@ -147,6 +152,35 @@ export function CreationFooter({
     }
   }, [ultra]);
 
+  const saveToLibrary = useCallback(async () => {
+    if (actions.length === 0) return;
+
+    setIsSaving(true);
+    setSaveStatus('idle');
+    try {
+      const funscriptName = `${scriptName || 'Untitled'}.funscript`;
+      const durationSeconds = actions[actions.length - 1].at / 1000;
+
+      await libraryApi.create({
+        videoName: null,
+        funscriptName,
+        funscriptData: JSON.stringify({ actions }),
+        duration: durationSeconds,
+      });
+
+      setSaveStatus('saved');
+      onSavedToLibrary?.();
+
+      // Reset status after a brief flash
+      setTimeout(() => setSaveStatus('idle'), 2000);
+    } catch {
+      setSaveStatus('error');
+      setTimeout(() => setSaveStatus('idle'), 3000);
+    } finally {
+      setIsSaving(false);
+    }
+  }, [actions, scriptName, onSavedToLibrary]);
+
   // Stop demo when footer closes
   useEffect(() => {
     return () => {
@@ -186,6 +220,20 @@ export function CreationFooter({
               {isDemoPlaying ? 'Stop Demo' : 'Demo'}
             </button>
           )}
+          <button
+            onClick={saveToLibrary}
+            disabled={actions.length === 0 || isSaving}
+            className={cn(
+              'px-4 py-1.5 text-sm rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
+              saveStatus === 'saved'
+                ? 'bg-green-700 text-white'
+                : saveStatus === 'error'
+                  ? 'bg-red-700 text-white'
+                  : 'bg-stone-700 text-stone-200 hover:bg-stone-600',
+            )}
+          >
+            {isSaving ? 'Saving...' : saveStatus === 'saved' ? 'Saved!' : saveStatus === 'error' ? 'Failed' : 'Save to Library'}
+          </button>
           <button
             onClick={onExport}
             disabled={actions.length === 0}

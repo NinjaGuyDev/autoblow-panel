@@ -26,6 +26,7 @@ interface UseScriptPlaybackParams {
 
 interface UseScriptPlaybackReturn {
   isPlaying: boolean;
+  isPaused: boolean;
   currentScriptId: number | null;
   nextScriptId: number | null;
   playbackError: string | null;
@@ -35,10 +36,12 @@ interface UseScriptPlaybackReturn {
   playSingle: (item: LibraryItem) => Promise<void>;
   stop: () => Promise<void>;
   startRandomize: () => Promise<void>;
+  togglePause: () => Promise<void>;
 }
 
 export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): UseScriptPlaybackReturn {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isPaused, setIsPaused] = useState(false);
   const [currentScriptId, setCurrentScriptId] = useState<number | null>(null);
   const [nextScriptId, setNextScriptId] = useState<number | null>(null);
   const [playbackError, setPlaybackError] = useState<string | null>(null);
@@ -48,6 +51,7 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
   const shuffleQueueRef = useRef<number[]>([]);
   const currentActionsRef = useRef<FunscriptAction[]>([]);
   const transitioningRef = useRef(false);
+  const pausedAtRef = useRef<number>(0);
 
   /**
    * Pick the next script ID based on randomize mode.
@@ -120,6 +124,7 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
       setCurrentScriptId(item.id);
       setScriptDurationMs(durationMs);
       setIsPlaying(true);
+      setIsPaused(false);
 
       // If randomize mode is active, pre-pick the next script
       if (randomizeMode !== 'off') {
@@ -142,12 +147,38 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
       try { await ultra.syncScriptStop(); } catch { /* ignore */ }
     }
     setIsPlaying(false);
+    setIsPaused(false);
     setCurrentScriptId(null);
     setNextScriptId(null);
     setScriptDurationMs(0);
     currentActionsRef.current = [];
     transitioningRef.current = false;
+    pausedAtRef.current = 0;
   }, [ultra]);
+
+  /**
+   * Toggle pause/resume for script playback.
+   * Queries the device for current position before pausing so we can resume from the same spot.
+   */
+  const togglePause = useCallback(async () => {
+    if (!ultra || !isPlaying) return;
+
+    try {
+      if (isPaused) {
+        // Resume from where we paused
+        await ultra.syncScriptStart(pausedAtRef.current);
+        setIsPaused(false);
+      } else {
+        // Query current position, then stop
+        const state = await ultra.getState();
+        pausedAtRef.current = state.syncScriptCurrentTime ?? 0;
+        await ultra.syncScriptStop();
+        setIsPaused(true);
+      }
+    } catch (err) {
+      setPlaybackError(err instanceof Error ? err.message : 'Pause/resume failed');
+    }
+  }, [ultra, isPlaying, isPaused]);
 
   /**
    * Start randomized playback — pick the first script and play it.
@@ -240,11 +271,12 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
     }
   }, [ultra, randomizeMode, nextScriptId, scripts, pickNextId]);
 
-  // Wire up the loop detection
-  useScriptLoop(ultra, isPlaying, scriptDurationMs, handleLoopEnd);
+  // Wire up the loop detection — skip loop checks while paused
+  useScriptLoop(ultra, isPlaying && !isPaused, scriptDurationMs, handleLoopEnd);
 
   return {
     isPlaying,
+    isPaused,
     currentScriptId,
     nextScriptId,
     playbackError,
@@ -254,5 +286,6 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
     playSingle,
     stop,
     startRandomize,
+    togglePause,
   };
 }

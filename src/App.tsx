@@ -151,8 +151,13 @@ function AppContent() {
     clearFunscript,
   });
 
-  // Device button events (pause button toggles local video play/pause)
-  useDeviceButtons(ultra, videoRef, playback.isEmbed);
+  // Device button events (pause button toggles local video play/pause, or script pause)
+  useDeviceButtons(
+    ultra,
+    videoRef,
+    playback.isEmbed,
+    scriptPlayback.isPlaying ? scriptPlayback.togglePause : undefined,
+  );
 
   // Handle session recovery hint on mount
   useEffect(() => {
@@ -574,6 +579,7 @@ function AppContent() {
           actions={editableActions}
           onClose={handleCloseCreation}
           onExport={handleExport}
+          onSavedToLibrary={scriptLibrary.refresh}
           ultra={ultra}
           isDeviceConnected={isDeviceConnected}
         />

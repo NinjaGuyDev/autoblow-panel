@@ -4,8 +4,9 @@
  */
 
 import { useState } from 'react';
-import { Search, RefreshCw, Trash2, Play, Square, FileText, Shuffle, ListOrdered, Zap } from 'lucide-react';
+import { Search, RefreshCw, Trash2, Play, Square, FileText, Shuffle, ListOrdered, Zap, Pause } from 'lucide-react';
 import type { LibraryItem } from '../../../server/types/shared';
+import type { Funscript } from '@/types/funscript';
 import type { RandomizeMode } from '@/hooks/useScriptPlayback';
 
 interface ScriptLibraryPageProps {
@@ -17,6 +18,7 @@ interface ScriptLibraryPageProps {
   deleteItem: (id: number) => Promise<void>;
   refresh: () => Promise<void>;
   isPlaying: boolean;
+  isPaused: boolean;
   currentScriptId: number | null;
   nextScriptId: number | null;
   playbackError: string | null;
@@ -45,8 +47,27 @@ function formatRelativeTime(isoString: string): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function formatDuration(seconds: number | null): string {
-  if (seconds === null) return '--:--';
+/**
+ * Compute script length in seconds from funscriptData JSON.
+ * Returns null if parsing fails or no actions exist.
+ */
+function getScriptLengthSeconds(item: LibraryItem): number | null {
+  try {
+    const parsed: Funscript = JSON.parse(item.funscriptData);
+    const actions = parsed.actions;
+    if (!actions || actions.length === 0) return null;
+    return actions[actions.length - 1].at / 1000;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Format script length: "Xs" for under 60s, "M:SS" for 60s+
+ */
+function formatScriptLength(seconds: number | null): string {
+  if (seconds === null) return '';
+  if (seconds < 60) return `${Math.round(seconds)}s`;
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -67,6 +88,7 @@ export function ScriptLibraryPage({
   deleteItem,
   refresh,
   isPlaying,
+  isPaused,
   currentScriptId,
   nextScriptId,
   playbackError,
@@ -136,78 +158,82 @@ export function ScriptLibraryPage({
       </div>
 
       {/* Control bar */}
-      {isDeviceConnected && (
-        <div className="flex flex-wrap items-center gap-3 mb-6 p-3 bg-stone-900/50 border border-stone-800 rounded-xl">
-          {/* Randomize mode chips */}
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-stone-500 mr-1">Randomize:</span>
-            {RANDOMIZE_OPTIONS.map(({ mode, label, icon: Icon }) => (
-              <button
-                key={mode}
-                onClick={() => setRandomizeMode(mode)}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                  randomizeMode === mode
-                    ? 'bg-amber-700 text-white'
-                    : 'bg-stone-800/50 text-stone-500 hover:bg-stone-800/80'
-                }`}
-              >
-                <Icon className="w-3 h-3" />
-                {label}
-              </button>
-            ))}
-          </div>
-
-          {/* Start/Stop randomize button */}
-          {randomizeMode !== 'off' && (
+      <div
+        className={`flex flex-wrap items-center gap-3 mb-6 p-3 bg-stone-900/50 border border-stone-800 rounded-xl ${!isDeviceConnected ? 'opacity-50' : ''}`}
+        title={!isDeviceConnected ? 'Device Connection Required' : undefined}
+      >
+        {/* Randomize mode chips */}
+        <div className="flex items-center gap-1">
+          <span className="text-xs text-stone-500 mr-1">Randomize:</span>
+          {RANDOMIZE_OPTIONS.map(({ mode, label, icon: Icon }) => (
             <button
-              onClick={isPlaying ? stop : startRandomize}
-              disabled={scripts.length === 0}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 ${
-                isPlaying
-                  ? 'bg-orange-700 text-white hover:bg-orange-600'
-                  : 'bg-amber-700 text-white hover:bg-amber-600'
+              key={mode}
+              onClick={() => setRandomizeMode(mode)}
+              disabled={!isDeviceConnected}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:cursor-not-allowed ${
+                randomizeMode === mode
+                  ? 'bg-amber-700 text-white'
+                  : 'bg-stone-800/50 text-stone-500 hover:bg-stone-800/80 disabled:hover:bg-stone-800/50'
               }`}
+              title={!isDeviceConnected ? 'Device Connection Required' : undefined}
             >
-              {isPlaying ? (
-                <>
-                  <Square className="w-3 h-3" />
-                  Stop
-                </>
-              ) : (
-                <>
-                  <Zap className="w-3 h-3" />
-                  Start
-                </>
-              )}
+              <Icon className="w-3 h-3" />
+              {label}
             </button>
-          )}
-
-          {/* Now Playing / Up Next indicators */}
-          {isPlaying && (
-            <div className="flex items-center gap-3 ml-auto text-xs">
-              {currentScript && (
-                <div className="flex items-center gap-1.5 text-amber-400">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400" />
-                  </span>
-                  <span className="truncate max-w-[150px]">
-                    {currentScript.funscriptName || 'Playing'}
-                  </span>
-                </div>
-              )}
-              {nextScript && randomizeMode !== 'off' && (
-                <div className="flex items-center gap-1.5 text-stone-500">
-                  <span>Next:</span>
-                  <span className="truncate max-w-[120px]">
-                    {nextScript.funscriptName || 'Unknown'}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
+          ))}
         </div>
-      )}
+
+        {/* Start/Stop randomize button */}
+        {randomizeMode !== 'off' && (
+          <button
+            onClick={isPlaying ? stop : startRandomize}
+            disabled={scripts.length === 0 || !isDeviceConnected}
+            className={`flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+              isPlaying
+                ? 'bg-orange-700 text-white hover:bg-orange-600'
+                : 'bg-amber-700 text-white hover:bg-amber-600'
+            }`}
+            title={!isDeviceConnected ? 'Device Connection Required' : undefined}
+          >
+            {isPlaying ? (
+              <>
+                <Square className="w-3 h-3" />
+                Stop
+              </>
+            ) : (
+              <>
+                <Zap className="w-3 h-3" />
+                Start
+              </>
+            )}
+          </button>
+        )}
+
+        {/* Now Playing / Up Next indicators */}
+        {isPlaying && (
+          <div className="flex items-center gap-3 ml-auto text-xs">
+            {currentScript && (
+              <div className="flex items-center gap-1.5 text-amber-400">
+                <span className="relative flex h-2 w-2">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-400" />
+                </span>
+                <span className="truncate max-w-[150px]">
+                  {currentScript.funscriptName || 'Playing'}
+                </span>
+              </div>
+            )}
+            {nextScript && randomizeMode !== 'off' && (
+              <div className="flex items-center gap-1.5 text-stone-500">
+                <span>Next:</span>
+                <span className="truncate max-w-[120px]">
+                  {nextScript.funscriptName || 'Unknown'}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
 
       {/* Playback error */}
       {playbackError && (
@@ -248,6 +274,18 @@ export function ScriptLibraryPage({
 
       {/* Script card grid */}
       {scripts.length > 0 && (
+        <div className="relative">
+          {/* Paused overlay */}
+          {isPlaying && isPaused && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-stone-950/60 backdrop-blur-[2px] rounded-xl">
+              <div className="flex items-center gap-3 px-6 py-3 bg-stone-900/90 border border-amber-700/50 rounded-xl shadow-lg">
+                <Pause className="w-6 h-6 text-amber-400" />
+                <span className="text-lg font-medium text-amber-400" style={{ fontFamily: 'var(--font-display)' }}>
+                  Paused
+                </span>
+              </div>
+            </div>
+          )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {scripts.map((item) => {
             const isCurrent = currentScriptId === item.id;
@@ -271,11 +309,14 @@ export function ScriptLibraryPage({
                       <FileText className="w-3 h-3" />
                       <span>Script</span>
                     </div>
-                    {item.duration && (
-                      <div className="text-xs bg-stone-800/80 px-2 py-1 rounded" style={{ fontFamily: 'var(--font-mono)' }}>
-                        {formatDuration(item.duration)}
-                      </div>
-                    )}
+                    {(() => {
+                      const length = formatScriptLength(getScriptLengthSeconds(item));
+                      return length ? (
+                        <div className="text-xs bg-stone-800/80 px-2 py-1 rounded" style={{ fontFamily: 'var(--font-mono)' }}>
+                          {length}
+                        </div>
+                      ) : null;
+                    })()}
                     {isCurrent && (
                       <div className="flex items-center gap-1 text-xs bg-amber-700/30 text-amber-400 px-2 py-1 rounded ml-auto">
                         <span className="relative flex h-1.5 w-1.5">
@@ -304,24 +345,25 @@ export function ScriptLibraryPage({
 
                   {/* Action buttons */}
                   <div className="flex gap-2">
-                    {isDeviceConnected && (
-                      <button
-                        onClick={() => playSingle(item)}
-                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                          isCurrent
-                            ? 'bg-amber-600 text-white hover:bg-amber-500'
-                            : 'bg-amber-700 text-white hover:bg-amber-600'
-                        }`}
-                      >
-                        <Play className="w-4 h-4" />
-                        <span>{isCurrent ? 'Restart' : 'Play'}</span>
-                      </button>
-                    )}
-                    {isCurrent && isDeviceConnected && (
+                    <button
+                      onClick={() => playSingle(item)}
+                      disabled={!isDeviceConnected}
+                      className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                        isCurrent
+                          ? 'bg-amber-600 text-white hover:bg-amber-500'
+                          : 'bg-amber-700 text-white hover:bg-amber-600'
+                      }`}
+                      title={!isDeviceConnected ? 'Device Connection Required' : undefined}
+                    >
+                      <Play className="w-4 h-4" />
+                      <span>{isCurrent ? 'Restart' : 'Play'}</span>
+                    </button>
+                    {isCurrent && (
                       <button
                         onClick={stop}
-                        className="px-3 py-2 bg-orange-700 text-white rounded-lg hover:bg-orange-600 transition-colors"
-                        title="Stop playback"
+                        disabled={!isDeviceConnected}
+                        className="px-3 py-2 bg-orange-700 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        title={!isDeviceConnected ? 'Device Connection Required' : 'Stop playback'}
                       >
                         <Square className="w-4 h-4" />
                       </button>
@@ -339,6 +381,7 @@ export function ScriptLibraryPage({
               </div>
             );
           })}
+        </div>
         </div>
       )}
     </div>
