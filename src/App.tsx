@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
+import type ReactPlayer from 'react-player';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Layout } from '@/components/layout/Layout';
 import { AppHeader } from '@/components/layout/AppHeader';
@@ -26,10 +27,13 @@ import { useDeviceLog } from '@/hooks/useDeviceLog';
 import { useLibrary } from '@/hooks/useLibrary';
 import { usePlaylistManager } from '@/hooks/usePlaylistManager';
 import { usePlaylistPlayback } from '@/hooks/usePlaylistPlayback';
+import { useEmbedPlayback } from '@/hooks/useEmbedPlayback';
+import { useManualSync } from '@/hooks/useManualSync';
 import { mediaApi } from '@/lib/apiClient';
 import { captureVideoThumbnail } from '@/lib/thumbnailCapture';
 import { exportFunscript } from '@/lib/funscriptExport';
 import { insertPatternAtCursor, insertPatternAtEnd } from '@/lib/patternInsertion';
+import { isEmbedUrl, detectPlatformConfig } from '@/lib/videoUtils';
 import type { TabId } from '@/types/navigation';
 import type { PatternDefinition } from '@/types/patterns';
 import type { LibraryItem } from '../server/types/shared';
@@ -72,6 +76,26 @@ function App() {
     togglePlayPause,
     seek,
   } = useVideoPlayback(videoRef, videoUrl);
+
+  // Embed playback state
+  const embedPlayerRef = useRef<ReactPlayer>(null);
+  const isEmbed = isEmbedUrl(videoName);
+  const platformConfig = detectPlatformConfig(isEmbed ? videoUrl : null);
+
+  const embedPlayback = useEmbedPlayback({
+    playerRef: embedPlayerRef,
+    embedUrl: isEmbed ? videoUrl : null,
+  });
+
+  const manualSync = useManualSync(platformConfig.requiresManualOffset && isEmbed);
+
+  // Unified playback values - select between local and embed
+  const activeIsPlaying = isEmbed ? embedPlayback.isPlaying : isPlaying;
+  const activeCurrentTime = isEmbed ? embedPlayback.currentTime : currentTime;
+  const activeDuration = isEmbed ? embedPlayback.duration : duration;
+  const activeTogglePlayPause = isEmbed ? embedPlayback.togglePlayPause : togglePlayPause;
+  const activeSeek = isEmbed ? embedPlayback.seek : seek;
+  const activePlaybackError = isEmbed ? embedPlayback.error : playbackError;
 
   const {
     funscriptFile,
@@ -124,7 +148,12 @@ function App() {
     scriptUploaded,
     driftMs,
     error: syncError,
-  } = useSyncPlayback(videoRef, ultra, funscriptData, videoUrl);
+  } = useSyncPlayback(videoRef, ultra, funscriptData, videoUrl, isEmbed ? {
+    isEmbed: true,
+    currentTime: embedPlayback.currentTime,
+    isPlaying: embedPlayback.isPlaying,
+    manualOffsetMs: manualSync.offsetMs,
+  } : undefined);
 
   // Playlist playback state
   const playlistPlayback = usePlaylistPlayback({
@@ -166,10 +195,14 @@ function App() {
 
   // Mutual exclusion: Pause video when manual control starts during playback
   useEffect(() => {
-    if (isRunning && isPlaying && videoRef.current) {
-      videoRef.current.pause();
+    if (isRunning && activeIsPlaying) {
+      if (isEmbed) {
+        embedPlayback.togglePlayPause(); // Pause embed
+      } else if (videoRef.current) {
+        videoRef.current.pause();
+      }
     }
-  }, [isRunning, isPlaying]);
+  }, [isRunning, activeIsPlaying, isEmbed]);
 
   // Device log integration: Track connection state changes
   const prevConnectionStateRef = useRef<typeof connectionState>('disconnected');
@@ -319,6 +352,12 @@ function App() {
     setActiveTab('video-sync'); // Switch to video sync tab for playback
   };
 
+  // Handle embed URL submission
+  const handleEmbedUrlLoad = (url: string) => {
+    loadVideoFromUrl(url, url); // name = url for embeds
+    manualSync.resetOffset();   // Reset offset for new video
+  };
+
   // Load item from library
   const handleLoadFromLibrary = async (item: LibraryItem) => {
     try {
@@ -331,16 +370,24 @@ function App() {
       // Switch to video-sync tab
       setActiveTab('video-sync');
 
-      // Try to load video from media directory
+      // Try to load video from media directory or embed URL
       if (item.videoName) {
-        const { exists } = await mediaApi.check(item.videoName);
-        if (exists) {
-          loadVideoFromUrl(mediaApi.streamUrl(item.videoName), item.videoName);
-          addLog('info', `Loaded from library: ${item.funscriptName || item.videoName || 'Unnamed'}`);
+        if (isEmbedUrl(item.videoName)) {
+          // Embed video - use URL directly, no media API check needed
+          loadVideoFromUrl(item.videoName, item.videoName);
+          addLog('info', `Loaded embed from library: ${item.funscriptName || item.videoName || 'Unnamed'}`);
           setVideoLoadHint(null);
         } else {
-          addLog('info', `Loaded from library: ${item.funscriptName || 'Unnamed'}`);
-          setVideoLoadHint(item.videoName);
+          // Local video - existing logic unchanged
+          const { exists } = await mediaApi.check(item.videoName);
+          if (exists) {
+            loadVideoFromUrl(mediaApi.streamUrl(item.videoName), item.videoName);
+            addLog('info', `Loaded from library: ${item.funscriptName || item.videoName || 'Unnamed'}`);
+            setVideoLoadHint(null);
+          } else {
+            addLog('info', `Loaded from library: ${item.funscriptName || 'Unnamed'}`);
+            setVideoLoadHint(item.videoName);
+          }
         }
       } else {
         addLog('info', `Loaded from library: ${item.funscriptName || 'Unnamed'}`);
@@ -410,12 +457,12 @@ function App() {
                 onVideoClear={handleVideoClear}
                 videoError={videoError}
                 videoRef={videoRef}
-                isPlaying={isPlaying}
-                currentTime={currentTime}
-                duration={duration}
-                playbackError={playbackError}
-                onTogglePlayPause={togglePlayPause}
-                onSeek={seek}
+                isPlaying={activeIsPlaying}
+                currentTime={activeCurrentTime}
+                duration={activeDuration}
+                playbackError={activePlaybackError}
+                onTogglePlayPause={activeTogglePlayPause}
+                onSeek={activeSeek}
                 funscriptFile={funscriptFile}
                 funscriptData={funscriptData}
                 funscriptName={funscriptName}
@@ -432,14 +479,30 @@ function App() {
                 showTimeline={showTimeline}
                 onToggleTimeline={() => setShowTimeline(!showTimeline)}
                 videoLoadHint={videoLoadHint}
+                isEmbed={isEmbed}
+                platformConfig={platformConfig}
+                onEmbedUrlSubmit={handleEmbedUrlLoad}
+                embedPlayerRef={embedPlayerRef}
+                embedPlaying={embedPlayback.isPlaying}
+                onEmbedReady={embedPlayback.onReady}
+                onEmbedPlay={embedPlayback.onPlay}
+                onEmbedPause={embedPlayback.onPause}
+                onEmbedProgress={embedPlayback.onProgress}
+                onEmbedDuration={embedPlayback.onDuration}
+                onEmbedError={embedPlayback.onError}
+                onEmbedEnded={embedPlayback.onEnded}
+                manualSyncOffset={manualSync.offsetMs}
+                onManualSyncOffsetChange={manualSync.setOffsetMs}
+                onManualSyncReset={manualSync.resetOffset}
+                manualSyncStepMs={manualSync.OFFSET_STEP_MS}
                 timelineElement={
                   showTimeline && videoUrl ? (
                     <Timeline
                       actions={editableActions}
-                      currentTimeMs={currentTime * 1000}
-                      durationMs={duration * 1000}
-                      isPlaying={isPlaying}
-                      onSeek={seek}
+                      currentTimeMs={activeCurrentTime * 1000}
+                      durationMs={activeDuration * 1000}
+                      isPlaying={activeIsPlaying}
+                      onSeek={activeSeek}
                       onActionsChange={setActions}
                       onUndo={undo}
                       onRedo={redo}

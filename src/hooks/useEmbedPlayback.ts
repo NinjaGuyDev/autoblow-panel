@@ -1,5 +1,5 @@
-import { useState, useEffect, RefObject } from 'react';
-import ReactPlayer from 'react-player';
+import { useState, useEffect, type RefObject } from 'react';
+import type ReactPlayer from 'react-player';
 
 interface UseEmbedPlaybackReturn {
   isPlaying: boolean;

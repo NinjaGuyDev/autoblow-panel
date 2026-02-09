@@ -1,5 +1,5 @@
 import ReactPlayer from 'react-player';
-import { PlatformConfig } from '../types/video';
+import type { PlatformConfig } from '../types/video';
 
 /**
  * Check if a video name is an embed URL (http:// or https://)
@@ -25,7 +25,7 @@ export function detectPlatformConfig(videoName: string | null): PlatformConfig {
   }
 
   // Check if ReactPlayer can play this URL
-  const canPlay = videoName ? ReactPlayer.canPlay(videoName) : false;
+  const canPlay = videoName && typeof ReactPlayer.canPlay === 'function' ? ReactPlayer.canPlay(videoName) : false;
 
   // Detect specific platforms
   if (/youtube\.com|youtu\.be/i.test(videoName!)) {
