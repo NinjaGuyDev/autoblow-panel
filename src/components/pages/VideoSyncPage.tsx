@@ -2,6 +2,7 @@ import { VideoLoader } from '@/components/file-loader/VideoLoader';
 import { FunscriptLoader } from '@/components/file-loader/FunscriptLoader';
 import { SyncStatus } from '@/components/device-control/SyncStatus';
 import { ManualSyncControls } from '@/components/video-player/ManualSyncControls';
+import { useDevice } from '@/contexts/DeviceContext';
 import type { ZodFunscript } from '@/lib/schemas';
 import type { SyncStatus as SyncStatusType } from '@/types/sync';
 import type { PlatformConfig } from '@/types/video';
@@ -36,7 +37,6 @@ interface VideoSyncPageProps {
   scriptUploaded: boolean;
   driftMs: number;
   syncError: string | null;
-  isDeviceConnected: boolean;
   hasFunscript: boolean;
 
   // Timeline controls
@@ -99,7 +99,6 @@ export function VideoSyncPage({
   scriptUploaded,
   driftMs,
   syncError,
-  isDeviceConnected,
   hasFunscript,
   showTimeline,
   onToggleTimeline,
@@ -125,6 +124,8 @@ export function VideoSyncPage({
   isScriptPlaying,
   onToggleScript,
 }: VideoSyncPageProps) {
+  const { isDeviceConnected } = useDevice();
+
   return (
     <div role="tabpanel" id="panel-video-sync" aria-labelledby="tab-video-sync">
       <div className="max-w-4xl mx-auto space-y-6">

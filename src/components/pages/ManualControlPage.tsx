@@ -1,5 +1,6 @@
 import { VideoLoader } from '@/components/file-loader/VideoLoader';
 import { ManualControls } from '@/components/device-control/ManualControls';
+import { useDevice } from '@/contexts/DeviceContext';
 import type { PatternType, ManualControlParams } from '@/types/device';
 
 interface ManualControlPageProps {
@@ -26,7 +27,6 @@ interface ManualControlPageProps {
   maxY: number;
   increment: number;
   variability: number;
-  isConnected: boolean;
   onStart: () => void;
   onStop: () => void;
   onParamChange: (params: Partial<ManualControlParams>) => void;
@@ -57,12 +57,12 @@ export function ManualControlPage({
   maxY,
   increment,
   variability,
-  isConnected,
   onStart,
   onStop,
   onParamChange,
   onPatternTypeChange,
 }: ManualControlPageProps) {
+  const { isDeviceConnected } = useDevice();
   return (
     <div role="tabpanel" id="panel-manual-control" aria-labelledby="tab-manual-control">
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6">
@@ -95,7 +95,7 @@ export function ManualControlPage({
             maxY={maxY}
             increment={increment}
             variability={variability}
-            isConnected={isConnected}
+            isConnected={isDeviceConnected}
             onStart={onStart}
             onStop={onStop}
             onParamChange={onParamChange}
