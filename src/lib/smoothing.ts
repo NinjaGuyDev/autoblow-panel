@@ -46,11 +46,28 @@ export const DEFAULT_SMOOTHING_OPTIONS: SmoothingOptions = {
 };
 
 /**
+ * Compute the median interval between consecutive actions
+ */
+function computeMedianInterval(actions: FunscriptAction[]): number {
+  if (actions.length < 2) return 0;
+  const intervals: number[] = [];
+  for (let i = 1; i < actions.length; i++) {
+    intervals.push(actions[i].at - actions[i - 1].at);
+  }
+  intervals.sort((a, b) => a - b);
+  const mid = Math.floor(intervals.length / 2);
+  return intervals.length % 2 === 0
+    ? (intervals[mid - 1] + intervals[mid]) / 2
+    : intervals[mid];
+}
+
+/**
  * Detect segments with consecutive direction reversals
  */
 function detectOscillationSegments(
   actions: FunscriptAction[],
-  minReversals: number
+  minReversals: number,
+  maxIntervalMs: number
 ): Array<{ startIndex: number; endIndex: number }> {
   if (actions.length < 3) return [];
 
@@ -58,12 +75,27 @@ function detectOscillationSegments(
   let currentSegmentStart = -1;
   let reversalCount = 0;
 
+  const finalizeSegment = (endIndex: number) => {
+    if (reversalCount >= minReversals) {
+      segments.push({ startIndex: currentSegmentStart, endIndex });
+    }
+    currentSegmentStart = -1;
+    reversalCount = 0;
+  };
+
   for (let i = 1; i < actions.length - 1; i++) {
+    const dt = actions[i + 1].at - actions[i].at;
     const prevDelta = actions[i].pos - actions[i - 1].pos;
     const nextDelta = actions[i + 1].pos - actions[i].pos;
 
     // Direction reversal: signs differ (excluding zero)
     const isReversal = prevDelta * nextDelta < 0;
+
+    // Split segment at large time gaps even if reversals continue
+    if (currentSegmentStart !== -1 && dt > maxIntervalMs) {
+      finalizeSegment(i);
+      continue;
+    }
 
     if (isReversal) {
       if (currentSegmentStart === -1) {
@@ -73,15 +105,7 @@ function detectOscillationSegments(
         reversalCount++;
       }
     } else {
-      // No reversal - end segment if it meets threshold
-      if (reversalCount >= minReversals) {
-        segments.push({
-          startIndex: currentSegmentStart,
-          endIndex: i,
-        });
-      }
-      currentSegmentStart = -1;
-      reversalCount = 0;
+      finalizeSegment(i);
     }
   }
 
@@ -106,7 +130,7 @@ function thinOscillations(
 ): FunscriptAction[] {
   if (actions.length < 3) return [...actions];
 
-  const segments = detectOscillationSegments(actions, options.minReversals);
+  const segments = detectOscillationSegments(actions, options.minReversals, options.maxIntervalMs);
   if (segments.length === 0) return [...actions];
 
   const toKeep = new Set<number>();
@@ -125,11 +149,10 @@ function thinOscillations(
     const posRange = Math.max(...segmentActions.map(a => a.pos)) -
                     Math.min(...segmentActions.map(a => a.pos));
 
-    const totalTime = segmentActions[segmentActions.length - 1].at - segmentActions[0].at;
-    const avgInterval = totalTime / (segmentActions.length - 1);
+    const medianInterval = computeMedianInterval(segmentActions);
 
-    // Only thin if range >= minRange AND average interval < threshold
-    if (posRange >= options.minRange && avgInterval < options.avgIntervalThreshold) {
+    // Only thin if range >= minRange AND median interval < threshold
+    if (posRange >= options.minRange && medianInterval < options.avgIntervalThreshold) {
       // Keep first point, then alternate directions at targetInterval
       const segmentResult: number[] = [segment.startIndex];
       let lastKeptIndex = segment.startIndex;
