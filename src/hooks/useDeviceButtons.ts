@@ -1,23 +1,40 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { Ultra } from '@xsense/autoblow-sdk';
 
 /**
  * Listens for physical button presses on the Autoblow Ultra device
  * and maps them to application actions.
  *
- * Currently handles the pause button — toggles play/pause on the
- * local video element. Does nothing when no device is connected
- * or when an embedded video is active (embeds lack direct element control).
+ * Handles the pause button:
+ * - If script playback is active, toggles script pause/resume
+ * - Otherwise, toggles play/pause on the local video element
+ * - Does nothing for embedded videos (embeds lack direct element control)
  */
 export function useDeviceButtons(
   ultra: Ultra | null,
   videoRef: React.RefObject<HTMLVideoElement | null>,
   isEmbed: boolean,
+  onScriptPause?: () => void,
 ) {
+  const onScriptPauseRef = useRef(onScriptPause);
+
   useEffect(() => {
-    if (!ultra || isEmbed) return;
+    onScriptPauseRef.current = onScriptPause;
+  }, [onScriptPause]);
+
+  useEffect(() => {
+    if (!ultra) return;
 
     const handlePauseButton = () => {
+      // Script playback takes priority
+      if (onScriptPauseRef.current) {
+        onScriptPauseRef.current();
+        return;
+      }
+
+      // Fall back to video toggle
+      if (isEmbed) return;
+
       const video = videoRef.current;
       if (!video) return;
 
