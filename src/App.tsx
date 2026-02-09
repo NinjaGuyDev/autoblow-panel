@@ -26,6 +26,7 @@ import { useSyncPlayback } from '@/hooks/useSyncPlayback';
 import { useLibrary } from '@/hooks/useLibrary';
 import { usePlaylistManager } from '@/hooks/usePlaylistManager';
 import { usePlaylistPlayback } from '@/hooks/usePlaylistPlayback';
+import { useDeviceButtons } from '@/hooks/useDeviceButtons';
 import { mediaApi } from '@/lib/apiClient';
 import { captureVideoThumbnail } from '@/lib/thumbnailCapture';
 import { exportFunscript } from '@/lib/funscriptExport';
@@ -142,6 +143,9 @@ function AppContent() {
     clearVideo,
     clearFunscript,
   });
+
+  // Device button events (pause button toggles local video play/pause)
+  useDeviceButtons(ultra, videoRef, playback.isEmbed);
 
   // Handle session recovery hint on mount
   useEffect(() => {
