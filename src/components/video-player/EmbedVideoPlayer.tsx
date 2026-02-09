@@ -4,6 +4,7 @@ import ReactPlayer from 'react-player';
 interface EmbedVideoPlayerProps {
   url: string;
   playing: boolean;
+  iframeEmbed: boolean;
   onReady: () => void;
   onPlay: () => void;
   onPause: () => void;
@@ -15,13 +16,15 @@ interface EmbedVideoPlayerProps {
 }
 
 /**
- * Wrapper component for embedded video platforms
+ * Wrapper component for embedded video platforms.
  * Uses ReactPlayer for supported platforms (YouTube, Vimeo, etc.)
  * Falls back to iframe for unsupported platforms (Pornhub, etc.)
+ * The iframeEmbed prop is the single source of truth — driven by detectPlatformConfig.
  */
 export function EmbedVideoPlayer({
   url,
   playing: _playing,
+  iframeEmbed,
   onReady,
   onPlay: _onPlay,
   onPause: _onPause,
@@ -31,19 +34,17 @@ export function EmbedVideoPlayer({
   onEnded: _onEnded,
   playerRef,
 }: EmbedVideoPlayerProps) {
-  const canPlay = ReactPlayer.canPlay(url);
-
   // Iframe fallback: signal ready once mounted so manual sync controls activate
   useEffect(() => {
-    if (!canPlay) {
+    if (iframeEmbed) {
       onReady();
     }
-  }, [canPlay, onReady]);
+  }, [iframeEmbed, onReady]);
 
   // Iframe fallback for platforms without a JS API (Pornhub, etc.)
   // User controls playback via the embedded player's own controls.
   // Funscript sync requires manual offset adjustment.
-  if (!canPlay) {
+  if (iframeEmbed) {
     return (
       <div
         className="w-full bg-black rounded-t-lg overflow-hidden"

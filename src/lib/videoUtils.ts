@@ -1,4 +1,3 @@
-import ReactPlayer from 'react-player';
 import type { PlatformConfig } from '../types/video';
 
 /**
@@ -9,9 +8,23 @@ export function isEmbedUrl(videoName: string | null): boolean {
   return videoName.startsWith('http://') || videoName.startsWith('https://');
 }
 
+// Platforms with JS API support via ReactPlayer (programmatic play/pause/seek)
+const SUPPORTED_PLATFORM_PATTERNS: Array<{ pattern: RegExp; platform: 'youtube' | 'vimeo' | 'supported-embed' }> = [
+  { pattern: /(?:youtu\.be\/|youtube(?:-nocookie|education)?\.com\/)/i, platform: 'youtube' },
+  { pattern: /vimeo\.com\//i, platform: 'vimeo' },
+  { pattern: /(?:wistia\.(?:com|net)|wi\.st)\/(?:medias|embed)\//i, platform: 'supported-embed' },
+  { pattern: /open\.spotify\.com\//i, platform: 'supported-embed' },
+  { pattern: /(?:www\.|go\.)?twitch\.tv\//i, platform: 'supported-embed' },
+  { pattern: /tiktok\.com\/(?:player|share|@)/i, platform: 'supported-embed' },
+  { pattern: /stream\.mux\.com\//i, platform: 'supported-embed' },
+  // Direct media file URLs (mp4, webm, etc.)
+  { pattern: /\.(mp4|og[gv]|webm|mov|m4v|m3u8|mpd)($|\?|#)/i, platform: 'supported-embed' },
+];
+
 /**
- * Detect platform configuration for a given video source
- * Returns platform type, sync mode, playability, and manual offset requirement
+ * Detect platform configuration for a given video source.
+ * Uses explicit URL pattern matching instead of ReactPlayer.canPlay
+ * to ensure consistent behavior and a single source of truth.
  */
 export function detectPlatformConfig(videoName: string | null): PlatformConfig {
   // Local files
@@ -24,39 +37,19 @@ export function detectPlatformConfig(videoName: string | null): PlatformConfig {
     };
   }
 
-  // Check if ReactPlayer can play this URL
-  const canPlay = videoName && typeof ReactPlayer.canPlay === 'function' ? ReactPlayer.canPlay(videoName) : false;
-
-  // Detect specific platforms
-  if (/youtube\.com|youtu\.be/i.test(videoName!)) {
-    return {
-      platform: 'youtube',
-      syncMode: 'auto',
-      canPlay: true,
-      requiresManualOffset: false,
-    };
+  // Match against known supported platforms
+  for (const { pattern, platform } of SUPPORTED_PLATFORM_PATTERNS) {
+    if (pattern.test(videoName!)) {
+      return {
+        platform,
+        syncMode: 'auto',
+        canPlay: true,
+        requiresManualOffset: false,
+      };
+    }
   }
 
-  if (/vimeo\.com/i.test(videoName!)) {
-    return {
-      platform: 'vimeo',
-      syncMode: 'auto',
-      canPlay: true,
-      requiresManualOffset: false,
-    };
-  }
-
-  // Other supported platforms
-  if (canPlay) {
-    return {
-      platform: 'supported-embed',
-      syncMode: 'auto',
-      canPlay: true,
-      requiresManualOffset: false,
-    };
-  }
-
-  // Unsupported platform - requires manual sync
+  // Unsupported platform - requires iframe embed with manual sync
   return {
     platform: 'unsupported-embed',
     syncMode: 'manual',

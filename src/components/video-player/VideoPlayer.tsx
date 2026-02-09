@@ -101,6 +101,7 @@ export function VideoPlayer({
         <EmbedVideoPlayer
           url={videoUrl}
           playing={embedPlaying ?? false}
+          iframeEmbed={iframeEmbed}
           playerRef={embedPlayerRef!}
           onReady={onEmbedReady!}
           onPlay={onEmbedPlay!}
