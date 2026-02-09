@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-08)
 
 **Core value:** Smooth, privacy-preserving funscript playback synced with local video content.
-**Current focus:** Phase 14 - Playlist Management (v1.1) — IN PROGRESS
+**Current focus:** Phase 15 - Embedded Video (v1.1) — IN PROGRESS
 
 ## Current Position
 
-Phase: 14 of 16 (Playlist Management)
-Plan: 3 of 3 complete
-Status: Phase complete
-Last activity: 2026-02-08 - Completed 14-03-PLAN.md (Playlist Playback Engine)
+Phase: 15 of 16 (Embedded Video)
+Plan: 1 of 2 complete
+Status: In progress
+Last activity: 2026-02-09 - Completed 15-01-PLAN.md (Embedded Video Foundation)
 
-Progress: [███████████████░░░░░] 94% (15/16 phases complete, v1.0 shipped, Phase 14: 3/3 ✓)
+Progress: [███████████████░░░░░] 94% (15/16 phases complete, v1.0 shipped, Phase 15: 1/2 ✓)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 32
-- Average duration: 4.4 minutes
-- Total execution time: ~2.55 hours
+- Total plans completed: 34
+- Average duration: 4.3 minutes
+- Total execution time: ~2.69 hours
 
 **By Phase:**
 
@@ -40,11 +40,12 @@ Progress: [███████████████░░░░░] 94% (15
 | 11 | 2 | 6.5 min | 3.25 min |
 | 12 | 2 | 8.1 min | 4.05 min |
 | 13 | 2 | 5 min | 2.5 min |
-| 14 | 3 | 10.5 min | 3.5 min |
+| 14 | 4 | 11.5 min | 2.9 min |
+| 15 | 1 | 7 min | 7.0 min |
 
 **Recent Trend:**
-- Last 5 plans: 3.0, 3.5, 4.0, 3.0 min (avg: 3.4 min)
-- Trend: Stable (fast execution)
+- Last 5 plans: 4.0, 3.0, 3.0, 1.0, 7.0 min (avg: 3.6 min)
+- Trend: Stable (foundation work takes longer)
 
 *Updated after each plan completion*
 
@@ -83,9 +84,13 @@ All v1.0 decisions archived in PROJECT.md Key Decisions table.
 | Sequential advancement via video 'ended' event listener | Browser fires 'ended' event reliably when video completes, providing clean trigger for auto-advance | 14-03 | ✓ Implemented |
 | Preload next video in hidden document.createElement('video') element | Triggers browser buffering without polluting React component tree, simple cleanup via refs | 14-03 | ✓ Implemented |
 | Stop playlist on last video end (auto-exit mode) | Clean completion state prevents indefinite playlist mode after content ends | 14-03 | ✓ Implemented |
+| Parameter override pattern for stale closures | When setState and async call occur synchronously, pass fresh data as parameter to avoid closure capturing pre-render state | 14-04 | ✓ Implemented |
+| ReactPlayer.canPlay for platform detection | Static method determines platform support before rendering embed player | 15-01 | ✓ Implemented |
+| Hook interface parity for embed playback | useEmbedPlayback exports same interface as useVideoPlayback for drop-in replacement | 15-01 | ✓ Implemented |
+| 50ms manual sync step size | Balances precision with usability for timing adjustments on unsupported platforms | 15-01 | ✓ Implemented |
 
 **v1.1 architectural decisions pending:**
-- API-only third-party sync (embed APIs vary by platform)
+- None
 
 ### Pending Todos
 
@@ -110,17 +115,18 @@ None.
 - ✓ Complete - playlist CRUD API with position management and cascade deletes (14-01)
 - ✓ Complete - playlist management UI with drag-and-drop editor (14-02)
 - ✓ Complete - playlist playback engine with sequential advancement and preloading (14-03)
-- **Phase complete - sequential playlist playback with auto funscript sync ready for testing**
+- ✓ Complete - UAT bug fix for stale closure preventing initial video/funscript load (14-04)
+- **Phase complete - UAT Issues 8 and 11 resolved, full playlist playback functional**
 
 **Phase 15 (Embedded Video):**
-- Adult platform embed APIs undocumented (may need manual-sync fallback)
-- Research phase flagged in SUMMARY.md
+- ✓ Foundation complete - platform detection, ReactPlayer wrapper, manual sync controls (15-01)
+- Plan 15-02 pending - wire embed support into existing VideoPlayer/App.tsx integration
 
 ## Session Continuity
 
-Last session: 2026-02-08
-Stopped at: Completed 14-03-PLAN.md (Playlist Playback Engine) - Phase 14 complete
-Resume file: .planning/phases/15-embedded-video/ (next phase)
+Last session: 2026-02-09
+Stopped at: Completed 15-01-PLAN.md (Embedded Video Foundation)
+Resume file: .planning/phases/15-embedded-video/15-02-PLAN.md
 
 Config:
 {

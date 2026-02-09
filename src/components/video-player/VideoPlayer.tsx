@@ -1,5 +1,7 @@
 import { useEffect } from 'react';
+import ReactPlayer from 'react-player';
 import { VideoControls } from './VideoControls';
+import { EmbedVideoPlayer } from './EmbedVideoPlayer';
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -10,6 +12,18 @@ interface VideoPlayerProps {
   error: string | null;
   onTogglePlayPause: () => void;
   onSeek: (time: number) => void;
+  // Embed support
+  isEmbed?: boolean;
+  // Embed-specific props (only used when isEmbed=true)
+  embedPlayerRef?: React.RefObject<ReactPlayer | null>;
+  embedPlaying?: boolean;
+  onEmbedReady?: () => void;
+  onEmbedPlay?: () => void;
+  onEmbedPause?: () => void;
+  onEmbedProgress?: (state: { playedSeconds: number }) => void;
+  onEmbedDuration?: (duration: number) => void;
+  onEmbedError?: (e: unknown) => void;
+  onEmbedEnded?: () => void;
 }
 
 /**
@@ -26,6 +40,16 @@ export function VideoPlayer({
   error,
   onTogglePlayPause,
   onSeek,
+  isEmbed = false,
+  embedPlayerRef,
+  embedPlaying,
+  onEmbedReady,
+  onEmbedPlay,
+  onEmbedPause,
+  onEmbedProgress,
+  onEmbedDuration,
+  onEmbedError,
+  onEmbedEnded,
 }: VideoPlayerProps) {
   // Keyboard shortcuts
   useEffect(() => {
@@ -71,13 +95,28 @@ export function VideoPlayer({
 
   return (
     <div className="rounded-lg overflow-hidden border border-muted">
-      {/* Video element without native controls */}
-      <video
-        ref={videoRef}
-        src={videoUrl}
-        className="w-full block bg-black"
-        disablePictureInPicture
-      />
+      {/* Conditional video element or embed player */}
+      {isEmbed ? (
+        <EmbedVideoPlayer
+          url={videoUrl}
+          playing={embedPlaying ?? false}
+          playerRef={embedPlayerRef!}
+          onReady={onEmbedReady!}
+          onPlay={onEmbedPlay!}
+          onPause={onEmbedPause!}
+          onProgress={onEmbedProgress!}
+          onDuration={onEmbedDuration!}
+          onError={onEmbedError!}
+          onEnded={onEmbedEnded!}
+        />
+      ) : (
+        <video
+          ref={videoRef}
+          src={videoUrl}
+          className="w-full block bg-black"
+          disablePictureInPicture
+        />
+      )}
 
       {/* Custom controls */}
       <VideoControls
