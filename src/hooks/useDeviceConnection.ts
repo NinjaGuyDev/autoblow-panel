@@ -6,6 +6,7 @@ import type {
   DeviceInfo,
   UseDeviceConnectionReturn,
 } from '@/types/device';
+import { encryptToken, decryptToken } from '@/lib/tokenEncryption';
 
 const DEVICE_TOKEN_KEY = 'autoblow-device-token';
 
@@ -18,11 +19,8 @@ export function useDeviceConnection(): UseDeviceConnectionReturn {
   const [error, setError] = useState<string | null>(null);
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
 
-  // Initialize savedToken directly from localStorage (lazy initialization)
-  const [savedToken, setSavedToken] = useState<string>(() => {
-    const token = localStorage.getItem(DEVICE_TOKEN_KEY);
-    return token || '';
-  });
+  // Initialize savedToken as empty, load asynchronously via useEffect
+  const [savedToken, setSavedToken] = useState<string>('');
 
   const ultraRef = useRef<Ultra | null>(null);
 
@@ -41,8 +39,8 @@ export function useDeviceConnection(): UseDeviceConnectionReturn {
         ultraRef.current = result.ultra;
         setConnectionState('connected');
 
-        // Save token to localStorage on successful connection
-        localStorage.setItem(DEVICE_TOKEN_KEY, token);
+        // Encrypt and save token to localStorage on successful connection
+        await encryptToken(token);
         setSavedToken(token);
       } else {
         throw new Error('Device is not an Autoblow AI Ultra');
@@ -75,6 +73,36 @@ export function useDeviceConnection(): UseDeviceConnectionReturn {
     // Keep token in localStorage for convenience (don't clear on disconnect)
     // Token persists across page reloads so user doesn't need to re-enter
   };
+
+  // Load encrypted token on mount (with backward compatibility for plaintext)
+  useEffect(() => {
+    const loadToken = async () => {
+      // Try to decrypt token first
+      const decrypted = await decryptToken();
+
+      if (decrypted) {
+        setSavedToken(decrypted);
+      } else {
+        // Backward compatibility: check for legacy plaintext token
+        const legacyToken = localStorage.getItem(DEVICE_TOKEN_KEY);
+
+        if (legacyToken) {
+          // Check if it looks like plaintext (not base64 ciphertext)
+          // Ciphertext is always base64, so if it contains non-base64 chars or is short, it's plaintext
+          const isLikelyPlaintext = legacyToken.length < 100 || /[^A-Za-z0-9+/=]/.test(legacyToken);
+
+          if (isLikelyPlaintext) {
+            // Migrate: encrypt the legacy token and use it
+            await encryptToken(legacyToken);
+            setSavedToken(legacyToken);
+            console.log('[Token Encryption] Migrated legacy plaintext token');
+          }
+        }
+      }
+    };
+
+    loadToken();
+  }, []);
 
   // Cleanup on unmount
   useEffect(() => {
