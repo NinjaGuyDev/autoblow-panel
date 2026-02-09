@@ -5,6 +5,7 @@ import { getPatternDirection } from '@/lib/patternDefinitions';
 import { createSmoothTransition } from '@/lib/patternInsertion';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/getErrorMessage';
+import { useDemoLoop } from '@/hooks/useDemoLoop';
 
 interface PatternDetailDialogProps {
   pattern: PatternDefinition | null;
@@ -34,6 +35,9 @@ export function PatternDetailDialog({
   const startTimeRef = useRef<number | null>(null);
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
+  const [scriptDurationMs, setScriptDurationMs] = useState(0);
+
+  useDemoLoop(ultra, isDemoPlaying, scriptDurationMs);
 
   // Draw pattern with animated playhead
   const drawAnimated = (currentTime: number) => {
@@ -143,7 +147,10 @@ export function PatternDetailDialog({
         }
       }
 
-      // Create funscript object with looping
+      // Track script duration for loop detection
+      setScriptDurationMs(actions[actions.length - 1].at);
+
+      // Create funscript object
       const funscript = {
         version: '1.0',
         inverted: false,
@@ -154,7 +161,7 @@ export function PatternDetailDialog({
       // Upload to device
       await ultra.syncScriptUploadFunscriptFile(funscript);
 
-      // Start playback from beginning (will loop automatically)
+      // Start playback from beginning
       await ultra.syncScriptStart(0);
 
       setIsDemoPlaying(true);
@@ -169,6 +176,7 @@ export function PatternDetailDialog({
     try {
       await ultra.syncScriptStop();
       setIsDemoPlaying(false);
+      setScriptDurationMs(0);
       setDemoError(null);
     } catch (err) {
       setDemoError(getErrorMessage(err, 'Failed to stop demo'));
