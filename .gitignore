@@ -18,3 +18,8 @@ data/
 
 # Media files (video uploads)
 media/
+/.claude/audio
+/.claude
+/_bmad
+/_bmad-output
+.mcp.json
