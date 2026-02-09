@@ -31,3 +31,41 @@ export interface SearchQuery {
 export interface MigrationRequest {
   data: CreateLibraryItemRequest[];
 }
+
+export interface Playlist {
+  id: number;
+  name: string;
+  description: string | null;
+  createdAt: string;       // ISO 8601
+  lastModified: string;    // ISO 8601
+  itemCount?: number;      // Computed in queries, not stored
+}
+
+export interface PlaylistItem {
+  id: number;
+  playlistId: number;
+  libraryItemId: number;
+  position: number;
+  // Joined fields from library_items (populated in queries)
+  videoName?: string | null;
+  funscriptName?: string | null;
+  duration?: number | null;
+}
+
+export interface CreatePlaylistRequest {
+  name: string;
+  description?: string | null;
+}
+
+export interface UpdatePlaylistRequest {
+  name?: string;
+  description?: string | null;
+}
+
+export interface AddPlaylistItemRequest {
+  libraryItemId: number;
+}
+
+export interface ReorderPlaylistItemsRequest {
+  itemIds: number[];  // Full ordered list of playlist_item IDs in new order
+}

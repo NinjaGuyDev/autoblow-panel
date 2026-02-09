@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-08)
 
 **Core value:** Smooth, privacy-preserving funscript playback synced with local video content.
-**Current focus:** Phase 13 - Pattern Builder (v1.1) — IN PROGRESS
+**Current focus:** Phase 14 - Playlist Management (v1.1) — IN PROGRESS
 
 ## Current Position
 
-Phase: 13 of 16 (Pattern Builder)
-Plan: 2 of 2 complete
+Phase: 14 of 16 (Playlist Management)
+Plan: 3 of 3 complete
 Status: Phase complete
-Last activity: 2026-02-08 - Completed 13-02-PLAN.md (Waypoint Builder UI)
+Last activity: 2026-02-08 - Completed 14-03-PLAN.md (Playlist Playback Engine)
 
-Progress: [█████████████░░░░░░░] 81% (13/16 phases complete, v1.0 shipped, Phase 13: 2/2 ✓)
+Progress: [███████████████░░░░░] 94% (15/16 phases complete, v1.0 shipped, Phase 14: 3/3 ✓)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 29
-- Average duration: 4.7 minutes
-- Total execution time: ~2.37 hours
+- Total plans completed: 32
+- Average duration: 4.4 minutes
+- Total execution time: ~2.55 hours
 
 **By Phase:**
 
@@ -40,9 +40,10 @@ Progress: [█████████████░░░░░░░] 81% (13
 | 11 | 2 | 6.5 min | 3.25 min |
 | 12 | 2 | 8.1 min | 4.05 min |
 | 13 | 2 | 5 min | 2.5 min |
+| 14 | 3 | 10.5 min | 3.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 3.5, 4.6, 2.0, 3.0 min (avg: 3.3 min)
+- Last 5 plans: 3.0, 3.5, 4.0, 3.0 min (avg: 3.4 min)
 - Trend: Stable (fast execution)
 
 *Updated after each plan completion*
@@ -75,6 +76,13 @@ All v1.0 decisions archived in PROJECT.md Key Decisions table.
 | COALESCE for partial PATCH updates | Updates only provided fields, preserves existing values | 12-01 | ✓ Implemented |
 | Multiplicative duration scaling | Preserves proportional timing relationships between actions | 12-01 | ✓ Implemented |
 | Preserve endpoints during intensity adjustment | Maintains pattern start/end positions for smooth transitions | 12-01 | ✓ Implemented |
+| No UNIQUE constraint on (playlist_id, position) | Temporary duplicates occur during reorder transactions; application logic manages uniqueness | 14-01 | ✓ Implemented |
+| Position compaction on item removal | Maintains contiguous positions for simpler UI logic and prevents gaps | 14-01 | ✓ Implemented |
+| Optimistic reorder updates with revert on error | Provides immediate UI feedback for drag-and-drop while maintaining consistency with backend state | 14-02 | ✓ Implemented |
+| Filter library items to video-associated items only | Playlists are video-focused per research; prevents adding script-only items | 14-02 | ✓ Implemented |
+| Sequential advancement via video 'ended' event listener | Browser fires 'ended' event reliably when video completes, providing clean trigger for auto-advance | 14-03 | ✓ Implemented |
+| Preload next video in hidden document.createElement('video') element | Triggers browser buffering without polluting React component tree, simple cleanup via refs | 14-03 | ✓ Implemented |
+| Stop playlist on last video end (auto-exit mode) | Clean completion state prevents indefinite playlist mode after content ends | 14-03 | ✓ Implemented |
 
 **v1.1 architectural decisions pending:**
 - API-only third-party sync (embed APIs vary by platform)
@@ -98,6 +106,12 @@ None.
 **Phase 13 (Pattern Builder):**
 - ✓ Complete - waypoint-based pattern builder with interactive canvas UI (13-01, 13-02)
 
+**Phase 14 (Playlist Management):**
+- ✓ Complete - playlist CRUD API with position management and cascade deletes (14-01)
+- ✓ Complete - playlist management UI with drag-and-drop editor (14-02)
+- ✓ Complete - playlist playback engine with sequential advancement and preloading (14-03)
+- **Phase complete - sequential playlist playback with auto funscript sync ready for testing**
+
 **Phase 15 (Embedded Video):**
 - Adult platform embed APIs undocumented (may need manual-sync fallback)
 - Research phase flagged in SUMMARY.md
@@ -105,8 +119,8 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-08
-Stopped at: Completed 13-02-PLAN.md (Waypoint Builder UI) - Phase 13 complete
-Resume file: .planning/phases/14-sync-management/14-01-PLAN.md (next phase)
+Stopped at: Completed 14-03-PLAN.md (Playlist Playback Engine) - Phase 14 complete
+Resume file: .planning/phases/15-embedded-video/ (next phase)
 
 Config:
 {
