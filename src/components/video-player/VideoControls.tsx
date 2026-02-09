@@ -7,6 +7,7 @@ interface VideoControlsProps {
   duration: number;
   onTogglePlayPause: () => void;
   onSeek: (time: number) => void;
+  onToggleFullscreen: () => void;
   error: string | null;
 }
 
@@ -20,6 +21,7 @@ export function VideoControls({
   duration,
   onTogglePlayPause,
   onSeek,
+  onToggleFullscreen,
   error,
 }: VideoControlsProps) {
   return (
@@ -48,6 +50,20 @@ export function VideoControls({
         <div className="text-sm text-stone-500 whitespace-nowrap min-w-[100px] text-right" style={{ fontFamily: 'var(--font-mono)' }}>
           {formatTime(currentTime)} / {formatTime(duration)}
         </div>
+
+        {/* Fullscreen Button */}
+        <button
+          onClick={onToggleFullscreen}
+          className="flex items-center justify-center w-8 h-8 rounded-md text-stone-400 hover:text-stone-200 hover:bg-stone-800 transition-colors"
+          aria-label="Toggle fullscreen"
+        >
+          <svg width={16} height={16} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3" />
+            <path d="M21 8V5a2 2 0 0 0-2-2h-3" />
+            <path d="M3 16v3a2 2 0 0 0 2 2h3" />
+            <path d="M16 21h3a2 2 0 0 0 2-2v-3" />
+          </svg>
+        </button>
       </div>
     </div>
   );
