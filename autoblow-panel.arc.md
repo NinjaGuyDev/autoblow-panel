@@ -1,6 +1,6 @@
 # Architecture Documentation: autoblow-panel
 
-> Generated on: 2026-02-07
+> Generated on: 2026-02-09
 >
 > This document provides comprehensive architecture documentation for the autoblow-panel repository.
 
@@ -31,225 +31,445 @@
 
 ### Project Purpose
 
-**Autoblow-Panel** is a React-based frontend control interface for the Autoblow AI Ultra intimate device. It provides:
-
-- **Video Synchronization**: Sync video playback with device motion patterns (funscripts)
-- **Pattern Library**: Browse and insert 37+ pre-built motion patterns into scripts
-- **Script Creation**: Create custom motion scripts from scratch using pattern composition
-- **Timeline Editing**: Visual timeline editor for precise motion control with undo/redo
-- **Manual Control**: Direct device control with customizable motion parameters (oscillation, sine wave, triangle wave, random walk)
-- **Device Logging**: Track device connection state, sync status, and errors
-- **Funscript Support**: Import/export industry-standard .funscript files (both original and new metadata formats)
+**Autoblow Panel** is a local-first web application for controlling the Autoblow AI Ultra device. It provides video-device synchronization, funscript editing, pattern creation, playlist management, and manual device control — all running entirely on the user's machine with zero cloud services, uploads, or tracking.
 
 ### Technology Stack
 
-| Layer | Technology | Version |
-|-------|-----------|---------|
-| Framework | React | 19.2.0 |
-| Language | TypeScript | 5.9.3 |
-| Build Tool | Vite | 7.2.4 |
-| CSS | Tailwind CSS | 4.1.18 |
-| Device SDK | @xsense/autoblow-sdk | 2.1.0 |
-| Validation | Zod | 4.3.6 |
-| Local DB | Dexie (IndexedDB) | 4.3.0 |
-| File Upload | react-dropzone | 14.4.0 |
-| Debouncing | use-debounce | 10.1.0 |
-| CSS Utilities | clsx + tailwind-merge | 2.1.1 / 3.4.0 |
+| Component | Technology | Version |
+|-----------|-----------|---------|
+| **Frontend** | React + TypeScript | 19.2.0 / 5.9.3 |
+| **Build Tool** | Vite | 7.2.4 |
+| **Styling** | Tailwind CSS | 4.1.18 |
+| **Backend** | Express.js | 5.2.1 |
+| **Database** | SQLite (better-sqlite3) | 12.6.2 |
+| **Device SDK** | @xsense/autoblow-sdk | 2.1.0 |
+| **Validation** | Zod | 4.3.6 |
+| **Local Storage** | Dexie (IndexedDB) | 4.3.0 |
+| **Drag & Drop** | @dnd-kit/core + sortable | 6.3.1 / 10.0.0 |
+| **Video Embed** | react-player | 3.4.0 |
+| **Icons** | lucide-react | 0.563.0 |
+| **Security** | Helmet | 8.1.0 |
+| **File Upload** | Multer | 2.0.2 |
 
 ### Architecture Pattern
 
-The application uses **React's composition pattern** with lifted state and custom hooks:
+**Frontend:** Lifted State React Composition with domain-driven custom hooks (24 hooks), pure presentation components, and canvas-based timeline editing.
 
-1. **Lifted State in App.tsx** - Root component manages cross-cutting concerns (video, funscript, device, undo/redo)
-2. **Custom Hooks for Domain Logic** - 13 hooks encapsulating feature-specific logic
-3. **Page Components as Presentational** - Tab-based pages receive props explicitly
-4. **Canvas-Based Timeline Editor** - High-performance rendering for 1000+ action points
+**Backend:** Layered architecture — Controllers → Services → Repositories → Database with constructor-based dependency injection throughout.
+
+**Data Flow:**
+```
+User Action → Component → Hook (state + side effects) →
+  → Lib (pure logic) → SDK or Database → Hook state update → Re-render
+```
 
 ### Directory Structure
 
 ```
-/src
-├── App.tsx                    # Root component with lifted state
-├── main.tsx                   # React entry point
-├── index.css                  # Global Tailwind + CSS variables
-├── /types                     # TypeScript type definitions (7 files)
-├── /lib                       # Core business logic (12 files)
-├── /hooks                     # React hooks (13 files)
-├── /components
-│   ├── /layout                # App shell, header, navbar, footer
-│   ├── /pages                 # Tab content (4 pages)
-│   ├── /file-loader           # Drag-and-drop file upload
-│   ├── /video-player          # HTML5 video controls
-│   ├── /timeline              # Canvas-based editor (8 components)
-│   ├── /device-control        # Device connection and manual control
-│   ├── /pattern-library       # Pattern browsing and insertion
-│   └── /dialogs               # Modal dialogs
-└── /assets
+autoblow-panel/
+├── src/                    # Frontend (React + TypeScript)
+│   ├── App.tsx             # Root component, state orchestration
+│   ├── main.tsx            # React DOM entry point
+│   ├── components/         # 34+ UI components (layout, pages, timeline, etc.)
+│   ├── hooks/              # 24 custom hooks (device, sync, editor, etc.)
+│   ├── lib/                # 15+ pure utility modules (validation, patterns, etc.)
+│   ├── types/              # 7 domain type definition files
+│   └── contexts/           # React Context (DeviceContext)
+├── server/                 # Backend (Express + TypeScript)
+│   ├── index.ts            # Express app init, DI setup, middleware, routes
+│   ├── controllers/        # 3 HTTP handlers (library, playlist, media)
+│   ├── services/           # 2 business logic modules
+│   ├── repositories/       # 2 data access modules
+│   ├── routes/             # 4 route definitions + health
+│   ├── middleware/          # 4 middleware (security, localhost, error, validation)
+│   ├── db/                 # Connection + schema initialization
+│   └── types/              # Shared frontend-backend types
+├── docker/                 # Docker Compose + Dockerfiles + nginx.conf
+├── data/                   # SQLite database (runtime, git-ignored)
+├── media/                  # Video/media files (runtime, git-ignored)
+└── public/                 # Static assets
 ```
+
+### Code Metrics
+
+| Layer | Files | LOC |
+|-------|-------|-----|
+| Frontend Components | 34+ TSX | ~5,000 |
+| Frontend Hooks | 24 TS | ~4,000 |
+| Frontend Utilities | 15+ TS | ~1,800 |
+| Backend | ~20 TS | ~1,515 |
+| **Total** | **~131 TS/TSX** | **~16,640** |
 
 ### Build & Development
 
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Vite dev server on port 3000 |
-| `npm run build` | TypeScript compilation + Vite bundling |
-| `npm run lint` | ESLint with React plugins |
-| `npm run preview` | Preview production build |
+```bash
+npm run dev              # Run frontend (Vite:5173) + backend (Express:3001) concurrently
+npm run build            # TypeScript compile + Vite bundle → dist/
+docker-compose -f docker/docker-compose.yml up  # Production deployment
+```
+
+### Testing Setup
+
+- **Framework:** Vitest 4.0.18 (configured, limited usage)
+- **Test Files:** 3 existing tests in `src/lib/__tests__/` (easing, smoothing, waypointGenerator)
+- **Coverage:** ~0% (only lib tests, no component/hook tests)
+
+### Version Status
+
+v1.1 shipped (phases 1-16 complete). Production-ready with Docker deployment support.
 
 ---
 
 ## HTTP API Documentation
 
-### Status: No HTTP API Endpoints
+### API Overview
 
-This application is **entirely client-side** with **no HTTP fetch or REST API calls**. All device communication is handled through the **@xsense/autoblow-sdk** npm package.
+| Metric | Count |
+|--------|-------|
+| **Total HTTP Endpoints** | 20 |
+| **Controllers** | 3 |
+| **Services** | 2 |
+| **Repositories** | 2 |
+| **Middleware** | 4 |
+| **External HTTP APIs** | 0 |
 
-### SDK Method Inventory
+All endpoints are prefixed and served from Express on port 3001. Frontend communicates via a type-safe API client (`src/lib/apiClient.ts`).
 
-| Domain | Method | Purpose |
-|--------|--------|---------|
-| Connection | `deviceInit(token)` | Initialize device connection |
-| Oscillation | `ultra.oscillateSet(speed, minY, maxY)` | Configure oscillation |
-| Oscillation | `ultra.oscillateStart()` | Start oscillation |
-| Oscillation | `ultra.oscillateStop()` | Stop oscillation |
-| Sync | `ultra.syncScriptUploadFunscriptFile(funscript)` | Upload funscript |
-| Sync | `ultra.syncScriptStart(timeMs)` | Start sync playback |
-| Sync | `ultra.syncScriptStop()` | Stop sync playback |
-| Sync | `ultra.syncScriptOffset(correctionMs)` | Apply drift correction |
-| State | `ultra.getState()` | Get device playback position |
-| Latency | `ultra.estimateLatency()` | Measure network latency |
+### Library API (`/api/library`)
 
-### SDK Funscript Format
+| Method | Path | Handler | Description |
+|--------|------|---------|-------------|
+| GET | `/api/library` | `LibraryController.getAll` | List all library items (excludes custom patterns) |
+| GET | `/api/library/search?q=` | `LibraryController.search` | Search by video/funscript name (LIKE query) |
+| GET | `/api/library/:id` | `LibraryController.getById` | Get single item by ID |
+| GET | `/api/library/custom-patterns` | `LibraryController.getCustomPatterns` | List custom patterns only |
+| GET | `/api/library/migration-status` | `LibraryController.getMigrationStatus` | Check IndexedDB migration state |
+| POST | `/api/library` | `LibraryController.create` | Create new library item |
+| POST | `/api/library/migrate` | `LibraryController.migrate` | Bulk migrate from IndexedDB to SQLite |
+| PUT | `/api/library` | `LibraryController.save` | Upsert library item by videoName |
+| PATCH | `/api/library/:id` | `LibraryController.updateCustomPattern` | Update custom pattern data |
+| DELETE | `/api/library/:id` | `LibraryController.delete` | Delete item + cascade media cleanup |
+
+**Key Request/Response Types:**
 
 ```typescript
-{
-  metadata: { id: number, version: 1 },
-  actions: [{ at: number, pos: number }, ...]
+// Create/Save Request
+interface CreateLibraryItemRequest {
+  videoName: string | null;
+  funscriptName: string | null;
+  funscriptData: string;              // JSON stringified (required)
+  duration: number | null;
+  isCustomPattern?: number;           // 0=regular, 1=custom
+  originalPatternId?: string | null;
+  patternMetadata?: string | null;
+}
+
+// Response
+interface LibraryItem {
+  id: number;
+  videoName: string | null;
+  funscriptName: string | null;
+  funscriptData: string;
+  duration: number | null;
+  lastModified: string;
+  isCustomPattern: number;
+  originalPatternId: string | null;
+  patternMetadata: string | null;
 }
 ```
 
-### Error Types
+### Playlist API (`/api/playlists`)
 
-- `DeviceNotConnectedError` - Device offline or not found
-- `DeviceTimeoutError` - Connection timeout
+| Method | Path | Handler | Description |
+|--------|------|---------|-------------|
+| GET | `/api/playlists` | `PlaylistController.getAll` | List all playlists with item counts |
+| GET | `/api/playlists/:id` | `PlaylistController.getById` | Get single playlist |
+| GET | `/api/playlists/:id/items` | `PlaylistController.getItems` | Get playlist items with library data |
+| POST | `/api/playlists` | `PlaylistController.create` | Create playlist |
+| PATCH | `/api/playlists/:id` | `PlaylistController.update` | Update playlist name/description |
+| DELETE | `/api/playlists/:id` | `PlaylistController.delete` | Delete playlist (cascade items) |
+| POST | `/api/playlists/:id/items` | `PlaylistController.addItem` | Add library item to playlist |
+| DELETE | `/api/playlists/:id/items/:itemId` | `PlaylistController.removeItem` | Remove item (compact positions) |
+| PUT | `/api/playlists/:id/items/reorder` | `PlaylistController.reorderItems` | Reorder items (transactional) |
+
+### Media API (`/api/media`)
+
+| Method | Path | Handler | Description |
+|--------|------|---------|-------------|
+| GET | `/api/media` | `MediaController.list` | List video files in media directory |
+| GET | `/api/media/check/:filename` | `MediaController.check` | Check file existence + size |
+| GET | `/api/media/stream/:filename` | `MediaController.stream` | Stream video with HTTP Range support |
+| POST | `/api/media/upload` | `MediaController.upload` | Upload video (multer, 10GB max) |
+| GET | `/api/media/thumbnail/:filename` | `MediaController.getThumbnail` | Get video thumbnail |
+| POST | `/api/media/thumbnail` | `MediaController.uploadThumbnail` | Upload thumbnail JPEG (5MB max) |
+
+**File Restrictions:** `.mp4`, `.webm`, `.ogg`, `.mkv`, `.avi` | Thumbnails: JPEG only
+
+### Health API
+
+| Method | Path | Handler | Description |
+|--------|------|---------|-------------|
+| GET | `/health` | Health route | Returns status, uptime, database check |
+
+### Middleware Stack (applied in order)
+
+1. `localhostOnly` — Restricts to `127.0.0.1` / `::1`
+2. Security headers (Helmet, production only)
+3. CORS — `origin: 'http://localhost:5173'`
+4. JSON body parser (50MB limit)
+5. Route handlers
+6. Global error handler
+
+### Device SDK Integration (Frontend Only)
+
+The Autoblow device is controlled via `@xsense/autoblow-sdk` directly from the frontend — no backend proxy:
+
+| Category | Method | Purpose |
+|----------|--------|---------|
+| Connection | `deviceInit(token)` | Initialize device |
+| Oscillation | `ultra.oscillateSet(speed, minY, maxY)` | Configure pattern |
+| Oscillation | `ultra.oscillateStart()` / `oscillateStop()` | Start/stop |
+| Sync | `ultra.syncScriptUploadFunscriptFile(funscript)` | Upload script |
+| Sync | `ultra.syncScriptStart(timeMs)` / `syncScriptStop()` | Playback control |
+| Sync | `ultra.syncScriptOffset(correctionMs)` | Drift correction |
+| State | `ultra.getState()` / `estimateLatency()` | Status + latency |
 
 ---
 
 ## Database Architecture
 
-### IndexedDB via Dexie
+### Overview
 
-**Database:** `AutoblowPanelDB` (version 1)
+| Property | Value |
+|----------|-------|
+| **Database** | SQLite 3 |
+| **Driver** | better-sqlite3 12.6.2 (synchronous) |
+| **Journal Mode** | WAL (Write-Ahead Logging) |
+| **Busy Timeout** | 5000ms |
+| **Foreign Keys** | Enabled |
+| **Path** | `./data/autoblow.db` (configurable via `DB_PATH`) |
 
-**Table: `workSessions`**
+### Connection Setup
 
-| Column | Type | Purpose |
-|--------|------|---------|
-| `id` | number (auto-increment) | Primary key (always 1) |
-| `videoName` | string \| null | Current video filename |
-| `funscriptName` | string \| null | Current funscript filename |
-| `funscriptData` | string | JSON-stringified Funscript |
-| `lastModified` | Date | Last update timestamp |
+**File:** `server/db/connection.ts`
 
-**Indexes:** `videoName`, `funscriptName`, `lastModified`
+- Creates data directory if missing
+- Single static connection (module-level export)
+- Pragmas: WAL mode, 5s busy timeout, FK enforcement
 
-**Access Pattern:** Single record at `id=1` (overwrite on save)
+### Tables
 
-**Files:**
-- `src/lib/db.ts` - Database class definition
-- `src/hooks/useAutoSave.ts` - Read/write operations via `useLiveQuery`
+#### `library_items`
 
-### localStorage
+```sql
+CREATE TABLE IF NOT EXISTS library_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  videoName TEXT,
+  funscriptName TEXT,
+  funscriptData TEXT NOT NULL,
+  duration REAL,
+  lastModified TEXT NOT NULL DEFAULT (datetime('now')),
+  isCustomPattern INTEGER DEFAULT 0,
+  originalPatternId TEXT,
+  patternMetadata TEXT
+);
+```
 
-| Key | Value | Purpose |
-|-----|-------|---------|
-| `autoblow-device-token` | Device auth token | Persist connection across reloads |
-| `autoblow-panel-theme` | `'dark'` \| `'light'` | UI theme preference |
+| Column | Type | Nullable | Description |
+|--------|------|----------|-------------|
+| id | INTEGER | NO | Auto-increment PK |
+| videoName | TEXT | YES | Video filename |
+| funscriptName | TEXT | YES | Funscript filename |
+| funscriptData | TEXT | NO | JSON-stringified funscript |
+| duration | REAL | YES | Duration in seconds |
+| lastModified | TEXT | NO | ISO timestamp |
+| isCustomPattern | INTEGER | YES | 0=regular, 1=custom |
+| originalPatternId | TEXT | YES | Source pattern ID |
+| patternMetadata | TEXT | YES | JSON metadata |
+
+**Indexes:** `videoName`, `funscriptName`, `lastModified DESC`, `isCustomPattern`
+
+#### `playlists`
+
+```sql
+CREATE TABLE IF NOT EXISTS playlists (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  description TEXT,
+  createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+  lastModified TEXT NOT NULL DEFAULT (datetime('now'))
+);
+```
+
+#### `playlist_items`
+
+```sql
+CREATE TABLE IF NOT EXISTS playlist_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  playlist_id INTEGER NOT NULL,
+  library_item_id INTEGER NOT NULL,
+  position INTEGER NOT NULL,
+  FOREIGN KEY (playlist_id) REFERENCES playlists(id) ON DELETE CASCADE,
+  FOREIGN KEY (library_item_id) REFERENCES library_items(id) ON DELETE CASCADE
+);
+```
+
+**Indexes:** `(playlist_id, position)` composite, `library_item_id`
+
+#### `migration_status`
+
+```sql
+CREATE TABLE IF NOT EXISTS migration_status (
+  id INTEGER PRIMARY KEY CHECK (id = 1),
+  migrated INTEGER NOT NULL DEFAULT 0,
+  migratedAt TEXT
+);
+```
+
+Single-row table tracking IndexedDB→SQLite migration status.
+
+### Relationships
+
+```
+playlists (1) ──→ playlist_items (M) ──→ library_items (1)
+                   CASCADE DELETE           CASCADE DELETE
+```
+
+### Schema Migration Strategy
+
+Idempotent initialization on startup — `CREATE TABLE IF NOT EXISTS` + `PRAGMA table_info` checks before `ALTER TABLE`. No versioned migration framework.
+
+### Data Access Layer
+
+```
+Database (better-sqlite3)
+  ↓
+Repositories (parameterized queries, prepared statements)
+  ├── LibraryRepository
+  └── PlaylistRepository
+  ↓
+Services (business logic, validation)
+  ├── LibraryService
+  └── PlaylistService
+  ↓
+Controllers (HTTP handlers)
+```
+
+All queries use parameterized statements (`db.prepare().get/all/run`). Transactions via `db.transaction()` for batch operations (reorder, migration).
 
 ---
 
 ## Core Entities & Domain Models
 
-### Funscript Domain
+### Shared API Types (`server/types/shared.ts`)
 
-| Entity | File | Properties |
-|--------|------|------------|
-| `FunscriptAction` | `types/funscript.ts` | `pos: 0-100`, `at: ms` |
-| `FunscriptMetadata` | `types/funscript.ts` | title, description, performers, tags, etc. |
-| `Funscript` | `types/funscript.ts` | actions[], optional metadata/version |
-| `LoadedFunscript` | `types/funscript.ts` | file, name, data |
-| `LoadedVideo` | `types/funscript.ts` | file, name, blobUrl, duration |
-| `WorkSession` | `types/funscript.ts` | id, videoName, funscriptName, funscriptData, lastModified |
+| Type | Purpose |
+|------|---------|
+| `LibraryItem` | Database row for video/funscript/pattern |
+| `Playlist` | Database row for playlist with itemCount |
+| `PlaylistItem` | Junction table row with library data |
+| `CreateLibraryItemRequest` | POST/PUT request body |
+| `CreatePlaylistRequest` | Playlist creation body |
+| `UpdatePlaylistRequest` | Playlist update body |
+| `MigrationRequest` | Bulk migration body |
+| `ReorderPlaylistItemsRequest` | Reorder body (itemIds[]) |
 
-### Pattern Domain
+### Funscript Domain (`src/types/funscript.ts`)
 
-| Entity | File | Properties |
-|--------|------|------------|
-| `Intensity` | `types/patterns.ts` | `'low'` \| `'medium'` \| `'high'` |
-| `PatternDirection` | `types/patterns.ts` | `'up'` \| `'down'` \| `'neutral'` |
-| `StyleTag` | `types/patterns.ts` | 17 values (wave, pulse, rhythmic, etc.) |
-| `PatternDefinition` | `types/patterns.ts` | id, name, intensity, tags, durationMs, generator() |
+| Type | Purpose |
+|------|---------|
+| `FunscriptAction` | Single motion command: `{pos: 0-100, at: ms}` |
+| `FunscriptMetadata` | Extended metadata (title, performers, tags, etc.) |
+| `Funscript` | Complete funscript supporting original + new format |
+| `LoadedVideo` | In-memory video file with Blob URL |
+| `LoadedFunscript` | In-memory parsed funscript |
+| `WorkSession` | Session persistence for IndexedDB/SQLite |
 
-### Device Domain
+### Device Types (`src/types/device.ts`)
 
-| Entity | File | Properties |
-|--------|------|------------|
-| `ConnectionState` | `types/device.ts` | `'disconnected'` \| `'connecting'` \| `'connected'` \| `'error'` |
-| `PatternType` | `types/device.ts` | `'oscillation'` \| `'sine-wave'` \| `'triangle-wave'` \| `'random-walk'` |
-| `OscillationParams` | `types/device.ts` | speed, minY, maxY |
-| `ManualControlParams` | `types/device.ts` | extends OscillationParams + patternType, increment, variability |
+| Type | Purpose |
+|------|---------|
+| `ConnectionState` | `'disconnected' \| 'connecting' \| 'connected' \| 'error'` |
+| `PatternType` | `'oscillation' \| 'sine-wave' \| 'triangle-wave' \| 'random-walk'` |
+| `OscillationParams` | `{speed, minY, maxY}` all 0-100 |
+| `ManualControlParams` | Full custom pattern params + variability |
 
-### Sync Domain
+### Pattern Types (`src/types/patterns.ts`)
 
-| Entity | File | Properties |
-|--------|------|------------|
-| `SyncStatus` | `types/sync.ts` | `'idle'` \| `'uploading'` \| `'ready'` \| `'playing'` \| `'paused'` \| `'error'` |
-| `SyncPlaybackState` | `types/sync.ts` | syncStatus, scriptUploaded, estimatedLatencyMs, driftMs, error |
+| Type | Purpose |
+|------|---------|
+| `PatternDefinition` | Preset pattern with `generator()` function |
+| `CustomPatternDefinition` | User-created with static `actions[]` + `isCustom: true` discriminator |
+| `AnyPattern` | Union type for both |
+| `StyleTag` | 17 motion style tags (wave, pulse, rhythmic, etc.) |
+| `Intensity` | `'low' \| 'medium' \| 'high'` |
+| `InterpolationType` | Easing functions for waypoint builder |
 
-### Timeline Domain
+### Sync/Video Types (`src/types/sync.ts`, `video.ts`)
 
-| Entity | File | Properties |
-|--------|------|------------|
-| `TimelineViewportState` | `types/timeline.ts` | viewStart, viewEnd, viewportDuration |
-| `EditMode` | `types/timeline.ts` | `'select'` \| `'draw'` |
-| `HitTestResult` | `types/timeline.ts` | index, action, distancePx |
+| Type | Purpose |
+|------|---------|
+| `SyncStatus` | `'idle' \| 'uploading' \| 'ready' \| 'playing' \| 'paused' \| 'error'` |
+| `SyncPlaybackState` | Sync status + latency + drift + error |
+| `PlatformType` | `'local' \| 'youtube' \| 'vimeo' \| 'supported-embed' \| 'unsupported-embed'` |
 
-### Validation Domain
+### Timeline/Editor Types (`src/types/timeline.ts`)
 
-| Entity | File | Properties |
-|--------|------|------------|
-| `SegmentClassification` | `types/validation.ts` | `'safe'` \| `'fast'` \| `'impossible'` |
-| `ValidatedSegment` | `types/validation.ts` | startIndex, endIndex, classification, speed |
-| `ValidationResult` | `types/validation.ts` | segments[], gaps[], summary |
+| Type | Purpose |
+|------|---------|
+| `EditMode` | `'select' \| 'draw'` |
+| `TimelineViewportState` | Viewport start/end/duration for pan/zoom |
+| `EditorState` | Full editor state (mode, selection, drag, draw) |
+| `HitTestResult` | Canvas click target with distance |
 
-### Zod Schemas
+### Validation Types (`src/types/validation.ts`)
 
-- `FunscriptActionSchema` - Validates pos (0-100), at (>=0)
-- `OriginalFunscriptSchema` - version, inverted, range, actions[]
-- `MetadataFunscriptSchema` - metadata, actions[]
-- `FunscriptSchema` - Union accepting either format
+| Type | Purpose |
+|------|---------|
+| `SegmentClassification` | `'safe' \| 'fast' \| 'impossible'` speed rating |
+| `ValidatedSegment` | Speed analysis between consecutive actions |
+| `ValidatedGap` | Time gap detection between actions |
+| `ValidationResult` | Complete validation with summary stats |
+
+### Zod Schemas (`src/lib/schemas.ts`)
+
+```typescript
+FunscriptSchema = union([
+  OriginalFunscriptSchema,  // {version, inverted, range, actions}
+  MetadataFunscriptSchema   // {metadata, actions}
+]);
+```
+
+- `pos`: 0-100, `at`: >=0, `actions`: min 1 element
+- `.passthrough()` allows additional properties
+
+### Navigation (`src/types/navigation.ts`)
+
+6 tabs: `library`, `playlists`, `video-sync`, `manual-control`, `device-log`, `pattern-library`
 
 ---
 
 ## Authentication
 
+### Status: No User Authentication
+
+This is a single-user, local-only application. There are no user accounts, login flows, or session management.
+
 ### Device Token Authentication
 
-The application implements simple token-based authentication for device connection:
+The only authentication is the device connection token for the Autoblow SDK:
 
-- **Token Input:** User enters device token via UI (`AppHeader.tsx`, `DeviceConnection.tsx`)
-- **Validation:** Token passed to `deviceInit(token)` from `@xsense/autoblow-sdk`
-- **Persistence:** Saved to `localStorage` on successful connection
-- **Lifecycle:** Token persists across page reloads (not cleared on disconnect)
-- **Connection States:** `disconnected` → `connecting` → `connected` (or `error`)
+- **Input:** User enters device token in connection dialog
+- **Encryption:** AES-GCM with PBKDF2 key derivation (100K iterations, SHA-256)
+- **Storage:** Encrypted in `localStorage` key `autoblow-device-token`
+- **App Password:** Hardcoded `'autoblow-panel-v1'` (protects against generic XSS scrapers, not targeted attacks)
+- **Backward Compat:** Detects and migrates legacy plaintext tokens
+- **Implementation:** `src/lib/tokenEncryption.ts`
 
-### Error Handling
-
-| Error Type | Message |
-|-----------|---------|
-| `DeviceNotConnectedError` | "Device not found or offline" |
-| `DeviceTimeoutError` | "Connection timed out" |
-| Generic `Error` | Error message text |
+**Connection Flow:**
+1. User enters token → `encryptToken()` → localStorage
+2. On mount → `decryptToken()` → `deviceInit(token)` via SDK
+3. Connection state managed in `DeviceContext`
 
 ---
 
@@ -257,224 +477,374 @@ The application implements simple token-based authentication for device connecti
 
 ### Status: No Authorization System
 
-There is **no role-based access control, permission checking, or authorization logic** in the codebase:
+- No roles (user/admin/etc.)
+- No permission checks on API endpoints
+- No resource-level access control
+- Single-user, local-only design assumption
 
-- No role definitions or permission matrix
-- No protected routes or route guards
-- No auth context or provider (only ThemeProvider)
-- No multi-user support
-- Once connected, all features are available
+### Access Control
+
+The only access control is **IP-based localhost restriction**:
+
+**File:** `server/middleware/localhost-only.ts`
+
+```typescript
+const ALLOWED_IPS = ['127.0.0.1', '::1', '::ffff:127.0.0.1'];
+```
+
+- Applied to all backend routes before CORS
+- Returns `403 Forbidden` for non-localhost requests
+- Logs security warnings: `[SECURITY] Access denied for IP: ${clientIp}`
+
+### CORS Policy
+
+```typescript
+cors({ origin: 'http://localhost:5173', credentials: true })
+```
+
+Restricted to Vite dev server origin.
 
 ---
 
 ## External Dependencies
 
-### Production Dependencies (8)
+### Runtime Dependencies (18 packages)
 
-| Package | Version | Purpose | Critical |
+| Package | Version | Purpose | Category |
 |---------|---------|---------|----------|
-| `@xsense/autoblow-sdk` | ^2.1.0 | Device communication SDK | Yes |
-| `clsx` | ^2.1.1 | Conditional className builder | Yes |
-| `dexie` | ^4.3.0 | IndexedDB wrapper | Yes |
-| `dexie-react-hooks` | ^4.2.0 | Reactive database queries | Yes |
-| `react` / `react-dom` | ^19.2.0 | UI framework | Yes |
-| `react-dropzone` | ^14.4.0 | File drag-and-drop | Yes |
-| `tailwind-merge` | ^3.4.0 | Tailwind class merging | Yes |
-| `use-debounce` | ^10.1.0 | Debouncing hook | Yes |
-| `zod` | ^4.3.6 | Schema validation | Yes |
+| `@xsense/autoblow-sdk` | ^2.1.0 | Device communication | Device SDK |
+| `react` / `react-dom` | ^19.2.0 | UI framework | Frontend |
+| `express` | ^5.2.1 | HTTP server | Backend |
+| `better-sqlite3` | ^12.6.2 | SQLite driver | Backend DB |
+| `cors` | ^2.8.6 | CORS middleware | Backend |
+| `helmet` | ^8.1.0 | Security headers | Backend |
+| `multer` | ^2.0.2 | File uploads | Backend |
+| `dexie` | ^4.3.0 | IndexedDB wrapper (migration) | Frontend |
+| `@dnd-kit/core` | ^6.3.1 | Drag-and-drop primitives | Frontend UI |
+| `@dnd-kit/sortable` | ^10.0.0 | Sortable lists | Frontend UI |
+| `lucide-react` | ^0.563.0 | Icon library | Frontend UI |
+| `react-dropzone` | ^14.4.0 | File drag-drop | Frontend |
+| `react-player` | ^3.4.0 | Video embeds | Frontend |
+| `tailwind-merge` | ^3.4.0 | Class merging | Frontend |
+| `use-debounce` | ^10.1.0 | Debouncing hook | Frontend |
+| `zod` | ^4.3.6 | Schema validation | Shared |
+| `clsx` | ^2.1.1 | Class name utility | Frontend |
 
-### Development Dependencies (12)
+### Development Dependencies (12+ packages)
 
 | Package | Version | Purpose |
 |---------|---------|---------|
-| `@tailwindcss/vite` | ^4.1.18 | Vite Tailwind plugin |
-| `@vitejs/plugin-react` | ^5.1.1 | React Fast Refresh |
+| `typescript` | ~5.9.3 | Type checking (strict mode) |
+| `vite` | ^7.2.4 | Frontend build tool |
+| `@vitejs/plugin-react` | ^5.1.1 | React Vite plugin |
+| `@tailwindcss/vite` | ^4.1.18 | Tailwind CSS Vite plugin |
+| `vitest` / `@vitest/ui` | ^4.0.18 | Unit testing |
+| `tsx` | ^4.21.0 | TypeScript executor (backend dev) |
+| `concurrently` | ^9.2.1 | Run multiple scripts |
 | `eslint` | ^9.39.1 | Code linting |
-| `eslint-plugin-react-hooks` | ^7.0.1 | React hooks rules |
-| `eslint-plugin-react-refresh` | ^0.4.24 | HMR validation |
 | `tailwindcss-animate` | ^1.0.7 | Animation utilities |
-| `typescript` | ~5.9.3 | TypeScript compiler |
-| `typescript-eslint` | ^8.46.4 | TypeScript ESLint |
-| `vite` | ^7.2.4 | Build tool |
-
-All dependencies are actively used. No unused or unlisted dependencies detected.
+| Various `@types/*` | latest | Type definitions |
 
 ---
 
 ## Service Dependencies
 
-### Primary: @xsense/autoblow-sdk
+### External Service: Autoblow Device SDK
 
-The sole external service dependency. Provides:
-- Device initialization and authentication
-- Oscillation control (set, start, stop)
-- Funscript upload and playback control
-- Device state queries and drift detection
-- Latency estimation
+**Package:** `@xsense/autoblow-sdk` v2.1.0 (frontend only)
 
-### Local Services
+This is the **only external service dependency**. The app communicates with the physical Autoblow AI Ultra device via the SDK's native protocol (not HTTP).
 
-| Service | Technology | Purpose |
-|---------|-----------|---------|
-| IndexedDB | Dexie | Session persistence |
-| localStorage | Browser API | Token and theme storage |
-| Blob URLs | Browser API | In-memory video playback |
-| File API | Browser API | File reading and export |
+**Connection:** `deviceInit(token)` returns SDK instance
+**Sync:** Upload funscript → start/stop/offset commands
+**Manual:** Oscillation set/start/stop commands
+**Monitoring:** `getState()` polling + `estimateLatency()`
+
+### Internal Services
+
+| Service | Port | Purpose |
+|---------|------|---------|
+| Vite Dev Server | 5173 | Frontend with HMR |
+| Express Backend | 3001 | API + media streaming |
+| SQLite | file-based | Data persistence |
+| Filesystem | local | Video/thumbnail storage |
+
+### Video Platform Embeds (iframe only, no API calls)
+
+- YouTube (`youtube.com`, `youtube-nocookie.com`)
+- Vimeo (`player.vimeo.com`)
+- PornHub (`*.pornhub.com`)
+- XVideos (`*.xvideos.com`)
+
+Embedded via `<iframe>` with CSP `frame-src` restrictions. No direct API calls to these platforms.
 
 ---
 
 ## Event Architecture
 
-### DOM Event Listeners
+### Frontend Event Systems
 
-**Video Element Events** (`useVideoPlayback.ts`, `useSyncPlayback.ts`):
-- `play`, `pause`, `ended` - Playback state tracking
-- `timeupdate` - Current time updates
-- `loadedmetadata` - Video duration
-- `seeked` - Device re-sync after seek
+**React Context:** `DeviceContext` provides device connection state, logging, and SDK instance to all components.
 
-**Keyboard Events** (`VideoPlayer.tsx`, `Timeline.tsx`):
-- Space/k - Toggle play/pause
-- Arrow keys - Seek
-- Delete - Remove selected points
-- Ctrl+Z/Y - Undo/redo
+**Video Element DOM Events** (handled in `useSyncPlayback`):
+- `play` → Start device sync
+- `pause` → Stop device sync
+- `seeked` → Re-sync device timing
+- `ended` → Stop device at video end
 
-### requestAnimationFrame Patterns
+**RAF-Based Drift Detection:**
+- `requestAnimationFrame` loop checks device state every 2 seconds during playback
+- Drift threshold: 200ms (local video), 500ms (embed video)
+- Maximum correction cap: 500ms
+- Calls `ultra.syncScriptOffset(drift)` when threshold exceeded
 
-| Pattern | File | Interval | Purpose |
-|---------|------|----------|---------|
-| Drift detection | `useSyncPlayback.ts` | 2000ms | Video-device sync monitoring |
-| Pattern preview | `PatternCard.tsx` | Per frame | Animated hover preview |
-| Pattern detail | `PatternDetailDialog.tsx` | Per frame | Modal preview animation |
+**Debounced Events:**
+- Oscillation parameter updates: 150ms debounce
+- Custom pattern regeneration: 3000ms debounce
 
-### ResizeObserver
+**Device Logging:**
+- In-memory event log maintained in `useDeviceLog` (max 500 entries)
+- Tracks connection states, errors, sync status
+- Displayed in Device Log tab
 
-- `Timeline.tsx` - Observes container width for canvas rendering
+### Backend Event Systems
 
-### Mutual Exclusion Logic
-
-- Sync playback stops manual control when video plays
-- Manual control pauses video when device starts
-- Prevents conflicting commands to device
+**No real-time communication.** All backend communication is HTTP request/response:
+- No WebSocket support
+- No Server-Sent Events
+- No message queues or pub/sub
 
 ---
 
 ## Deployment & CI/CD
 
-### Status: No Deployment Infrastructure
+### Docker Deployment
 
-- **No CI/CD pipelines** (no `.github/workflows/`, no GitLab CI, etc.)
-- **No Docker configuration**
-- **No hosting provider configs** (no Vercel, Netlify, etc.)
-- **No environment files** (no `.env`)
-- **No infrastructure as code**
+**Files:**
+- `docker/Dockerfile` — Frontend: Node 20 Alpine (build) → nginx 1.25 Alpine (serve)
+- `docker/Dockerfile.backend` — Backend: Node 20 Alpine (build) → Node 20 Alpine (runtime)
+- `docker/docker-compose.yml` — Service orchestration
+- `docker/nginx.conf` — Reverse proxy configuration
 
-### Build Configuration
+**Services:**
 
-| File | Purpose |
-|------|---------|
-| `vite.config.ts` | Vite + React + Tailwind plugins, port 3000 |
-| `tsconfig.json` | TypeScript config (strict mode, ES2022 target) |
-| `tailwind.config.js` | Tailwind CSS (dark mode: class-based) |
-| `.gitignore` | Ignores node_modules, dist, .env, .funscript files |
+| Service | Image | Port | Purpose |
+|---------|-------|------|---------|
+| frontend | nginx:1.25-alpine | 80 | Static SPA + reverse proxy |
+| backend | node:20-alpine | 3001 (localhost only) | API + media streaming |
+
+**Volumes:**
+- `sqlite-data:/app/data` — Persistent SQLite database
+- `media-data:/app/media` — Persistent video/thumbnail files
+
+**Network:** Bridge network `app-network` for inter-service communication
+
+### Nginx Configuration
+
+- Gzip compression (level 6) for text/CSS/JS/JSON
+- Long-lived cache (1 year, immutable) for hashed static assets
+- `/api` routes proxied to backend:3001
+- SPA fallback: `try_files $uri $uri/ /index.html`
+- Security headers: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, CSP
+
+### CI/CD
+
+**Status:** No automated CI/CD pipelines configured. Manual deployment via Docker Compose.
+
+### Environment Variables
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `NODE_ENV` | development | Security headers applied when `production` |
+| `PORT` | 3001 | Backend server port |
+| `DB_PATH` | `./data/autoblow.db` | SQLite database path |
+| `MEDIA_DIR` | `./media` | Video/thumbnail storage |
 
 ---
 
 ## Monitoring & Observability
 
-### Status: Minimal/Local-Only Observability
+### Health Check
 
-**Console Logging:** Only 9 `console.error()` calls in `useSyncPlayback.ts` and 1 in `useVideoPlayback.ts`. No `console.log`, `console.warn`, or `console.info` usage.
+**Endpoint:** `GET /health`
 
-**Device Log Hook** (`useDeviceLog.ts`):
-- In-memory event log (max 500 entries)
-- Types: `'sent'` | `'received'` | `'info'` | `'error'`
-- Displayed in DeviceLogPage component
-- Not persisted to disk
+```json
+{
+  "status": "ok" | "error",
+  "timestamp": "2026-02-09T...",
+  "uptime": 123.45,
+  "checks": { "database": "ok" | "error" }
+}
+```
 
-**No External Monitoring:**
-- No Sentry/Bugsnag error tracking
-- No Google Analytics or user analytics
-- No APM or performance monitoring
-- No structured logging framework
-- No health checks
+- Returns `200` on success, `503` on database failure
+- Docker health check: 30s interval, 10s timeout, 3 retries
+
+### Logging
+
+**Console logging only** — no structured logging framework (Winston/Pino), no log aggregation.
+
+- Backend: Error logging in health check, error handler, services; security warnings for denied IPs
+- Frontend: Error logging in hooks; device event log (500 entry max) displayed in UI
+
+### Observability Gaps
+
+- No structured logging
+- No distributed tracing
+- No APM/performance monitoring
+- No error tracking (Sentry)
+- No metrics collection (Prometheus)
+- No request/response timing
+- No database query profiling
 
 ---
 
 ## Feature Flags
 
-### Status: No Feature Flag Infrastructure
+### Status: No Feature Flag System
 
-No feature flag systems, libraries, or patterns detected. All features are always enabled. No environment-based configuration or A/B testing infrastructure found.
+The only conditional logic is environment-based:
+
+```typescript
+// server/index.ts
+if (process.env.NODE_ENV === 'production') {
+  app.use(createSecurityMiddleware());
+}
+```
+
+Security headers are only applied in production to avoid breaking Vite HMR in development.
+
+No mechanism exists for gradual rollout, A/B testing, kill switches, or per-user feature enablement.
 
 ---
 
 ## ML/AI Services
 
-### Status: No ML/AI Integration
+### Status: No ML/AI Usage
 
-No machine learning or AI services integrated. All motion patterns are procedurally generated using mathematical functions. The validation system uses rule-based speed thresholds (not learned models):
+The project explicitly excludes ML-based features (per `PROJECT.md`):
 
-- `safe`: < 250 units/second
-- `fast`: 250-400 units/second
-- `impossible`: > 400 units/second
+> "AI/ML-based script generation — Deterministic algorithms only"
+
+All 36+ patterns are generated by **pure functions** (sine, cosine, pulse, random walk, etc.) in:
+- `src/lib/patternDefinitions.ts` — 37 preset pattern definitions
+- `src/lib/patternGenerators.ts` — Mathematical generator functions
+- `src/lib/waypointGenerator.ts` — Bezier curve generation
+
+No LLM calls, no model inference, no training data.
 
 ---
 
 ## Data Privacy & Compliance
 
-### Status: Privacy-by-Design
+### Privacy Architecture: Local-First
 
-**Data Collection:** Zero telemetry, analytics, or external data transmission.
+**Core Principle:** All data stays on the user's machine.
 
-**Storage:**
-- All data stored locally in browser (IndexedDB + localStorage)
-- No cloud sync
-- No server-side persistence
-- User can clear all data via UI
+**Data Collected:**
+| Data | Storage | Encryption |
+|------|---------|------------|
+| Video files | `./media/` filesystem | No (local only) |
+| Funscript data | SQLite `funscriptData` column | No (local only) |
+| Device token | localStorage (browser) | AES-GCM encrypted |
+| Playlists | SQLite | No (local only) |
+| Custom patterns | SQLite | No (local only) |
+| Session state | IndexedDB (browser) | No (local only) |
 
-**GDPR/CCPA:** Compliant by design - zero external data transmission, all data under user control.
+**Data NOT Collected:**
+- No cloud uploads
+- No user accounts or PII
+- No telemetry or analytics
+- No cookies or tracking
+- No third-party data sharing
+
+### Data Retention
+
+- No automatic deletion; user retains full control
+- Delete endpoint cascades: database record + video file + thumbnail
+- No archival or backup mechanism
+
+### GDPR/CCPA Compliance
+
+**Limited applicability** (single-user, local-only):
+- Art. 17 (Right to Erasure): Delete via UI → cascades to all data
+- Art. 20 (Portability): Manual export of `.funscript` files
+- Art. 32 (Security): Encrypted tokens, parameterized SQL, localhost-only
+- No "sale" of personal information (CCPA)
 
 ---
 
 ## Security Assessment
 
-### Overall Risk: LOW
+### OWASP Top 10 Assessment
 
-| Category | Status | Notes |
-|----------|--------|-------|
-| XSS Vulnerabilities | PASS | No `dangerouslySetInnerHTML`, no `innerHTML`, no `eval()` |
-| Injection Attacks | PASS | All input validated with Zod schemas |
-| Data Storage | PASS | No hardcoded secrets or credentials |
-| CORS/CSP | N/A | No external HTTP requests |
-| Dependencies | PASS | All legitimate, well-maintained packages |
-| Insecure Communication | PASS | SDK handles device protocol |
-| Input Validation | PASS | Comprehensive Zod + range clamping |
-| Open Redirects | PASS | No user-controlled redirect targets |
-| Data Exposure | PASS | Minimal logging, no PII |
+| Vulnerability | Risk | Status |
+|---|---|---|
+| **A01: Broken Access Control** | Localhost-only limits attack surface | Mitigated |
+| **A02: Cryptographic Failures** | Token encryption (AES-GCM + PBKDF2) | Mitigated |
+| **A03: Injection** | Parameterized SQL, no eval | Mitigated |
+| **A04: Insecure Design** | No authentication needed (local-only) | Design-appropriate |
+| **A05: Security Misconfiguration** | CSP enforced in production | Partially addressed |
+| **A06: Vulnerable Components** | No automated scanning | Gap |
+| **A07: Authentication Failures** | Device token encrypted at rest | Design-appropriate |
+| **A08: Software/Data Integrity** | No lockfile signing | Minor gap |
+| **A09: Logging/Monitoring** | Console logging only | Limited |
+| **A10: SSRF** | No outbound API calls | Not applicable |
 
-### Notable Security Practices
+### Security Strengths
 
-- File download uses `rel="noopener noreferrer"` on anchor elements
-- Blob URLs properly revoked after use to prevent memory leaks
-- Device parameters range-clamped (0-100 bounds enforced)
-- TypeScript strict mode prevents many runtime vulnerabilities
-- React StrictMode enabled in development
+1. **Localhost-Only Enforcement** — IP filtering blocks all non-localhost requests
+2. **Parameterized Queries** — SQL injection prevention via better-sqlite3
+3. **Token Encryption** — AES-GCM with PBKDF2 (100K iterations) at rest
+4. **CSP Headers** — Restrictive Content-Security-Policy in production
+5. **Helmet Security Headers** — X-Frame-Options, X-Content-Type-Options, Referrer-Policy
+6. **React Auto-Escaping** — No `dangerouslySetInnerHTML` usage found
+7. **Directory Traversal Prevention** — `path.basename()` on all file parameters
+8. **CORS Restriction** — Limited to `localhost:5173`
+9. **File Extension Whitelist** — Video uploads restricted to known types
 
-### Recommendations (if deployed to network)
+### Security Weaknesses
 
-1. Add Content-Security-Policy headers
-2. Enable HTTPS only
-3. Consider token encryption at rest
-4. Run `npm audit` regularly
+| Weakness | Severity | Notes |
+|----------|----------|-------|
+| No request body schema validation | Medium | Controllers use TypeScript type assertions, not runtime validation |
+| No rate limiting | Low | DoS vector via uploads/searches (mitigated by localhost-only) |
+| No HTTPS enforcement | Low | N/A for localhost; needed if network-exposed |
+| Error information disclosure | Low | Error messages may leak implementation details |
+| File upload without magic number check | Low | Extension check only, not MIME type verification |
+| Hardcoded app password | Low | Token encryption password in source (acceptable for local-only) |
+| No CSRF protection | Low | Mitigated by localhost-only + no cookies |
+| No automated dependency scanning | Low | No Dependabot/Snyk integration |
+
+### CSP Configuration
+
+```
+default-src 'self'
+script-src 'self'
+style-src 'self' 'unsafe-inline'     (Tailwind requirement)
+frame-src youtube, vimeo, pornhub, xvideos
+img-src 'self' data: https:
+connect-src 'self'
+```
 
 ---
 
 ## LLM Security Assessment
 
-### Status: No LLM Integration
+### Status: No LLM Usage Detected
 
-No LLM, AI service, or prompt construction patterns detected in the codebase. The application has zero AI/ML features - all functionality is deterministic and rule-based.
+The autoblow-panel application does **not** use any LLM, AI model, or generative AI services. Specifically:
+
+- No LLM API calls (OpenAI, Anthropic, etc.)
+- No prompt construction or injection vectors
+- No AI-generated content
+- No RAG (Retrieval Augmented Generation) patterns
+- No embedding generation or vector search
+- No fine-tuned models or model files
+
+The project explicitly states "AI/ML-based script generation — Deterministic algorithms only" as a design constraint.
+
+**Assessment:** Not applicable. No LLM security risks present.
 
 ---
 
@@ -483,7 +853,7 @@ No LLM, AI service, or prompt construction patterns detected in the codebase. Th
 | Attribute | Value |
 |-----------|-------|
 | Repository | autoblow-panel |
-| Generated | 2026-02-07 |
+| Generated | 2026-02-09 |
 | Sections | 16 |
 | Generator | project-analyzer plugin |
 
