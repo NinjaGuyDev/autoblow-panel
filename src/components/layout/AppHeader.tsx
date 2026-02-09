@@ -98,6 +98,20 @@ export function AppHeader({
         </span>
       </div>
 
+      {/* Center: New Script button */}
+      <div className="flex-1 flex justify-center">
+        <button
+          onClick={onNewScript}
+          className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
+            isCreationMode
+              ? 'bg-emerald-900/40 border border-emerald-700/50 text-emerald-400 hover:bg-emerald-900/60'
+              : 'bg-stone-800/60 border border-stone-700/50 text-stone-300 hover:bg-stone-700/60 hover:text-stone-100'
+          }`}
+        >
+          {isCreationMode ? 'Creating Script' : '+ New Script'}
+        </button>
+      </div>
+
       {/* Right: Connection controls */}
       <div className="flex items-center gap-3">
         {/* Connected indicator badge */}
