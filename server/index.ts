@@ -13,6 +13,9 @@ import { PlaylistController } from './controllers/playlist.controller.js';
 import { createPlaylistRouter } from './routes/playlist.routes.js';
 import { MediaController } from './controllers/media.controller.js';
 import { createMediaRouter } from './routes/media.routes.js';
+import { localhostOnly } from './middleware/localhost-only.js';
+import { createSecurityMiddleware } from './middleware/security.js';
+import healthRouter from './routes/health.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 // Initialize database schema
@@ -42,6 +45,14 @@ service.setMediaCleanup(mediaController);
 // Create Express app
 const app = express();
 
+// Apply localhost-only validation before CORS
+app.use(localhostOnly);
+
+// Apply security headers in production mode only (prevents CSP from breaking Vite HMR)
+if (process.env.NODE_ENV === 'production') {
+  app.use(createSecurityMiddleware());
+}
+
 // Configure CORS for Vite dev server
 app.use(cors({
   origin: 'http://localhost:5173',
@@ -50,6 +61,9 @@ app.use(cors({
 
 // Configure JSON body parser with large limit for funscript data
 app.use(express.json({ limit: '50mb' }));
+
+// Health check endpoint
+app.use('/health', healthRouter);
 
 // Mount routes
 app.use('/api/library', libraryRouter);
