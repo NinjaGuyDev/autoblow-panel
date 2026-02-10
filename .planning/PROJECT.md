@@ -34,10 +34,22 @@ Smooth, privacy-preserving funscript playback synced with local video content.
 - ✓ Third-party video embedding with API-based funscript sync — v1.1
 - ✓ Security hardening: localhost-only + Docker deployment — v1.1
 - ✓ SQLite backend for persistent storage (replacing IndexedDB) — v1.1
+- ✓ Script Library page with randomized script playback and save-to-library — v1.2
+- ✓ Device pause button toggles video play/pause — v1.2
+- ✓ Video fullscreen button with keyboard shortcut — v1.2
+- ✓ UI redesign with stone/amber warm theme — v1.2
+- ✓ Major refactoring: DeviceProvider, useUnifiedPlayback, sub-hooks, shared canvas infra — v1.2
 
 ### Active
 
-(None — planning next milestone)
+#### Current Milestone: v1.3 Session Analytics & Script Intelligence
+
+- Session tracking with opt-in overlay and script order tracking
+- Climax tracker with dual-storage, timeline overlay, flash overlay, and Climax Log page
+- Script length filter with colored badges and randomize pool filtering
+- Script chapters with named time ranges, chapter bar, seek/loop
+- Usage dashboard with heatmap, most played scripts, time-of-day stats
+- Analytics reports: stamina trend, script triggers, time patterns, personal records
 
 ### Out of Scope
 
@@ -54,10 +66,10 @@ Smooth, privacy-preserving funscript playback synced with local video content.
 
 ## Context
 
-**Current State (v1.1 shipped):**
-- 16,723 LOC TypeScript/TSX across ~100+ files
+**Current State (v1.2 shipped, v1.3 in progress):**
+- ~18,000+ LOC TypeScript/TSX across ~130+ files
 - Tech stack: Vite + React 19 + TypeScript, Tailwind CSS, Express + SQLite (better-sqlite3), react-player, dnd-kit, helmet
-- 6 pages: Library, Video Sync, Manual Control, Pattern Library, Playlists, Device Log
+- 7 pages: Library, Script Library, Video Sync, Manual Control, Pattern Library, Playlists, Device Log
 - Canvas-based timeline with editing, validation, smoothing, and pattern insertion
 - 36+ motion patterns with animated previews, search/filter, custom editing, and waypoint builder
 - Content library with SQLite persistence, playlist management, embedded video support
@@ -106,4 +118,4 @@ Smooth, privacy-preserving funscript playback synced with local video content.
 | Docker multi-stage builds | Minimal image sizes, Alpine base for production | ✓ Good |
 
 ---
-*Last updated: 2026-02-09 after v1.1 milestone*
+*Last updated: 2026-02-09 after v1.2 shipped, v1.3 milestone setup*
