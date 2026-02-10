@@ -31,7 +31,10 @@ export function createLibraryRouter(controller: LibraryController): Router {
   // Update custom pattern
   router.patch('/:id', controller.updateCustomPattern);
 
-  // Delete library item
+  // Soft-delete custom pattern (preserves record for stats references)
+  router.delete('/custom-patterns/:id', controller.softDeleteCustomPattern);
+
+  // Hard-delete library item
   router.delete('/:id', controller.delete);
 
   return router;

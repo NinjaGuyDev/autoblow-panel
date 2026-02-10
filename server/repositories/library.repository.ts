@@ -7,7 +7,8 @@ export class LibraryRepository {
   findAll(): LibraryItem[] {
     const stmt = this.db.prepare(`
       SELECT * FROM library_items
-      WHERE isCustomPattern = 0 OR isCustomPattern IS NULL
+      WHERE (isCustomPattern = 0 OR isCustomPattern IS NULL)
+        AND deletedAt IS NULL
       ORDER BY lastModified DESC
     `);
     return stmt.all() as LibraryItem[];
@@ -26,6 +27,7 @@ export class LibraryRepository {
       SELECT * FROM library_items
       WHERE (videoName LIKE ? OR funscriptName LIKE ?)
         AND (isCustomPattern = 0 OR isCustomPattern IS NULL)
+        AND deletedAt IS NULL
       ORDER BY lastModified DESC
     `);
     return stmt.all(searchPattern, searchPattern) as LibraryItem[];
@@ -35,6 +37,7 @@ export class LibraryRepository {
     const stmt = this.db.prepare(`
       SELECT * FROM library_items
       WHERE isCustomPattern = 1
+        AND deletedAt IS NULL
       ORDER BY lastModified DESC
     `);
     return stmt.all() as LibraryItem[];
@@ -62,6 +65,16 @@ export class LibraryRepository {
   delete(id: number): number {
     const stmt = this.db.prepare(`
       DELETE FROM library_items WHERE id = ?
+    `);
+    const result = stmt.run(id);
+    return result.changes;
+  }
+
+  softDelete(id: number): number {
+    const stmt = this.db.prepare(`
+      UPDATE library_items
+      SET deletedAt = datetime('now')
+      WHERE id = ? AND deletedAt IS NULL
     `);
     const result = stmt.run(id);
     return result.changes;

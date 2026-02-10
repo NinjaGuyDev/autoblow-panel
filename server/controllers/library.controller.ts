@@ -57,6 +57,17 @@ export class LibraryController {
     }
   };
 
+  softDeleteCustomPattern = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const id = parseIdParam(req, res);
+      if (id === null) return;
+      this.service.softDeleteCustomPattern(id);
+      res.status(204).send();
+    } catch (error) {
+      next(error);
+    }
+  };
+
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const data = req.body as CreateLibraryItemRequest;

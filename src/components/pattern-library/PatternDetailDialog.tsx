@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Ultra } from '@xsense/autoblow-sdk';
-import { type AnyPattern, getPatternActions } from '@/types/patterns';
+import { type AnyPattern, isCustomPattern, getPatternActions } from '@/types/patterns';
 import { getPatternDirection } from '@/lib/patternDefinitions';
 import { createSmoothTransition } from '@/lib/patternInsertion';
 import { cn } from '@/lib/utils';
@@ -13,6 +13,8 @@ interface PatternDetailDialogProps {
   onClose: () => void;
   onInsert: (pattern: AnyPattern) => void;
   onEditCopy?: (pattern: AnyPattern) => void;
+  onEdit?: (pattern: AnyPattern) => void;
+  onDelete?: (pattern: AnyPattern) => void;
   ultra: Ultra | null;
   isDeviceConnected: boolean;
 }
@@ -27,6 +29,8 @@ export function PatternDetailDialog({
   onClose,
   onInsert,
   onEditCopy,
+  onEdit,
+  onDelete,
   ultra,
   isDeviceConnected,
 }: PatternDetailDialogProps) {
@@ -36,6 +40,7 @@ export function PatternDetailDialog({
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
   const [scriptDurationMs, setScriptDurationMs] = useState(0);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   useDemoLoop(ultra, isDemoPlaying, scriptDurationMs);
 
@@ -191,6 +196,11 @@ export function PatternDetailDialog({
     }
   }, [isOpen, isDemoPlaying, stopDemo]);
 
+  // Reset delete confirmation when dialog opens/closes
+  useEffect(() => {
+    setShowDeleteConfirm(false);
+  }, [isOpen]);
+
   if (!isOpen || !pattern) return null;
 
   const direction = getPatternDirection(pattern);
@@ -304,6 +314,18 @@ export function PatternDetailDialog({
             Insert Pattern
           </button>
 
+          {onEdit && isCustomPattern(pattern) && (
+            <button
+              onClick={() => {
+                onEdit(pattern);
+                onClose();
+              }}
+              className="px-4 py-2 rounded bg-stone-700 text-white hover:bg-stone-600 transition-colors font-medium shadow-sm"
+            >
+              Edit
+            </button>
+          )}
+
           {onEditCopy && (
             <button
               onClick={() => {
@@ -336,7 +358,42 @@ export function PatternDetailDialog({
           >
             Close
           </button>
+
+          {onDelete && isCustomPattern(pattern) && (
+            <button
+              onClick={() => setShowDeleteConfirm(true)}
+              className="px-4 py-2 rounded border border-red-800/50 text-red-400 hover:bg-red-900/30 transition-colors"
+            >
+              Delete
+            </button>
+          )}
         </div>
+
+        {/* Delete confirmation */}
+        {showDeleteConfirm && (
+          <div className="mt-4 p-3 rounded bg-red-900/20 border border-red-800/40">
+            <p className="text-sm text-red-300 mb-3">
+              Are you sure you want to delete &ldquo;{pattern.name}&rdquo;?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  onDelete?.(pattern);
+                  onClose();
+                }}
+                className="px-4 py-2 rounded bg-red-700 text-white hover:bg-red-600 transition-colors font-medium text-sm"
+              >
+                Confirm Delete
+              </button>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 rounded border border-stone-600 text-stone-200 hover:bg-stone-800 transition-colors text-sm"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
