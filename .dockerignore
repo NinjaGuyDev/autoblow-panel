@@ -3,6 +3,7 @@ dist/
 build/
 .git/
 .planning/
+.claude/
 .env*
 !.env.example
 *.md
@@ -16,3 +17,6 @@ __tests__/
 npm-debug.log*
 data/
 media/
+docker/Dockerfile
+docker/Dockerfile.backend
+docker/docker-compose.yml
