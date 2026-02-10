@@ -128,7 +128,8 @@ export function usePatternEditor() {
       };
 
       // Upload to device
-      await ultra.syncScriptUploadFunscriptFile(funscript);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await ultra.syncScriptUploadFunscriptFile(funscript as any);
 
       // Start playback from beginning
       await ultra.syncScriptStart(0);

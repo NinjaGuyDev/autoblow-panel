@@ -1,10 +1,12 @@
 import type { FunscriptAction } from '@/types/funscript';
 import type {
+  AnyPattern,
   PatternDefinition,
   PatternDirection,
   StyleTag,
   Intensity,
 } from '@/types/patterns';
+import { getPatternActions } from '@/types/patterns';
 
 /**
  * All unique style tags used across pattern definitions
@@ -33,9 +35,9 @@ export const ALL_STYLE_TAGS: StyleTag[] = [
  * Computes pattern direction based on start and end positions
  */
 export function getPatternDirection(
-  pattern: PatternDefinition
+  pattern: AnyPattern
 ): PatternDirection {
-  const actions = pattern.generator();
+  const actions = getPatternActions(pattern);
   if (actions.length === 0) return 'neutral';
 
   const startPos = actions[0].pos;

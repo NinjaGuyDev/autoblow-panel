@@ -3,7 +3,7 @@ import { FunscriptLoader } from '@/components/file-loader/FunscriptLoader';
 import { SyncStatus } from '@/components/device-control/SyncStatus';
 import { ManualSyncControls } from '@/components/video-player/ManualSyncControls';
 import { useDevice } from '@/contexts/DeviceContext';
-import type { ZodFunscript } from '@/lib/schemas';
+import type { Funscript } from '@/types/funscript';
 import type { SyncStatus as SyncStatusType } from '@/types/sync';
 import type { PlatformConfig } from '@/types/video';
 
@@ -25,7 +25,7 @@ interface VideoSyncPageProps {
 
   // Funscript props
   funscriptFile: File | null;
-  funscriptData: ZodFunscript | null;
+  funscriptData: Funscript | null;
   funscriptName: string | null;
   onFunscriptLoad: (file: File) => void;
   onFunscriptClear: () => void;

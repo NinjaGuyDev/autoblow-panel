@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, type RefObject } from 'react';
 import type { Ultra } from '@xsense/autoblow-sdk';
-import type { ZodFunscript } from '@/lib/schemas';
+import type { Funscript } from '@/types/funscript';
 import type { SyncStatus, UseSyncPlaybackReturn } from '@/types/sync';
 import { convertToSDKFunscript } from '@/lib/funscriptConverter';
 import { getErrorMessage } from '@/lib/getErrorMessage';
@@ -39,7 +39,7 @@ const MAX_CORRECTION_MS = 500; // Safety cap on corrections
 export function useSyncPlayback(
   videoRef: RefObject<HTMLVideoElement | null>,
   ultra: Ultra | null,
-  funscriptData: ZodFunscript | null,
+  funscriptData: Funscript | null,
   videoUrl: string | null,
   embedOptions?: {
     isEmbed: boolean;

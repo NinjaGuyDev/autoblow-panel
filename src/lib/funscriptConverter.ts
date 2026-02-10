@@ -1,16 +1,16 @@
 import type { Funscript as SDKFunscript } from '@xsense/autoblow-sdk';
-import type { ZodFunscript } from '@/lib/schemas';
+import type { Funscript } from '@/types/funscript';
 
 /**
- * Converts app ZodFunscript format to SDK Funscript format
+ * Converts app Funscript format to SDK Funscript format
  *
  * SDK expects: { metadata: { id, version }, actions: [{ at, pos }] }
- * App provides: ZodFunscript (union of original/metadata formats)
+ * App provides: Funscript with actions array
  *
- * @param appFunscript - Funscript in app format (validated by Zod schema)
+ * @param appFunscript - Funscript in app format
  * @returns Funscript in SDK format ready for upload
  */
-export function convertToSDKFunscript(appFunscript: ZodFunscript): SDKFunscript {
+export function convertToSDKFunscript(appFunscript: Funscript): SDKFunscript {
   // Generate random 32-bit unsigned int for script ID
   const id = Math.floor(Math.random() * 4294967295);
 

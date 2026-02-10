@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, memo } from 'react';
-import type { PatternDefinition } from '@/types/patterns';
+import { type AnyPattern, getPatternActions } from '@/types/patterns';
 import { cn } from '@/lib/utils';
 
 interface PatternCardProps {
-  pattern: PatternDefinition;
+  pattern: AnyPattern;
   onClick: () => void;
   isCreationMode?: boolean;
   onQuickAdd?: () => void;
@@ -32,7 +32,7 @@ export const PatternCard = memo(function PatternCard({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const actions = pattern.generator();
+    const actions = getPatternActions(pattern);
     if (actions.length === 0) return;
 
     // Clear canvas
@@ -67,7 +67,7 @@ export const PatternCard = memo(function PatternCard({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const actions = pattern.generator();
+    const actions = getPatternActions(pattern);
     if (actions.length === 0) return;
 
     // Clear canvas

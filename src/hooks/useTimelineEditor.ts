@@ -80,7 +80,7 @@ export function useTimelineEditor({
   }, [actions, selection.selectedIndices, selection.clearSelection, setActions]);
 
   const handleMouseDown = useCallback(
-    (mouseX: number, mouseY: number, e: React.MouseEvent) => {
+    (mouseX: number, mouseY: number, _e: React.MouseEvent) => {
       if (mode === 'draw') {
         draw.startDrawing(mouseX, mouseY);
         return;

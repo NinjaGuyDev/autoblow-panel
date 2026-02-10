@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Ultra } from '@xsense/autoblow-sdk';
-import type { PatternDefinition } from '@/types/patterns';
+import { type AnyPattern, getPatternActions } from '@/types/patterns';
 import { getPatternDirection } from '@/lib/patternDefinitions';
 import { createSmoothTransition } from '@/lib/patternInsertion';
 import { cn } from '@/lib/utils';
@@ -8,11 +8,11 @@ import { getErrorMessage } from '@/lib/getErrorMessage';
 import { useDemoLoop } from '@/hooks/useDemoLoop';
 
 interface PatternDetailDialogProps {
-  pattern: PatternDefinition | null;
+  pattern: AnyPattern | null;
   isOpen: boolean;
   onClose: () => void;
-  onInsert: (pattern: PatternDefinition) => void;
-  onEditCopy?: (pattern: PatternDefinition) => void;
+  onInsert: (pattern: AnyPattern) => void;
+  onEditCopy?: (pattern: AnyPattern) => void;
   ultra: Ultra | null;
   isDeviceConnected: boolean;
 }
@@ -47,7 +47,7 @@ export function PatternDetailDialog({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const actions = pattern.generator();
+    const actions = getPatternActions(pattern);
     if (actions.length === 0) return;
 
     // Clear canvas
@@ -127,7 +127,7 @@ export function PatternDetailDialog({
       setDemoError(null);
 
       // Generate pattern actions
-      let actions = pattern.generator();
+      let actions = getPatternActions(pattern);
 
       // Add smoothing at the end if pattern ends at different position than it starts
       if (actions.length > 0) {
@@ -159,7 +159,8 @@ export function PatternDetailDialog({
       };
 
       // Upload to device
-      await ultra.syncScriptUploadFunscriptFile(funscript);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await ultra.syncScriptUploadFunscriptFile(funscript as any);
 
       // Start playback from beginning
       await ultra.syncScriptStart(0);
@@ -265,7 +266,7 @@ export function PatternDetailDialog({
               Actions
             </label>
             <span className="text-sm text-stone-200">
-              {pattern.generator().length}
+              {getPatternActions(pattern).length}
             </span>
           </div>
         </div>

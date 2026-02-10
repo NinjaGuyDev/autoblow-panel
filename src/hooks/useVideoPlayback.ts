@@ -1,4 +1,4 @@
-import { useState, useEffect, RefObject } from 'react';
+import { useState, useEffect, type RefObject } from 'react';
 
 interface UseVideoPlaybackReturn {
   isPlaying: boolean;
@@ -7,11 +7,6 @@ interface UseVideoPlaybackReturn {
   error: string | null;
   togglePlayPause: () => void;
   seek: (time: number) => void;
-}
-
-interface UseVideoPlaybackProps {
-  videoRef: RefObject<HTMLVideoElement | null>;
-  videoUrl: string | null;
 }
 
 /**

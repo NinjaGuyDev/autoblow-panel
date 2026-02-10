@@ -107,3 +107,10 @@ export type AnyPattern = PatternDefinition | CustomPatternDefinition;
 export function isCustomPattern(p: AnyPattern): p is CustomPatternDefinition {
   return 'isCustom' in p && p.isCustom === true;
 }
+
+/**
+ * Extract actions from any pattern type (generator-based or static)
+ */
+export function getPatternActions(p: AnyPattern): FunscriptAction[] {
+  return isCustomPattern(p) ? p.actions : p.generator();
+}

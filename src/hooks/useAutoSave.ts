@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { libraryApi } from '@/lib/apiClient';
-import type { ZodFunscript } from '@/lib/schemas';
+import type { Funscript } from '@/types/funscript';
 import type { LibraryItem } from '@/../server/types/shared';
 
 interface UseAutoSaveReturn {
-  saveSession: (videoName: string | null, funscriptName: string | null, funscriptData: ZodFunscript | null) => Promise<void>;
+  saveSession: (videoName: string | null, funscriptName: string | null, funscriptData: Funscript | null) => Promise<void>;
   lastSession: LibraryItem | null;
   clearSession: () => Promise<void>;
 }
@@ -42,7 +42,7 @@ export function useAutoSave(): UseAutoSaveReturn {
   const saveSession = useCallback(async (
     videoName: string | null,
     funscriptName: string | null,
-    funscriptData: ZodFunscript | null
+    funscriptData: Funscript | null
   ) => {
     // Clear existing timeout
     if (saveTimeoutRef.current !== null) {
