@@ -11,6 +11,10 @@ import { PlaylistRepository } from './repositories/playlist.repository.js';
 import { PlaylistService } from './services/playlist.service.js';
 import { PlaylistController } from './controllers/playlist.controller.js';
 import { createPlaylistRouter } from './routes/playlist.routes.js';
+import { SessionRepository } from './repositories/session.repository.js';
+import { SessionService } from './services/session.service.js';
+import { SessionController } from './controllers/session.controller.js';
+import { createSessionRouter } from './routes/session.routes.js';
 import { MediaController } from './controllers/media.controller.js';
 import { createMediaRouter } from './routes/media.routes.js';
 import { localhostOnly } from './middleware/localhost-only.js';
@@ -35,6 +39,12 @@ const playlistRepository = new PlaylistRepository(db);
 const playlistService = new PlaylistService(playlistRepository, repository);
 const playlistController = new PlaylistController(playlistService);
 const playlistRouter = createPlaylistRouter(playlistController);
+
+// Wire up session dependency chain
+const sessionRepository = new SessionRepository(db);
+const sessionService = new SessionService(sessionRepository);
+const sessionController = new SessionController(sessionService);
+const sessionRouter = createSessionRouter(sessionController);
 
 const mediaController = new MediaController(MEDIA_DIR);
 const mediaRouter = createMediaRouter(mediaController, MEDIA_DIR);
@@ -70,6 +80,7 @@ app.use('/health', healthRouter);
 // Mount routes
 app.use('/api/library', libraryRouter);
 app.use('/api/playlists', playlistRouter);
+app.use('/api/sessions', sessionRouter);
 app.use('/api/media', mediaRouter);
 
 // Error handler (must be last)
