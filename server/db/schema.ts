@@ -99,4 +99,55 @@ export function initializeSchema(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_playlist_items_playlist ON playlist_items(playlist_id, position);
     CREATE INDEX IF NOT EXISTS idx_playlist_items_library ON playlist_items(library_item_id);
   `);
+
+  // Create sessions table for session analytics (Phase 17)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      startedAt TEXT NOT NULL,
+      endedAt TEXT,
+      durationSeconds REAL,
+      scriptOrder TEXT NOT NULL DEFAULT '[]',
+      libraryItemId INTEGER,
+      context TEXT NOT NULL DEFAULT 'normal',
+      FOREIGN KEY (libraryItemId) REFERENCES library_items(id) ON DELETE SET NULL
+    );
+  `);
+
+  // Create climax_records table for climax tracking (Phase 17)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS climax_records (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sessionId INTEGER,
+      timestamp TEXT NOT NULL,
+      runwayData TEXT NOT NULL DEFAULT '[]',
+      libraryItemId INTEGER,
+      createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (sessionId) REFERENCES sessions(id) ON DELETE CASCADE,
+      FOREIGN KEY (libraryItemId) REFERENCES library_items(id) ON DELETE SET NULL
+    );
+  `);
+
+  // Create pause_events table for pause analytics (Phase 17)
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS pause_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      sessionId INTEGER NOT NULL,
+      timestamp TEXT NOT NULL,
+      resumedAt TEXT,
+      durationSeconds REAL,
+      FOREIGN KEY (sessionId) REFERENCES sessions(id) ON DELETE CASCADE
+    );
+  `);
+
+  // Create indexes for session analytics queries
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_sessions_started ON sessions(startedAt);
+    CREATE INDEX IF NOT EXISTS idx_sessions_library_item ON sessions(libraryItemId);
+    CREATE INDEX IF NOT EXISTS idx_sessions_context ON sessions(context);
+    CREATE INDEX IF NOT EXISTS idx_climax_session ON climax_records(sessionId);
+    CREATE INDEX IF NOT EXISTS idx_climax_library_item ON climax_records(libraryItemId);
+    CREATE INDEX IF NOT EXISTS idx_climax_created ON climax_records(createdAt);
+    CREATE INDEX IF NOT EXISTS idx_pause_session ON pause_events(sessionId);
+  `);
 }
