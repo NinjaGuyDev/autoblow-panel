@@ -15,6 +15,11 @@ import { SessionRepository } from './repositories/session.repository.js';
 import { SessionService } from './services/session.service.js';
 import { SessionController } from './controllers/session.controller.js';
 import { createSessionRouter } from './routes/session.routes.js';
+import { ClimaxRepository } from './repositories/climax.repository.js';
+import { PauseEventRepository } from './repositories/pause-event.repository.js';
+import { ClimaxService } from './services/climax.service.js';
+import { AnalyticsController } from './controllers/analytics.controller.js';
+import { createAnalyticsRouter } from './routes/analytics.routes.js';
 import { MediaController } from './controllers/media.controller.js';
 import { createMediaRouter } from './routes/media.routes.js';
 import { localhostOnly } from './middleware/localhost-only.js';
@@ -45,6 +50,13 @@ const sessionRepository = new SessionRepository(db);
 const sessionService = new SessionService(sessionRepository);
 const sessionController = new SessionController(sessionService);
 const sessionRouter = createSessionRouter(sessionController);
+
+// Wire up analytics dependency chain
+const climaxRepository = new ClimaxRepository(db);
+const pauseEventRepository = new PauseEventRepository(db);
+const climaxService = new ClimaxService(climaxRepository, pauseEventRepository);
+const analyticsController = new AnalyticsController(climaxService);
+const analyticsRouter = createAnalyticsRouter(analyticsController);
 
 const mediaController = new MediaController(MEDIA_DIR);
 const mediaRouter = createMediaRouter(mediaController, MEDIA_DIR);
@@ -81,6 +93,7 @@ app.use('/health', healthRouter);
 app.use('/api/library', libraryRouter);
 app.use('/api/playlists', playlistRouter);
 app.use('/api/sessions', sessionRouter);
+app.use('/api/analytics', analyticsRouter);
 app.use('/api/media', mediaRouter);
 
 // Error handler (must be last)
