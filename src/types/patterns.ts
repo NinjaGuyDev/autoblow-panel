@@ -47,7 +47,8 @@ export type StyleTag =
   | 'zigzag'
   | 'plateau'
   | 'gradual'
-  | 'incremental';
+  | 'incremental'
+  | 'pause';
 
 /**
  * A pattern definition with metadata and action generator
