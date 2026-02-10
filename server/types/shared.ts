@@ -12,6 +12,7 @@ export interface LibraryItem {
   isCustomPattern?: number; // 0=regular library item, 1=custom pattern
   originalPatternId?: string | null; // Preset pattern ID this was copied from
   patternMetadata?: string | null; // JSON string with pattern metadata
+  deletedAt?: string | null; // ISO 8601 timestamp for soft delete
 }
 
 export interface CreateLibraryItemRequest {

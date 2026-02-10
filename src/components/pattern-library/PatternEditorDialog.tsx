@@ -19,6 +19,7 @@ interface PatternEditorDialogProps {
   isOpen: boolean;
   onClose: () => void;
   onActionsChange: (actions: FunscriptAction[]) => void;
+  onNameChange: (name: string) => void;
   onDurationChange: (seconds: number) => void;
   onIntensityChange: (delta: number) => void;
   onStartDemo: () => void;
@@ -43,6 +44,7 @@ export function PatternEditorDialog({
   isOpen,
   onClose,
   onActionsChange,
+  onNameChange,
   onDurationChange,
   onIntensityChange,
   onStartDemo,
@@ -165,7 +167,13 @@ export function PatternEditorDialog({
       onStartDemo={onStartDemo}
       onStopDemo={onStopDemo}
       header={
-        <h2 className="text-xl font-semibold text-stone-200" style={{ fontFamily: 'var(--font-display)' }}>{pattern.name}</h2>
+        <input
+          type="text"
+          value={pattern.name}
+          onChange={(e) => onNameChange(e.target.value)}
+          className="text-xl font-semibold text-stone-200 bg-transparent border-b border-stone-700 focus:border-amber-700 focus:outline-none w-full pb-1"
+          style={{ fontFamily: 'var(--font-display)' }}
+        />
       }
     >
       {/* Canvas */}

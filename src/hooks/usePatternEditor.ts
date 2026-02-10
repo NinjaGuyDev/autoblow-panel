@@ -45,6 +45,16 @@ export function usePatternEditor() {
   }, []);
 
   /**
+   * Updates pattern name
+   */
+  const changeName = useCallback((name: string) => {
+    setEditedPattern((prev) => {
+      if (!prev) return null;
+      return { ...prev, name, lastModified: Date.now() };
+    });
+  }, []);
+
+  /**
    * Updates pattern actions (immutable)
    */
   const updateActions = useCallback((actions: FunscriptAction[]) => {
@@ -224,6 +234,7 @@ export function usePatternEditor() {
     demoError,
     openEditor,
     closeEditor,
+    changeName,
     updateActions,
     changeDuration,
     changeIntensity,

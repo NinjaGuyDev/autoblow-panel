@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import type { PatternDefinition, CustomPatternDefinition, AnyPattern } from '@/types/patterns';
+import { isCustomPattern } from '@/types/patterns';
 import { PATTERN_DEFINITIONS } from '@/lib/patternDefinitions';
 import { usePatternFilters } from '@/hooks/usePatternFilters';
 import { usePatternEditor } from '@/hooks/usePatternEditor';
@@ -94,15 +95,18 @@ export function PatternLibraryPage({
   const [showDetailDialog, setShowDetailDialog] = useState(false);
   const [showInsertDialog, setShowInsertDialog] = useState(false);
 
+  // Copy name prompt state
+  const [pendingCopyPattern, setPendingCopyPattern] = useState<PatternDefinition | null>(null);
+  const [copyName, setCopyName] = useState('');
+
   // Handle pattern card click
   const handlePatternClick = (pattern: AnyPattern) => {
     setSelectedPattern(pattern);
     setShowDetailDialog(true);
   };
 
-  // Handle edit copy button click
+  // Handle edit copy button click — show name prompt first
   const handleEditCopy = (pattern: AnyPattern) => {
-    // Convert AnyPattern to PatternDefinition for createEditableCopy
     const patternDef: PatternDefinition = 'generator' in pattern && typeof pattern.generator === 'function'
       ? pattern as PatternDefinition
       : {
@@ -114,8 +118,42 @@ export function PatternLibraryPage({
           generator: () => (pattern as CustomPatternDefinition).actions,
         };
 
-    const copy = createEditableCopy(patternDef);
+    setCopyName(`${pattern.name} (Copy)`);
+    setPendingCopyPattern(patternDef);
+  };
+
+  // Handle editing an existing custom pattern directly
+  const handleEdit = (pattern: AnyPattern) => {
+    if (!isCustomPattern(pattern)) return;
+    patternEditor.openEditor(pattern);
+  };
+
+  // Handle deleting a custom pattern (soft delete)
+  const handleDelete = async (pattern: AnyPattern) => {
+    if (!isCustomPattern(pattern) || !pattern.libraryItemId) return;
+    try {
+      await customPatternApi.delete(pattern.libraryItemId);
+      // Reload custom patterns to reflect deletion
+      const libraryItems = await customPatternApi.getAll();
+      setCustomPatterns(libraryItems.map(itemToCustomPattern));
+    } catch (err) {
+      console.error('Failed to delete custom pattern:', err);
+    }
+  };
+
+  // Confirm copy name and open editor
+  const handleCopyNameConfirm = () => {
+    if (!pendingCopyPattern || !copyName.trim()) return;
+    const copy = createEditableCopy(pendingCopyPattern);
+    copy.name = copyName.trim();
     patternEditor.openEditor(copy);
+    setPendingCopyPattern(null);
+    setCopyName('');
+  };
+
+  const handleCopyNameCancel = () => {
+    setPendingCopyPattern(null);
+    setCopyName('');
   };
 
   // Handle insert button click in detail dialog
@@ -232,6 +270,8 @@ export function PatternLibraryPage({
         onClose={handleCloseDetailDialog}
         onInsert={handleInsertClick}
         onEditCopy={handleEditCopy}
+        onEdit={handleEdit}
+        onDelete={handleDelete}
         ultra={ultra}
         isDeviceConnected={isDeviceConnected}
       />
@@ -242,6 +282,7 @@ export function PatternLibraryPage({
         isOpen={patternEditor.isEditorOpen}
         onClose={patternEditor.closeEditor}
         onActionsChange={patternEditor.updateActions}
+        onNameChange={patternEditor.changeName}
         onDurationChange={patternEditor.changeDuration}
         onIntensityChange={patternEditor.changeIntensity}
         onStartDemo={() => ultra && patternEditor.startDemo(ultra)}
@@ -260,6 +301,43 @@ export function PatternLibraryPage({
         onClose={handleCloseInsertDialog}
         onInsert={handlePositionSelect}
       />
+
+      {/* Copy Name Prompt */}
+      {pendingCopyPattern && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={(e) => { if (e.target === e.currentTarget) handleCopyNameCancel(); }}
+        >
+          <div className="bg-stone-900 border border-stone-700 rounded-lg w-full max-w-sm p-6 shadow-2xl">
+            <h2 className="text-lg font-semibold text-stone-200 mb-4" style={{ fontFamily: 'var(--font-display)' }}>
+              Name Your Copy
+            </h2>
+            <input
+              type="text"
+              value={copyName}
+              onChange={(e) => setCopyName(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleCopyNameConfirm(); if (e.key === 'Escape') handleCopyNameCancel(); }}
+              autoFocus
+              className="w-full px-3 py-2 rounded-lg bg-stone-800 border border-stone-700 text-stone-200 focus:outline-none focus:ring-2 focus:ring-amber-700/40 focus:border-amber-700"
+            />
+            <div className="flex gap-3 mt-4">
+              <button
+                onClick={handleCopyNameConfirm}
+                disabled={!copyName.trim()}
+                className="flex-1 px-4 py-2 rounded-lg bg-amber-700 text-white hover:bg-amber-600 transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Create Copy
+              </button>
+              <button
+                onClick={handleCopyNameCancel}
+                className="px-4 py-2 rounded-lg border border-stone-600 text-stone-200 hover:bg-stone-800 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Waypoint Builder Dialog */}
       <WaypointBuilderDialog

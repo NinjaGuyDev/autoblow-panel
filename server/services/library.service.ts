@@ -49,6 +49,20 @@ export class LibraryService {
     return this.repository.updateCustomPattern(id, data);
   }
 
+  softDeleteCustomPattern(id: number): void {
+    const item = this.repository.findById(id);
+    if (!item) {
+      throw new Error(`Library item with id ${id} not found`);
+    }
+    if (item.isCustomPattern !== 1) {
+      throw new Error(`Library item with id ${id} is not a custom pattern`);
+    }
+    const changes = this.repository.softDelete(id);
+    if (changes === 0) {
+      throw new Error(`Library item with id ${id} is already deleted`);
+    }
+  }
+
   createItem(data: CreateLibraryItemRequest): LibraryItem {
     // Validate required fields
     if (!data.funscriptData) {

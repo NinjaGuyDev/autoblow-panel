@@ -59,6 +59,13 @@ export function initializeSchema(db: Database.Database): void {
     `);
   }
 
+  if (!existingColumns.has('deletedAt')) {
+    db.exec(`
+      ALTER TABLE library_items
+      ADD COLUMN deletedAt TEXT;
+    `);
+  }
+
   // Create index on isCustomPattern for efficient filtering
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_library_custom_pattern ON library_items(isCustomPattern);

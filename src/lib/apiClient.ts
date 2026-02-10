@@ -95,7 +95,7 @@ export const customPatternApi = {
   },
 
   async delete(id: number): Promise<void> {
-    return libraryApi.deleteItem(id);
+    return fetchVoid(`${API_BASE}/custom-patterns/${id}`, { method: 'DELETE' });
   },
 };
 
