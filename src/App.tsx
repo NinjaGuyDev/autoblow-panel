@@ -14,6 +14,7 @@ import { LibraryPage } from '@/components/pages/LibraryPage';
 import { PlaylistPage } from '@/components/pages/PlaylistPage';
 import { PlaylistControls } from '@/components/playlist/PlaylistControls';
 import { ScriptLibraryPage } from '@/components/pages/ScriptLibraryPage';
+import { SessionTrackingOverlay } from '@/components/session-tracking/SessionTrackingOverlay';
 import { getErrorMessage } from '@/lib/getErrorMessage';
 import { Timeline } from '@/components/timeline/Timeline';
 import { useVideoFile } from '@/hooks/useVideoFile';
@@ -30,6 +31,7 @@ import { useScriptPlayback } from '@/hooks/useScriptPlayback';
 import { usePlaylistManager } from '@/hooks/usePlaylistManager';
 import { usePlaylistPlayback } from '@/hooks/usePlaylistPlayback';
 import { useDeviceButtons } from '@/hooks/useDeviceButtons';
+import { useSessionTracking } from '@/hooks/useSessionTracking';
 import { mediaApi } from '@/lib/apiClient';
 import { captureVideoThumbnail } from '@/lib/thumbnailCapture';
 import { exportFunscript } from '@/lib/funscriptExport';
@@ -64,6 +66,7 @@ function AppContent() {
   const [isCreationMode, setIsCreationMode] = useState(false);
   const [showNameDialog, setShowNameDialog] = useState(false);
   const [scriptName, setScriptName] = useState<string>('');
+  const [currentLibraryItemId, setCurrentLibraryItemId] = useState<number | null>(null);
 
   // Device state from context
   const { ultra, addLog, isDeviceConnected } = useDevice();
@@ -157,6 +160,23 @@ function AppContent() {
     playback.isEmbed,
     scriptPlayback.isPlaying ? scriptPlayback.togglePause : undefined,
   );
+
+  // Derive playback context for session tracking
+  const playbackContext: 'normal' | 'demo' | 'manual' = (() => {
+    if (isRunning) return 'manual'; // Manual control active
+    if (scriptPlayback.isPlaying) return 'demo'; // Script library = demo context
+    return 'normal'; // Video sync playback
+  })();
+
+  // Derive isPlaying for session tracking (video-sync is playing)
+  const isSessionPlayback = playback.activeIsPlaying;
+
+  // Session tracking state
+  const sessionTracking = useSessionTracking({
+    isPlaying: isSessionPlayback,
+    playbackContext,
+    currentLibraryItemId,
+  });
 
   // Handle session recovery hint on mount
   useEffect(() => {
@@ -262,6 +282,7 @@ function AppContent() {
 
   const handleVideoClear = () => {
     clearVideo();
+    setCurrentLibraryItemId(null);
   };
 
   const handleFunscriptLoad = async (file: File) => {
@@ -370,6 +391,9 @@ function AppContent() {
 
       // Load funscript data using the new loadFunscriptFromData method
       loadFunscriptFromData(item.funscriptName || 'library-item.funscript', parsedData);
+
+      // Set current library item ID for session tracking
+      setCurrentLibraryItemId(item.id);
 
       // Switch to video-sync tab
       setActiveTab('video-sync');
@@ -587,6 +611,14 @@ function AppContent() {
           onSavedToLibrary={scriptLibrary.refresh}
           ultra={ultra}
           isDeviceConnected={isDeviceConnected}
+        />
+      )}
+
+      {/* Session tracking overlay */}
+      {sessionTracking.showOverlay && (
+        <SessionTrackingOverlay
+          onAccept={sessionTracking.handleAccept}
+          onDecline={sessionTracking.handleDecline}
         />
       )}
     </div>
