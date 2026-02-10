@@ -5,7 +5,6 @@ import { PatternDialogShell } from './PatternDialogShell';
 import { usePatternCanvas } from './usePatternCanvas';
 import {
   CANVAS_HEIGHT,
-  DRAW_AREA_HEIGHT,
   computeTimeRange,
   dataToPixel,
   pixelToData,

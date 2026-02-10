@@ -1,5 +1,5 @@
 import type { FunscriptAction } from '@/types/funscript';
-import type { PatternDefinition } from '@/types/patterns';
+import { type AnyPattern, isCustomPattern } from '@/types/patterns';
 
 /**
  * Linear interpolation helper
@@ -57,10 +57,10 @@ export function createSmoothTransition(
  */
 export function insertPatternAtEnd(
   currentActions: FunscriptAction[],
-  pattern: PatternDefinition
+  pattern: AnyPattern
 ): FunscriptAction[] {
   // Generate pattern actions
-  const patternActions = pattern.generator();
+  const patternActions = isCustomPattern(pattern) ? pattern.actions : pattern.generator();
   if (patternActions.length === 0) return currentActions;
 
   // Find max time and last position in current actions
@@ -75,7 +75,6 @@ export function insertPatternAtEnd(
       : patternActions[0].pos; // If no existing actions, no smoothing needed
 
   // Create smooth transition from last position to pattern start
-  const smoothingActions: FunscriptAction[] = [];
   if (currentActions.length > 0) {
     const patternStartPos = patternActions[0].pos;
     const transitionPoints = createSmoothTransition(
@@ -121,11 +120,11 @@ export function insertPatternAtEnd(
  */
 export function insertPatternAtCursor(
   currentActions: FunscriptAction[],
-  pattern: PatternDefinition,
+  pattern: AnyPattern,
   cursorTimeMs: number
 ): FunscriptAction[] {
   // Generate pattern actions
-  const patternActions = pattern.generator();
+  const patternActions = isCustomPattern(pattern) ? pattern.actions : pattern.generator();
 
   // Offset pattern to start at cursor
   const offsetPatternActions = patternActions.map((action) => ({

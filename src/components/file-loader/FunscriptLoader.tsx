@@ -1,10 +1,9 @@
 import { FileDropzone } from './FileDropzone';
-import type { ZodFunscript } from '@/lib/schemas';
-import type { FunscriptMetadata } from '@/types/funscript';
+import type { Funscript, FunscriptMetadata } from '@/types/funscript';
 
 interface FunscriptLoaderProps {
   funscriptFile: File | null;
-  funscriptData: ZodFunscript | null;
+  funscriptData: Funscript | null;
   funscriptName: string | null;
   onFunscriptLoad: (file: File) => void;
   onFunscriptClear: () => void;

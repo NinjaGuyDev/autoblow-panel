@@ -95,7 +95,8 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
       ? prepareLoopedScript(actions)
       : { funscript: { actions }, durationMs: actions[actions.length - 1]?.at ?? 0 };
 
-    await ultra.syncScriptUploadFunscriptFile(funscript);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await ultra.syncScriptUploadFunscriptFile(funscript as any);
     await ultra.syncScriptStart(0);
     return { durationMs };
   }, [ultra]);
@@ -253,7 +254,8 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
         return;
       }
 
-      await ultra.syncScriptUploadFunscriptFile(funscript);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await ultra.syncScriptUploadFunscriptFile(funscript as any);
       await ultra.syncScriptStart(0);
 
       // Advance state

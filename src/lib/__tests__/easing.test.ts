@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { easingFunctions, type EasingFunction, type InterpolationType } from '../easing';
+import { easingFunctions, type InterpolationType } from '../easing';
 
 describe('easing functions', () => {
   describe('linear', () => {

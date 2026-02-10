@@ -40,7 +40,7 @@ export function useTimelineViewport({
   const panStartXRatio = useRef<number | null>(null);
   const panStartViewStart = useRef<number>(0);
   const userInteracting = useRef(false);
-  const autoScrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const autoScrollTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Computed viewport end
   const viewEnd = viewStart + viewportDuration;

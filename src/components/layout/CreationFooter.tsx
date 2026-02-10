@@ -130,7 +130,8 @@ export function CreationFooter({
         actions: demoActions,
       };
 
-      await ultra.syncScriptUploadFunscriptFile(funscript);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      await ultra.syncScriptUploadFunscriptFile(funscript as any);
       await ultra.syncScriptStart(0);
 
       setIsDemoPlaying(true);

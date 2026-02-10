@@ -96,11 +96,11 @@ export function EmbedVideoPlayer({
         config={{
           youtube: {
             modestbranding: 1,
-          },
+          } as Record<string, unknown>,
           vimeo: {
             byline: false,
             title: false,
-          },
+          } as Record<string, unknown>,
         }}
       />
     </div>

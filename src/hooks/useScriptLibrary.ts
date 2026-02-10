@@ -27,7 +27,7 @@ export function useScriptLibrary(): UseScriptLibraryReturn {
   const [scripts, setScripts] = useState<LibraryItem[]>([]);
   const { loading, error, run, execute } = useAsyncOperation(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const fetchItems = useCallback(async (query: string) => {
     try {

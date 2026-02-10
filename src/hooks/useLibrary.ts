@@ -33,7 +33,7 @@ export function useLibrary(): UseLibraryReturn {
   const [rawItems, setRawItems] = useState<LibraryItem[]>([]);
 
   // Debounce timeout ref
-  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   /**
    * Fetch library items (all or search results)

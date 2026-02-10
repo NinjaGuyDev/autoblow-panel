@@ -156,19 +156,14 @@ function thinOscillations(
       // Keep first point, then alternate directions at targetInterval
       const segmentResult: number[] = [segment.startIndex];
       let lastKeptIndex = segment.startIndex;
-      let needsUpward = actions[segment.startIndex].pos < 50; // Start by looking for opposite direction
 
       for (let i = segment.startIndex + 1; i <= segment.endIndex; i++) {
         const timeSinceLast = actions[i].at - actions[lastKeptIndex].at;
 
         if (timeSinceLast >= options.targetIntervalMs) {
-          // For alternating pattern, check direction relative to last kept point
-          const direction = actions[i].pos > actions[lastKeptIndex].pos;
-
           // Keep if it's been long enough (simple time-based thinning)
           segmentResult.push(i);
           lastKeptIndex = i;
-          needsUpward = !direction;
         }
       }
 

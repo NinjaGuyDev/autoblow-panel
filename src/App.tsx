@@ -36,7 +36,7 @@ import { exportFunscript } from '@/lib/funscriptExport';
 import { insertPatternAtCursor, insertPatternAtEnd } from '@/lib/patternInsertion';
 import { isEmbedUrl } from '@/lib/videoUtils';
 import type { TabId } from '@/types/navigation';
-import type { PatternDefinition } from '@/types/patterns';
+import type { AnyPattern } from '@/types/patterns';
 import type { LibraryItem } from '../server/types/shared';
 import type { Funscript } from '@/types/funscript';
 
@@ -58,7 +58,6 @@ function App() {
  * and cross-cutting coordination effects.
  */
 function AppContent() {
-  const [showSessionHint, setShowSessionHint] = useState(false);
   const [videoLoadHint, setVideoLoadHint] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<TabId>('library');
   const [showTimeline, setShowTimeline] = useState(true);
@@ -162,7 +161,7 @@ function AppContent() {
   // Handle session recovery hint on mount
   useEffect(() => {
     if (lastSession?.funscriptName) {
-      setShowSessionHint(true);
+      // Session hint available — future UI will display this
     }
   }, [lastSession]);
 
@@ -318,7 +317,7 @@ function AppContent() {
   };
 
   // Pattern insertion handler
-  const handlePatternInsert = (pattern: PatternDefinition, position: 'cursor' | 'end') => {
+  const handlePatternInsert = (pattern: AnyPattern, position: 'cursor' | 'end') => {
     if (position === 'end') {
       setActions(insertPatternAtEnd(editableActions, pattern));
     } else {
@@ -504,11 +503,17 @@ function AppContent() {
               isScriptPlaying={playback.embedPlayback.isPlaying}
               onToggleScript={playback.embedPlayback.togglePlayPause}
               timelineElement={
-                showTimeline && videoUrl ? (
+                showTimeline && (videoUrl || funscriptData) ? (
                   <Timeline
                     actions={editableActions}
                     currentTimeMs={playback.activeCurrentTime * 1000}
-                    durationMs={playback.activeDuration * 1000}
+                    durationMs={
+                      playback.activeDuration > 0
+                        ? playback.activeDuration * 1000
+                        : editableActions.length > 0
+                          ? editableActions[editableActions.length - 1].at
+                          : 0
+                    }
                     isPlaying={playback.activeIsPlaying}
                     onSeek={playback.activeSeek}
                     onActionsChange={setActions}
