@@ -12,7 +12,9 @@ import type {
   CreatePlaylistRequest,
   UpdatePlaylistRequest,
   AddPlaylistItemRequest,
-  ReorderPlaylistItemsRequest
+  ReorderPlaylistItemsRequest,
+  Session,
+  CreateSessionRequest
 } from '../../server/types/shared';
 
 const API_BASE = '/api/library';
@@ -177,5 +179,28 @@ export const playlistApi = {
   async reorderItems(playlistId: number, itemIds: number[]): Promise<void> {
     const body: ReorderPlaylistItemsRequest = { itemIds };
     return fetchVoid(`${PLAYLIST_BASE}/${playlistId}/items/reorder`, jsonBody('PUT', body));
+  },
+};
+
+/**
+ * Session API client
+ * Provides session tracking lifecycle methods
+ */
+const SESSION_BASE = '/api/sessions';
+
+export const sessionApi = {
+  async create(data: CreateSessionRequest): Promise<Session> {
+    return fetchJson(SESSION_BASE, jsonBody('POST', data));
+  },
+
+  async end(id: number, endedAt?: string): Promise<Session> {
+    return fetchJson(`${SESSION_BASE}/${id}/end`, jsonBody('POST', { endedAt: endedAt ?? new Date().toISOString() }));
+  },
+
+  async appendScript(sessionId: number, libraryItemId: number): Promise<Session> {
+    return fetchJson(`${SESSION_BASE}/${sessionId}/scripts`, jsonBody('POST', {
+      libraryItemId,
+      timestamp: new Date().toISOString()
+    }));
   },
 };
