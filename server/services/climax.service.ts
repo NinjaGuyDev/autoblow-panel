@@ -36,6 +36,10 @@ export class ClimaxService {
       throw new Error('timestamp is required and cannot be empty');
     }
 
+    if (!data.runwayData || data.runwayData.trim() === '') {
+      throw new Error('runwayData is required and cannot be empty');
+    }
+
     // Validate runwayData is valid JSON
     try {
       JSON.parse(data.runwayData);
