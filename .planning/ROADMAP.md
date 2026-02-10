@@ -151,7 +151,7 @@ Full details: [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)
 | 14. Playlist Management | v1.1 | 4/4 | Complete | 2026-02-08 |
 | 15. Embedded Video Integration | v1.1 | 2/2 | Complete | 2026-02-09 |
 | 16. Security Hardening + Docker Deployment | v1.1 | 2/2 | Complete | 2026-02-08 |
-| 17. Session & Climax Backend | v1.3 | 0/? | Pending | — |
+| 17. Session & Climax Backend | v1.3 | 2/2 | Complete | 2026-02-10 |
 | 18. Session Tracking UI | v1.3 | 0/? | Pending | — |
 | 19. Climax Tracker | v1.3 | 0/? | Pending | — |
 | 20. Script Length Filter | v1.3 | 0/? | Pending | — |

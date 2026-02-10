@@ -59,9 +59,17 @@ export class SessionService {
   endSession(id: number, endedAt: string): Session {
     const session = this.getSessionById(id);
 
-    // Compute duration in seconds
     const startTime = new Date(session.startedAt).getTime();
     const endTime = new Date(endedAt).getTime();
+
+    if (!isFinite(startTime) || !isFinite(endTime)) {
+      throw new Error('Invalid date format for startedAt or endedAt');
+    }
+
+    if (endTime < startTime) {
+      throw new Error('endedAt cannot be before startedAt');
+    }
+
     const durationSeconds = (endTime - startTime) / 1000;
 
     return this.sessionRepository.update(id, {

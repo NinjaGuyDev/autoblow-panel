@@ -13,13 +13,23 @@ export class AnalyticsController {
       const { sessionId, libraryItemId } = req.query;
 
       if (sessionId) {
-        const records = this.climaxService.getClimaxRecordsBySession(parseInt(sessionId as string, 10));
+        const parsed = parseInt(sessionId as string, 10);
+        if (!Number.isInteger(parsed)) {
+          res.status(400).json({ error: 'sessionId must be a valid integer' });
+          return;
+        }
+        const records = this.climaxService.getClimaxRecordsBySession(parsed);
         res.json(records);
         return;
       }
 
       if (libraryItemId) {
-        const records = this.climaxService.getClimaxRecordsByLibraryItem(parseInt(libraryItemId as string, 10));
+        const parsed = parseInt(libraryItemId as string, 10);
+        if (!Number.isInteger(parsed)) {
+          res.status(400).json({ error: 'libraryItemId must be a valid integer' });
+          return;
+        }
+        const records = this.climaxService.getClimaxRecordsByLibraryItem(parsed);
         res.json(records);
         return;
       }
@@ -74,7 +84,13 @@ export class AnalyticsController {
         return;
       }
 
-      const events = this.climaxService.getPauseEventsBySession(parseInt(sessionId as string, 10));
+      const parsed = parseInt(sessionId as string, 10);
+      if (!Number.isInteger(parsed)) {
+        res.status(400).json({ error: 'sessionId must be a valid integer' });
+        return;
+      }
+
+      const events = this.climaxService.getPauseEventsBySession(parsed);
       res.json(events);
     } catch (error) {
       next(error);
@@ -122,6 +138,10 @@ export class AnalyticsController {
   getClimaxCountByScript = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+      if (!Number.isInteger(limit)) {
+        res.status(400).json({ error: 'limit must be a valid integer' });
+        return;
+      }
       const counts = this.climaxService.getClimaxCountByScript(limit);
       res.json(counts);
     } catch (error) {
@@ -138,7 +158,13 @@ export class AnalyticsController {
         return;
       }
 
-      const stats = this.climaxService.getSessionPauseStats(parseInt(sessionId as string, 10));
+      const parsed = parseInt(sessionId as string, 10);
+      if (!Number.isInteger(parsed)) {
+        res.status(400).json({ error: 'sessionId must be a valid integer' });
+        return;
+      }
+
+      const stats = this.climaxService.getSessionPauseStats(parsed);
       res.json(stats);
     } catch (error) {
       next(error);
