@@ -27,6 +27,7 @@ export const ALL_STYLE_TAGS: StyleTag[] = [
   'stepped',
   'stutter',
   'surge',
+  'pause',
   'wave',
   'zigzag',
 ];
@@ -52,12 +53,21 @@ export function getPatternDirection(
 // Pattern helpers
 // ---------------------------------------------------------------------------
 
+const MAX_PATTERN_DURATION_MS = 8000;
+
 interface PatternMetadata {
   id: string;
   name: string;
   intensity: Intensity;
   tags: StyleTag[];
   durationMs: number;
+}
+
+/** Proportionally scale action timestamps to fit within maxMs. */
+function capActions(actions: FunscriptAction[], originalMs: number): FunscriptAction[] {
+  if (originalMs <= MAX_PATTERN_DURATION_MS) return actions;
+  const scale = MAX_PATTERN_DURATION_MS / originalMs;
+  return actions.map(a => ({ pos: a.pos, at: Math.round(a.at * scale) }));
 }
 
 /** Flip every pos value (100 − pos) to create the directional mirror. */
@@ -76,15 +86,18 @@ function linearRamp(steps: number, durationMs: number): FunscriptAction[] {
 /**
  * Define a base pattern and its directional mirror in one call.
  * Returns [base, mirror] where the mirror has 100 − pos for every point.
+ * Automatically caps duration to MAX_PATTERN_DURATION_MS, scaling timestamps proportionally.
  */
 function patternPair(
   baseMeta: PatternMetadata,
   baseActions: FunscriptAction[],
   mirrorOverrides: { id: string; name: string },
 ): [PatternDefinition, PatternDefinition] {
+  const capped = capActions(baseActions, baseMeta.durationMs);
+  const meta = { ...baseMeta, durationMs: Math.min(baseMeta.durationMs, MAX_PATTERN_DURATION_MS) };
   return [
-    { ...baseMeta, generator: () => baseActions },
-    { ...baseMeta, ...mirrorOverrides, generator: () => mirrorActions(baseActions) },
+    { ...meta, generator: () => capped },
+    { ...meta, ...mirrorOverrides, generator: () => mirrorActions(capped) },
   ];
 }
 
@@ -148,16 +161,45 @@ export const PATTERN_DEFINITIONS: PatternDefinition[] = [
     { id: 'direct-down-8s', name: 'Direct Down 8s' },
   ),
 
+  {
+    id: 'high-pause',
+    name: 'High Pause',
+    intensity: 'low',
+    tags: ['pause'],
+    durationMs: 2000,
+    generator: () => [
+      { pos: 100, at: 0 },
+      { pos: 100, at: 2000 },
+    ],
+  },
+  {
+    id: 'mid-pause',
+    name: 'Mid Pause',
+    intensity: 'low',
+    tags: ['pause'],
+    durationMs: 2000,
+    generator: () => [
+      { pos: 50, at: 0 },
+      { pos: 50, at: 2000 },
+    ],
+  },
+  {
+    id: 'low-pause',
+    name: 'Low Pause',
+    intensity: 'low',
+    tags: ['pause'],
+    durationMs: 2000,
+    generator: () => [
+      { pos: 0, at: 0 },
+      { pos: 0, at: 2000 },
+    ],
+  },
+
   // ── MEDIUM INTENSITY ─────────────────────────────────────────────────
 
-  // Standalone pair — different shapes, not mirrors of each other
-  {
-    id: 'wave-up-slow',
-    name: 'Wave Up Slow',
-    intensity: 'medium',
-    tags: ['wave', 'rhythmic'],
-    durationMs: 17000,
-    generator: () => [
+  ...patternPair(
+    { id: 'wave-up-slow', name: 'Wave Up Slow', intensity: 'medium', tags: ['wave', 'rhythmic'], durationMs: 17000 },
+    [
       { pos: 0, at: 0 },
       { pos: 15, at: 2000 },
       { pos: 10, at: 3000 },
@@ -171,28 +213,8 @@ export const PATTERN_DEFINITIONS: PatternDefinition[] = [
       { pos: 85, at: 15000 },
       { pos: 100, at: 17000 },
     ],
-  },
-  {
-    id: 'wave-down-slow',
-    name: 'Wave Down Slow',
-    intensity: 'medium',
-    tags: ['wave', 'rhythmic'],
-    durationMs: 23000,
-    generator: () => [
-      { pos: 90, at: 3000 },
-      { pos: 90, at: 3000 },
-      { pos: 75, at: 4000 },
-      { pos: 50, at: 6000 },
-      { pos: 90, at: 8000 },
-      { pos: 15, at: 12000 },
-      { pos: 15, at: 15000 },
-      { pos: 10, at: 17000 },
-      { pos: 10, at: 17500 },
-      { pos: 90, at: 20000 },
-      { pos: 90, at: 21000 },
-      { pos: 50, at: 23000 },
-    ],
-  },
+    { id: 'wave-down-slow', name: 'Wave Down Slow' },
+  ),
 
   ...patternPair(
     { id: 'double-wave-up', name: 'Double Wave Up', intensity: 'medium', tags: ['wave', 'rhythmic'], durationMs: 20000 },
@@ -373,11 +395,11 @@ export const PATTERN_DEFINITIONS: PatternDefinition[] = [
     name: 'Slow Sine Wave',
     intensity: 'low',
     tags: ['wave', 'smooth', 'rhythmic'],
-    durationMs: 10000,
+    durationMs: 8000,
     generator: () => {
       const actions: FunscriptAction[] = [];
-      const duration = 10000;
-      const interval = 200;
+      const duration = 8000;
+      const interval = 160;
       for (let t = 0; t <= duration; t += interval) {
         const pos = Math.round(50 + 50 * Math.sin((t / duration) * Math.PI * 2));
         actions.push({ pos, at: t });
@@ -390,11 +412,11 @@ export const PATTERN_DEFINITIONS: PatternDefinition[] = [
     name: 'Rapid Pulse',
     intensity: 'high',
     tags: ['pulse', 'rhythmic'],
-    durationMs: 5000,
+    durationMs: 12000,
     generator: () => {
       const actions: FunscriptAction[] = [];
-      const duration = 5000;
-      const interval = 250;
+      const duration = 12000;
+      const interval = 600;
       let toggle = true;
       for (let t = 0; t <= duration; t += interval) {
         const pos = toggle ? 100 : 0;
