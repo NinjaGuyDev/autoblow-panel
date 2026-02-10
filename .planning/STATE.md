@@ -11,16 +11,16 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 
 Milestone: v1.3 Session Analytics & Script Intelligence
 Status: In progress
-Last activity: 2026-02-10 - Completed 17-01-PLAN.md (Session Analytics Backend Foundation)
+Last activity: 2026-02-10 - Completed Phase 17 (Session & Climax Backend)
 
-Progress: [█░░░░░░░░░░░░░░░░░░░] 5% (1 of ~20 plans complete in phases 17-22)
+Progress: [█░░░░░░░░░░░░░░░░░░░] 10% (2 of ~20 plans complete in phases 17-22)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 38 (v1.0 + v1.1 + v1.3-in-progress)
-- Average duration: 4.1 minutes
-- Total execution time: ~2.93 hours
+- Total plans completed: 39 (v1.0 + v1.1 + v1.3-in-progress)
+- Average duration: 4.0 minutes
+- Total execution time: ~3.04 hours
 
 **By Phase (v1.0 + v1.1):**
 
@@ -42,7 +42,7 @@ Progress: [█░░░░░░░░░░░░░░░░░░░] 5% (1 o
 | 14 | 4 | 11.5 min | 2.9 min |
 | 15 | 2 | 13 min | 6.5 min |
 | 16 | 2 | 5.3 min | 2.65 min |
-| 17 | 1 | 3.9 min | 3.9 min |
+| 17 | 2 | 7.2 min | 3.6 min |
 
 ## Accumulated Context
 
@@ -56,6 +56,9 @@ All decisions archived in PROJECT.md Key Decisions table and milestone archives:
 - SESS-FK-CASCADE: Use CASCADE delete for events/records → sessions, SET NULL for library_items → sessions (preserves session history if item deleted)
 - SESS-CONTEXT-VALIDATION: Validate context enum in service layer, not DB CHECK constraint (follows existing pattern)
 - SESS-DURATION-COMPUTED: Auto-compute durationSeconds in endSession method from timestamps (prevents manual errors)
+- CLMX-UNIFIED-SERVICE: Combine climax record and pause event logic in single ClimaxService (start combined, extract if complexity grows)
+- CLMX-DURATION-AUTO-COMPUTE: Auto-compute pause duration in resumePauseEvent from timestamps (consistent with session pattern)
+- CLMX-RUNWAY-JSON-VALIDATION: Validate runwayData JSON format in service layer on create (catch errors early)
 
 ### External Dependencies
 
@@ -72,8 +75,8 @@ None.
 ## Session Continuity
 
 Last session: 2026-02-10
-Stopped at: Phase 17 plan 01 complete — session analytics backend foundation shipped
-Next action: Execute 17-02-PLAN.md (remaining Phase 17 plans)
+Stopped at: Phase 17 complete — session & climax backend APIs shipped with analytics aggregation
+Next action: Continue Phase 18 (Session Tracking UI) or Phase 19 (Climax Tracker UI)
 
 Config:
 {

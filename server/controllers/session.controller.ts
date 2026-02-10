@@ -96,6 +96,10 @@ export class SessionController {
   getMostPlayed = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+      if (!Number.isInteger(limit)) {
+        res.status(400).json({ error: 'limit must be a valid integer' });
+        return;
+      }
       const mostPlayed = this.service.getMostPlayed(limit);
       res.json(mostPlayed);
     } catch (error) {

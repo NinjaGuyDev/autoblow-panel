@@ -82,9 +82,21 @@ export class ClimaxService {
       throw new Error(`Pause event with id ${id} not found`);
     }
 
-    // Compute duration in seconds
+    if (event.resumedAt) {
+      throw new Error(`Pause event with id ${id} has already been resumed`);
+    }
+
     const pauseTime = new Date(event.timestamp).getTime();
     const resumeTime = new Date(resumedAt).getTime();
+
+    if (!isFinite(pauseTime) || !isFinite(resumeTime)) {
+      throw new Error('Invalid date format for pause timestamp or resumedAt');
+    }
+
+    if (resumeTime < pauseTime) {
+      throw new Error('resumedAt cannot be before the original pause timestamp');
+    }
+
     const durationSeconds = (resumeTime - pauseTime) / 1000;
 
     return this.pauseEventRepository.update(id, {
