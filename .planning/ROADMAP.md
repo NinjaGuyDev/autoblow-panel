@@ -65,6 +65,11 @@ Full details: [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)
 **Requirements:** SESS-01, SESS-02, SESS-05
 **Dependencies:** Phase 17
 
+**Plans:** 1 plan
+
+Plans:
+- [x] 18-01-PLAN.md — Session API client, useSessionTracking hook, overlay component, App.tsx integration
+
 **Scope:**
 - SessionTrackingOverlay component (non-blocking toast, auto-dismiss 5s)
 - useSessionTracking hook (opt-in state, session lifecycle, API calls)
@@ -152,7 +157,7 @@ Full details: [milestones/v1.1-ROADMAP.md](milestones/v1.1-ROADMAP.md)
 | 15. Embedded Video Integration | v1.1 | 2/2 | Complete | 2026-02-09 |
 | 16. Security Hardening + Docker Deployment | v1.1 | 2/2 | Complete | 2026-02-08 |
 | 17. Session & Climax Backend | v1.3 | 2/2 | Complete | 2026-02-10 |
-| 18. Session Tracking UI | v1.3 | 0/? | Pending | — |
+| 18. Session Tracking UI | v1.3 | 1/1 | Complete | 2026-02-10 |
 | 19. Climax Tracker | v1.3 | 0/? | Pending | — |
 | 20. Script Length Filter | v1.3 | 0/? | Pending | — |
 | 21. Script Chapters | v1.3 | 0/? | Pending | — |

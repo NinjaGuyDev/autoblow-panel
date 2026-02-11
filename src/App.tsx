@@ -263,6 +263,7 @@ function AppContent() {
   const handleVideoLoad = (file: File) => {
     loadVideo(file);
     setVideoLoadHint(null);
+    setCurrentLibraryItemId(null); // Non-library source — clear stale ID
 
     // Upload to media directory and capture thumbnail in background
     mediaApi.upload(file).then(() => {
@@ -381,6 +382,7 @@ function AppContent() {
   const handleEmbedUrlLoad = (url: string) => {
     loadVideoFromUrl(url, url); // name = url for embeds
     playback.manualSync.resetOffset(); // Reset offset for new video
+    setCurrentLibraryItemId(null); // Non-library source — clear stale ID
   };
 
   // Load item from library

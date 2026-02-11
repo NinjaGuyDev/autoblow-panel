@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { sessionApi } from '@/lib/apiClient';
 
 interface UseSessionTrackingParams {
@@ -123,19 +123,19 @@ export function useSessionTracking({
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, [currentSessionId]);
 
-  // Accept handler
-  const handleAccept = () => {
+  // Accept handler (memoized — stable ref prevents overlay useEffect reset)
+  const handleAccept = useCallback(() => {
     setTrackingPreference(true);
     localStorage.setItem('session-tracking-enabled', 'true');
     setShowOverlay(false);
-  };
+  }, []);
 
-  // Decline handler
-  const handleDecline = () => {
+  // Decline handler (memoized — stable ref prevents overlay useEffect reset)
+  const handleDecline = useCallback(() => {
     setTrackingPreference(false);
     localStorage.setItem('session-tracking-enabled', 'false');
     setShowOverlay(false);
-  };
+  }, []);
 
   return {
     trackingPreference,
