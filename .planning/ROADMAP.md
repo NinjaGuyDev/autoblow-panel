@@ -83,6 +83,13 @@ Plans:
 **Requirements:** CLMX-01, CLMX-02 (funscript), CLMX-03, CLMX-04, CLMX-05, CLMX-06
 **Dependencies:** Phase 17, Phase 18
 
+**Plans:** 3 plans
+
+Plans:
+- [ ] 19-01-PLAN.md — Core climax infrastructure (API client, types, hooks, flash overlay)
+- [ ] 19-02-PLAN.md — Timeline overlay, toolbar button, keyboard shortcut, App.tsx integration
+- [ ] 19-03-PLAN.md — Climax Log page with navigation tab
+
 **Scope:**
 - useClimaxTracker hook (device pause detection, climax recording, runway snapshot)
 - ClimaxOverlay on timeline (red vertical lines at climax timestamps)
@@ -158,7 +165,7 @@ Plans:
 | 16. Security Hardening + Docker Deployment | v1.1 | 2/2 | Complete | 2026-02-08 |
 | 17. Session & Climax Backend | v1.3 | 2/2 | Complete | 2026-02-10 |
 | 18. Session Tracking UI | v1.3 | 1/1 | Complete | 2026-02-10 |
-| 19. Climax Tracker | v1.3 | 0/? | Pending | — |
+| 19. Climax Tracker | v1.3 | 0/3 | Pending | — |
 | 20. Script Length Filter | v1.3 | 0/? | Pending | — |
 | 21. Script Chapters | v1.3 | 0/? | Pending | — |
 | 22. Usage Dashboard & Analytics | v1.3 | 0/? | Pending | — |

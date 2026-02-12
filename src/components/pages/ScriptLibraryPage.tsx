@@ -3,11 +3,14 @@
  * Supports single-script looping and randomized continuous playback.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Search, RefreshCw, Trash2, Play, Square, FileText, Shuffle, ListOrdered, Zap, Pause } from 'lucide-react';
 import type { LibraryItem } from '../../../server/types/shared';
-import type { Funscript } from '@/types/funscript';
+import type { Funscript, FunscriptAction } from '@/types/funscript';
 import type { RandomizeMode } from '@/hooks/useScriptPlayback';
+import { Timeline } from '@/components/timeline/Timeline';
+import { useUndoableActions } from '@/hooks/useUndoableActions';
+import { exportFunscript } from '@/lib/funscriptExport';
 
 interface ScriptLibraryPageProps {
   scripts: LibraryItem[];
@@ -27,7 +30,12 @@ interface ScriptLibraryPageProps {
   playSingle: (item: LibraryItem) => Promise<void>;
   stop: () => Promise<void>;
   startRandomize: () => Promise<void>;
+  togglePause: () => Promise<void>;
   isDeviceConnected: boolean;
+  currentActions: FunscriptAction[];
+  currentTimeMs: number;
+  scriptDurationMs: number;
+  onSeek: (timeMs: number) => Promise<void>;
 }
 
 function formatRelativeTime(isoString: string): string {
@@ -97,9 +105,44 @@ export function ScriptLibraryPage({
   playSingle,
   stop,
   startRandomize,
+  togglePause,
   isDeviceConnected,
+  currentActions,
+  currentTimeMs,
+  scriptDurationMs,
+  onSeek,
 }: ScriptLibraryPageProps) {
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [showTimeline, setShowTimeline] = useState(() => localStorage.getItem('script-library-show-timeline') === 'true');
+
+  // Undoable editing state for the timeline
+  const { actions: editableActions, setActions, undo, redo, canUndo, canRedo, reset: resetEditable } = useUndoableActions(currentActions);
+
+  // Reset editable actions when the current script changes
+  useEffect(() => {
+    resetEditable(currentActions);
+  }, [currentScriptId]);
+
+  const handleTimelineToggle = useCallback((checked: boolean) => {
+    setShowTimeline(checked);
+    localStorage.setItem('script-library-show-timeline', String(checked));
+  }, []);
+
+  const handleTimelineSeek = useCallback((timeSeconds: number) => {
+    onSeek(timeSeconds * 1000);
+  }, [onSeek]);
+
+  const handleTimelineExport = useCallback(() => {
+    const currentScript = scripts.find(s => s.id === currentScriptId);
+    const filename = currentScript?.funscriptName?.replace('.funscript', '-edited.funscript') ?? 'script-edited.funscript';
+    exportFunscript(editableActions, filename);
+  }, [editableActions, scripts, currentScriptId]);
+
+  const timelineDurationMs = scriptDurationMs > 0
+    ? scriptDurationMs
+    : editableActions.length > 0
+      ? editableActions[editableActions.length - 1].at
+      : 0;
 
   const handleDelete = async (id: number, name: string) => {
     const confirmed = window.confirm(`Delete "${name}"? This action cannot be undone.`);
@@ -123,7 +166,7 @@ export function ScriptLibraryPage({
       role="tabpanel"
       id="panel-script-library"
       aria-labelledby="tab-script-library"
-      className="container mx-auto px-4 py-6"
+      className={`container mx-auto px-4 py-6 ${showTimeline && editableActions.length > 0 ? 'pb-64' : ''}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -135,14 +178,25 @@ export function ScriptLibraryPage({
             {scripts.length} {scripts.length === 1 ? 'script' : 'scripts'}
           </span>
         </div>
-        <button
-          onClick={() => refresh()}
-          disabled={loading}
-          className="p-2 hover:bg-stone-800/50 rounded-lg transition-colors disabled:opacity-50"
-          title="Refresh scripts"
-        >
-          <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
-        </button>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-sm text-stone-400 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={showTimeline}
+              onChange={(e) => handleTimelineToggle(e.target.checked)}
+              className="accent-amber-600 w-4 h-4 cursor-pointer"
+            />
+            Show Timeline
+          </label>
+          <button
+            onClick={() => refresh()}
+            disabled={loading}
+            className="p-2 hover:bg-stone-800/50 rounded-lg transition-colors disabled:opacity-50"
+            title="Refresh scripts"
+          >
+            <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+          </button>
+        </div>
       </div>
 
       {/* Search bar */}
@@ -382,6 +436,27 @@ export function ScriptLibraryPage({
             );
           })}
         </div>
+        </div>
+      )}
+
+      {/* Sticky timeline panel */}
+      {showTimeline && editableActions.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-stone-950 border-t border-stone-800 shadow-2xl">
+          <div className="container mx-auto px-4 py-2">
+            <Timeline
+              actions={editableActions}
+              currentTimeMs={currentTimeMs}
+              durationMs={timelineDurationMs}
+              isPlaying={isPlaying}
+              onSeek={handleTimelineSeek}
+              onActionsChange={setActions}
+              onUndo={undo}
+              onRedo={redo}
+              canUndo={canUndo}
+              canRedo={canRedo}
+              onExport={handleTimelineExport}
+            />
+          </div>
         </div>
       )}
     </div>

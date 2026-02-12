@@ -4,7 +4,7 @@
  * with smooth transitions between scripts.
  */
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Ultra } from '@xsense/autoblow-sdk';
 import type { LibraryItem } from '../../server/types/shared';
 import { useScriptLoop } from '@/hooks/useScriptLoop';
@@ -32,11 +32,14 @@ interface UseScriptPlaybackReturn {
   playbackError: string | null;
   randomizeMode: RandomizeMode;
   scriptDurationMs: number;
+  currentTimeMs: number;
+  currentActions: FunscriptAction[];
   setRandomizeMode: (mode: RandomizeMode) => void;
   playSingle: (item: LibraryItem) => Promise<void>;
   stop: () => Promise<void>;
   startRandomize: () => Promise<void>;
   togglePause: () => Promise<void>;
+  seek: (timeMs: number) => Promise<void>;
 }
 
 export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): UseScriptPlaybackReturn {
@@ -48,10 +51,42 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
   const [randomizeMode, setRandomizeMode] = useState<RandomizeMode>('off');
   const [scriptDurationMs, setScriptDurationMs] = useState(0);
 
+  const [currentTimeMs, setCurrentTimeMs] = useState(0);
+  const [currentActions, setCurrentActions] = useState<FunscriptAction[]>([]);
+
   const shuffleQueueRef = useRef<number[]>([]);
   const currentActionsRef = useRef<FunscriptAction[]>([]);
   const transitioningRef = useRef(false);
   const pausedAtRef = useRef<number>(0);
+  const playbackStartRef = useRef<number>(0);
+  const playbackOffsetRef = useRef<number>(0);
+  const rafIdRef = useRef<number>(0);
+
+  // RAF-based elapsed time tracker
+  useEffect(() => {
+    if (!isPlaying || isPaused) return;
+
+    const tick = () => {
+      const elapsed = playbackOffsetRef.current + (performance.now() - playbackStartRef.current);
+      const capped = scriptDurationMs > 0 ? Math.min(elapsed, scriptDurationMs) : elapsed;
+      setCurrentTimeMs(capped);
+      rafIdRef.current = requestAnimationFrame(tick);
+    };
+
+    rafIdRef.current = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(rafIdRef.current);
+  }, [isPlaying, isPaused, scriptDurationMs]);
+
+  /**
+   * Seek to a specific time in the current script.
+   */
+  const seek = useCallback(async (timeMs: number) => {
+    if (!ultra || !isPlaying) return;
+    await ultra.syncScriptStart(timeMs);
+    playbackOffsetRef.current = timeMs;
+    playbackStartRef.current = performance.now();
+    setCurrentTimeMs(timeMs);
+  }, [ultra, isPlaying]);
 
   /**
    * Pick the next script ID based on randomize mode.
@@ -120,7 +155,13 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
       }
 
       currentActionsRef.current = actions;
+      setCurrentActions(actions);
       const { durationMs } = await uploadAndPlay(actions, true);
+
+      // Reset time tracking
+      playbackOffsetRef.current = 0;
+      playbackStartRef.current = performance.now();
+      setCurrentTimeMs(0);
 
       setCurrentScriptId(item.id);
       setScriptDurationMs(durationMs);
@@ -152,9 +193,12 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
     setCurrentScriptId(null);
     setNextScriptId(null);
     setScriptDurationMs(0);
+    setCurrentTimeMs(0);
+    setCurrentActions([]);
     currentActionsRef.current = [];
     transitioningRef.current = false;
     pausedAtRef.current = 0;
+    playbackOffsetRef.current = 0;
   }, [ultra]);
 
   /**
@@ -166,10 +210,13 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
 
     try {
       if (isPaused) {
-        // Resume from where we paused
+        // Resume from where we paused — offset already correct
         await ultra.syncScriptStart(pausedAtRef.current);
+        playbackStartRef.current = performance.now();
         setIsPaused(false);
       } else {
+        // Capture elapsed time into offset before pausing
+        playbackOffsetRef.current = playbackOffsetRef.current + (performance.now() - playbackStartRef.current);
         // Query current position, then stop
         const state = await ultra.getState();
         pausedAtRef.current = state.syncScriptCurrentTime ?? 0;
@@ -209,11 +256,19 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
     // Guard against re-entrant calls
     if (transitioningRef.current) return;
 
+    // Reset time tracking on any loop restart
+    const resetTimeTracking = () => {
+      playbackOffsetRef.current = 0;
+      playbackStartRef.current = performance.now();
+      setCurrentTimeMs(0);
+    };
+
     if (randomizeMode === 'off') {
       // Simple restart
       if (ultra) {
         try { await ultra.syncScriptStart(0); } catch { /* ignore */ }
       }
+      resetTimeTracking();
       return;
     }
 
@@ -223,6 +278,7 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
       if (ultra) {
         try { await ultra.syncScriptStart(0); } catch { /* ignore */ }
       }
+      resetTimeTracking();
       return;
     }
 
@@ -231,6 +287,7 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
       if (ultra) {
         try { await ultra.syncScriptStart(0); } catch { /* ignore */ }
       }
+      resetTimeTracking();
       return;
     }
 
@@ -260,8 +317,10 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
 
       // Advance state
       currentActionsRef.current = nextActions;
+      setCurrentActions(nextActions);
       setCurrentScriptId(nextScriptId);
       setScriptDurationMs(durationMs);
+      resetTimeTracking();
 
       // Pick the next-next script
       const newNext = pickNextId(randomizeMode, nextScriptId);
@@ -284,10 +343,13 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
     playbackError,
     randomizeMode,
     scriptDurationMs,
+    currentTimeMs,
+    currentActions,
     setRandomizeMode,
     playSingle,
     stop,
     startRandomize,
     togglePause,
+    seek,
   };
 }

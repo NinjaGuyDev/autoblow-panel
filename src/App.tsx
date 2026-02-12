@@ -463,6 +463,10 @@ function AppContent() {
             {...scriptLibrary}
             {...scriptPlayback}
             isDeviceConnected={isDeviceConnected}
+            currentActions={scriptPlayback.currentActions}
+            currentTimeMs={scriptPlayback.currentTimeMs}
+            scriptDurationMs={scriptPlayback.scriptDurationMs}
+            onSeek={scriptPlayback.seek}
           />
         )}
 
