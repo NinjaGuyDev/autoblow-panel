@@ -83,20 +83,23 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
   const seek = useCallback(async (timeMs: number) => {
     if (!ultra || !isPlaying) return;
 
+    const clampedTime = Math.max(0, Math.min(timeMs, scriptDurationMs));
+
     try {
-      await ultra.syncScriptStart(timeMs);
+      // Stop the device first when paused so syncScriptStart doesn't resume playback
+      if (isPaused) {
+        await ultra.syncScriptStop();
+      }
+      await ultra.syncScriptStart(clampedTime);
     } catch (err) {
       setPlaybackError(err instanceof Error ? err.message : 'Seek failed');
       return;
     }
 
-    playbackOffsetRef.current = timeMs;
+    playbackOffsetRef.current = clampedTime;
     playbackStartRef.current = performance.now();
-    setCurrentTimeMs(timeMs);
-
-    if (isPaused) {
-      pausedAtRef.current = Math.max(0, Math.min(timeMs, scriptDurationMs));
-    }
+    setCurrentTimeMs(clampedTime);
+    pausedAtRef.current = clampedTime;
   }, [ultra, isPlaying, isPaused, scriptDurationMs]);
 
   /**
