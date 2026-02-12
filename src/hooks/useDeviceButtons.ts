@@ -1,5 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Ultra } from '@xsense/autoblow-sdk';
+
+const EVENTSOURCE_RECONNECT_INTERVAL_MS = 90_000;
 
 /**
  * Listens for physical button presses on the Autoblow Ultra device
@@ -17,10 +19,28 @@ export function useDeviceButtons(
   onScriptPause?: () => void,
 ) {
   const onScriptPauseRef = useRef(onScriptPause);
+  const [eventSourceGeneration, setEventSourceGeneration] = useState(0);
 
   useEffect(() => {
     onScriptPauseRef.current = onScriptPause;
   }, [onScriptPause]);
+
+  // Proactively reconnect the SSE EventSource every 90s to prevent
+  // browser idle timeout (~120s) from silently killing the connection.
+  useEffect(() => {
+    if (!ultra) return;
+
+    const intervalId = setInterval(() => {
+      const stale = ultra.deviceEvents;
+      ultra.deviceEvents = ultra.subscribeToEvents();
+      stale.close();
+      setEventSourceGeneration((g) => g + 1);
+    }, EVENTSOURCE_RECONNECT_INTERVAL_MS);
+
+    return () => {
+      clearInterval(intervalId);
+    };
+  }, [ultra]);
 
   useEffect(() => {
     if (!ultra) return;
@@ -47,10 +67,11 @@ export function useDeviceButtons(
       }
     };
 
-    ultra.deviceEvents.addEventListener('pause-button-pressed', handlePauseButton);
+    const currentEventSource = ultra.deviceEvents;
+    currentEventSource.addEventListener('pause-button-pressed', handlePauseButton);
 
     return () => {
-      ultra.deviceEvents.removeEventListener('pause-button-pressed', handlePauseButton);
+      currentEventSource.removeEventListener('pause-button-pressed', handlePauseButton);
     };
-  }, [ultra, videoRef, isEmbed]);
+  }, [ultra, videoRef, isEmbed, eventSourceGeneration]);
 }
