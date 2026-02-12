@@ -82,11 +82,22 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
    */
   const seek = useCallback(async (timeMs: number) => {
     if (!ultra || !isPlaying) return;
-    await ultra.syncScriptStart(timeMs);
+
+    try {
+      await ultra.syncScriptStart(timeMs);
+    } catch (err) {
+      setPlaybackError(err instanceof Error ? err.message : 'Seek failed');
+      return;
+    }
+
     playbackOffsetRef.current = timeMs;
     playbackStartRef.current = performance.now();
     setCurrentTimeMs(timeMs);
-  }, [ultra, isPlaying]);
+
+    if (isPaused) {
+      pausedAtRef.current = Math.max(0, Math.min(timeMs, scriptDurationMs));
+    }
+  }, [ultra, isPlaying, isPaused, scriptDurationMs]);
 
   /**
    * Pick the next script ID based on randomize mode.
@@ -210,16 +221,17 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
 
     try {
       if (isPaused) {
-        // Resume from where we paused — offset already correct
+        // Resume from paused position and reset the RAF baseline
         await ultra.syncScriptStart(pausedAtRef.current);
+        playbackOffsetRef.current = pausedAtRef.current;
         playbackStartRef.current = performance.now();
         setIsPaused(false);
       } else {
-        // Capture elapsed time into offset before pausing
-        playbackOffsetRef.current = playbackOffsetRef.current + (performance.now() - playbackStartRef.current);
-        // Query current position, then stop
+        // Query device for authoritative position before stopping
         const state = await ultra.getState();
-        pausedAtRef.current = state.syncScriptCurrentTime ?? 0;
+        const deviceTimeMs = Number(state.syncScriptCurrentTime ?? pausedAtRef.current);
+        pausedAtRef.current = deviceTimeMs;
+        playbackOffsetRef.current = deviceTimeMs;
         await ultra.syncScriptStop();
         setIsPaused(true);
       }
