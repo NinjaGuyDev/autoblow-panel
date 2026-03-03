@@ -27,6 +27,15 @@ interface TimelineControlsProps {
   onSmoothingCancel?: () => void;
   smoothingStats?: { originalCount: number; smoothedCount: number } | null;
   hasSelection?: boolean;
+  humanizerActive?: boolean;
+  onHumanizerToggle?: () => void;
+  humanizerIntensity?: number;
+  onHumanizerIntensityChange?: (value: number) => void;
+  isHumanizerPreviewActive?: boolean;
+  onHumanizerPreview?: () => void;
+  onHumanizerApply?: () => void;
+  onHumanizerCancel?: () => void;
+  humanizerStats?: { affectedCount: number; totalCount: number } | null;
 }
 
 export function TimelineControls({
@@ -55,6 +64,15 @@ export function TimelineControls({
   onSmoothingCancel,
   smoothingStats,
   hasSelection,
+  humanizerActive,
+  onHumanizerToggle,
+  humanizerIntensity,
+  onHumanizerIntensityChange,
+  isHumanizerPreviewActive,
+  onHumanizerPreview,
+  onHumanizerApply,
+  onHumanizerCancel,
+  humanizerStats,
 }: TimelineControlsProps) {
   const isEditMode = !!editMode;
 
@@ -113,6 +131,20 @@ export function TimelineControls({
               title="Smooth script"
             >
               Smooth
+            </button>
+          )}
+
+          {isEditMode && onHumanizerToggle && (
+            <button
+              onClick={onHumanizerToggle}
+              className={`px-2 py-1 text-sm rounded transition-colors ${
+                humanizerActive
+                  ? 'bg-teal-700 text-white'
+                  : 'text-stone-500 hover:text-stone-200 hover:bg-stone-800'
+              }`}
+              title="Humanize repetitive patterns"
+            >
+              Humanize
             </button>
           )}
         </div>
@@ -261,6 +293,72 @@ export function TimelineControls({
             onClick={onSmoothingCancel}
             className="px-3 py-1 text-sm text-stone-500 hover:text-stone-200 hover:bg-stone-800 rounded transition-colors"
             title="Cancel smoothing"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    )}
+
+    {/* Humanizer control strip */}
+    {isEditMode && humanizerActive && (
+      <div className="flex items-center justify-between px-3 py-2 border-b border-stone-800 bg-teal-950/40">
+        <div className="flex items-center gap-3 flex-1">
+          {/* Label */}
+          <span className="text-sm font-medium text-teal-300">Humanize</span>
+
+          {/* Intensity slider */}
+          <div className="flex items-center gap-2 flex-1 max-w-md">
+            <span className="text-xs text-stone-500">Variation:</span>
+            <input
+              type="range"
+              min="0"
+              max="100"
+              value={humanizerIntensity ?? 50}
+              onChange={(e) => onHumanizerIntensityChange?.(parseInt(e.target.value))}
+              className="flex-1"
+              style={{ accentColor: '#0d9488' }}
+            />
+            <span className="text-xs text-stone-500 w-8 text-right">
+              {humanizerIntensity ?? 50}
+            </span>
+          </div>
+
+          {/* Scope indicator */}
+          <span className="text-xs text-stone-500">
+            {hasSelection ? `Selection (${selectedCount} points)` : 'Entire script'}
+          </span>
+        </div>
+
+        {/* Action buttons */}
+        <div className="flex items-center gap-2">
+          {/* Stats display */}
+          {isHumanizerPreviewActive && humanizerStats && (
+            <span className="text-xs text-stone-500 mr-2">
+              {humanizerStats.affectedCount} action{humanizerStats.affectedCount !== 1 ? 's' : ''} varied
+            </span>
+          )}
+
+          <button
+            onClick={onHumanizerPreview}
+            disabled={isHumanizerPreviewActive}
+            className="px-3 py-1 text-sm text-stone-500 hover:text-stone-200 hover:bg-stone-800 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Preview humanization result"
+          >
+            Preview
+          </button>
+          <button
+            onClick={onHumanizerApply}
+            disabled={!isHumanizerPreviewActive}
+            className="px-3 py-1 text-sm bg-teal-700 text-white hover:bg-teal-600 rounded transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+            title="Apply humanization"
+          >
+            Apply
+          </button>
+          <button
+            onClick={onHumanizerCancel}
+            className="px-3 py-1 text-sm text-stone-500 hover:text-stone-200 hover:bg-stone-800 rounded transition-colors"
+            title="Cancel humanization"
           >
             Cancel
           </button>

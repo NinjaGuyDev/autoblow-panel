@@ -3,6 +3,7 @@ import { useTimelineViewport } from '@/hooks/useTimelineViewport';
 import { useTimelineEditor } from '@/hooks/useTimelineEditor';
 import { useValidation } from '@/hooks/useValidation';
 import { useSmoothing } from '@/hooks/useSmoothing';
+import { useHumanizer } from '@/hooks/useHumanizer';
 import { TimelineCanvas } from './TimelineCanvas';
 import { TimelineEditorOverlay } from './TimelineEditorOverlay';
 import { ValidationOverlay } from './ValidationOverlay';
@@ -95,6 +96,12 @@ export function Timeline({
 
   // Smoothing state (always call hook, but only active in edit mode)
   const smoothing = useSmoothing({
+    actions,
+    selectedIndices: editor?.selectedIndices ?? new Set(),
+  });
+
+  // Humanizer state (always call hook, but only active in edit mode)
+  const humanizer = useHumanizer({
     actions,
     selectedIndices: editor?.selectedIndices ?? new Set(),
   });
@@ -304,6 +311,20 @@ export function Timeline({
         onSmoothingCancel={smoothing.cancelPreview}
         smoothingStats={smoothing.stats}
         hasSelection={(editor?.selectedIndices.size ?? 0) > 0}
+        humanizerActive={humanizer.humanizerActive}
+        onHumanizerToggle={humanizer.humanizerActive ? humanizer.closeHumanizer : humanizer.openHumanizer}
+        humanizerIntensity={humanizer.intensity}
+        onHumanizerIntensityChange={humanizer.setIntensity}
+        isHumanizerPreviewActive={humanizer.isPreviewActive}
+        onHumanizerPreview={humanizer.generatePreview}
+        onHumanizerApply={() => {
+          const result = humanizer.commitHumanizer();
+          if (result) {
+            onActionsChange?.(result);
+          }
+        }}
+        onHumanizerCancel={humanizer.cancelPreview}
+        humanizerStats={humanizer.stats}
       />
 
       <div className="relative" style={{ height: CANVAS_HEIGHT }}>
@@ -340,6 +361,18 @@ export function Timeline({
             viewEnd={viewport.viewEnd}
             width={containerWidth}
             height={CANVAS_HEIGHT}
+          />
+        )}
+
+        {/* Humanizer overlay (preview) */}
+        {humanizer.isPreviewActive && containerWidth > 0 && (
+          <SmoothingOverlay
+            smoothedActions={humanizer.previewActions}
+            viewStart={viewport.viewStart}
+            viewEnd={viewport.viewEnd}
+            width={containerWidth}
+            height={CANVAS_HEIGHT}
+            lineColor="rgba(20, 184, 166, 0.75)"
           />
         )}
 

@@ -11,16 +11,16 @@ See: .planning/PROJECT.md (updated 2026-02-09)
 
 Milestone: v1.3 Session Analytics & Script Intelligence
 Status: In progress
-Last activity: 2026-02-10 - Completed Phase 18 Plan 01 (Session Tracking UI)
+Last activity: 2026-02-12 - Completed Phase 20 Plan 01 (Script Length Filter)
 
-Progress: [██░░░░░░░░░░░░░░░░░░] 15% (3 of ~20 plans complete in phases 17-22)
+Progress: [██░░░░░░░░░░░░░░░░░░] 20% (4 of ~20 plans complete in phases 17-22)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 40 (v1.0 + v1.1 + v1.3-in-progress)
-- Average duration: 4.0 minutes
-- Total execution time: ~3.09 hours
+- Total plans completed: 41 (v1.0 + v1.1 + v1.3-in-progress)
+- Average duration: 3.9 minutes
+- Total execution time: ~3.14 hours
 
 **By Phase (v1.0 + v1.1):**
 
@@ -44,6 +44,7 @@ Progress: [██░░░░░░░░░░░░░░░░░░] 15% (3 
 | 16 | 2 | 5.3 min | 2.65 min |
 | 17 | 2 | 7.2 min | 3.6 min |
 | 18 | 1 | 2.9 min | 2.9 min |
+| 20 | 1 | 2.9 min | 2.9 min |
 
 ## Accumulated Context
 
@@ -53,7 +54,7 @@ All decisions archived in PROJECT.md Key Decisions table and milestone archives:
 - .planning/milestones/v1.0-ROADMAP.md
 - .planning/milestones/v1.1-ROADMAP.md
 
-**Recent (Phase 17-18):**
+**Recent (Phase 17-18, 20):**
 - SESS-FK-CASCADE: Use CASCADE delete for events/records → sessions, SET NULL for library_items → sessions (preserves session history if item deleted)
 - SESS-CONTEXT-VALIDATION: Validate context enum in service layer, not DB CHECK constraint (follows existing pattern)
 - SESS-DURATION-COMPUTED: Auto-compute durationSeconds in endSession method from timestamps (prevents manual errors)
@@ -64,6 +65,11 @@ All decisions archived in PROJECT.md Key Decisions table and milestone archives:
 - SESS-UI-02: Lazy useState init for localStorage read (prevents flash-of-overlay on reload)
 - SESS-UI-03: Script Library playback = demo context (device-only playback is not a "real session")
 - SESS-UI-04: beforeunload with keepalive fetch (prevents orphaned sessions on tab close)
+- SLEN-TYPE-UNION: Use string literal union instead of enum (smaller bundle, no import needed)
+- SLEN-MAP-STATE: Use Map<ScriptLength, boolean> for filter state (clearer semantics)
+- SLEN-NEW-MAP-INSTANCE: Create new Map on toggle to trigger React re-render
+- SLEN-LIFTED-RANDOMIZE: Lift randomizeMode from useScriptPlayback to App.tsx (resolves circular dependency)
+- SLEN-FAIL-OPEN: Include scripts with null classification in filtered pool (graceful degradation)
 
 ### External Dependencies
 
@@ -79,9 +85,9 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-02-10
-Stopped at: Phase 18 Plan 01 complete — session tracking UI with opt-in overlay and lifecycle management
-Next action: Continue Phase 18 (remaining plans if any) or Phase 19 (Climax Tracker UI)
+Last session: 2026-02-12
+Stopped at: Phase 20 Plan 01 complete — script length classification with colored badges and filter chips
+Next action: Phase 19 (Climax Tracker UI) or Phase 21 (Session Analytics Dashboard)
 
 Config:
 {
