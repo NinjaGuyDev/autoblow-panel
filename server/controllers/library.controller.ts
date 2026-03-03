@@ -45,6 +45,18 @@ export class LibraryController {
     }
   };
 
+  updateById = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const id = parseIdParam(req, res);
+      if (id === null) return;
+      const data = req.body as Partial<CreateLibraryItemRequest>;
+      const item = this.service.updateItemById(id, data);
+      res.json(item);
+    } catch (error) {
+      next(error);
+    }
+  };
+
   updateCustomPattern = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const id = parseIdParam(req, res);

@@ -66,6 +66,10 @@ export const libraryApi = {
     return fetchJson(API_BASE, jsonBody('PUT', data));
   },
 
+  async updateById(id: number, data: Partial<CreateLibraryItemRequest>): Promise<LibraryItem> {
+    return fetchJson(`${API_BASE}/${id}`, jsonBody('PUT', data));
+  },
+
   async deleteItem(id: number): Promise<void> {
     return fetchVoid(`${API_BASE}/${id}`, { method: 'DELETE' });
   },

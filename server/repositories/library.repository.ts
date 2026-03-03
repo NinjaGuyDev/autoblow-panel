@@ -80,6 +80,26 @@ export class LibraryRepository {
     return result.changes;
   }
 
+  updateById(id: number, item: Partial<CreateLibraryItemRequest>): LibraryItem {
+    const lastModified = new Date().toISOString();
+    const stmt = this.db.prepare(`
+      UPDATE library_items
+      SET funscriptName = COALESCE(?, funscriptName),
+          funscriptData = COALESCE(?, funscriptData),
+          duration = COALESCE(?, duration),
+          lastModified = ?
+      WHERE id = ?
+      RETURNING *
+    `);
+    return stmt.get(
+      item.funscriptName ?? null,
+      item.funscriptData ?? null,
+      item.duration ?? null,
+      lastModified,
+      id
+    ) as LibraryItem;
+  }
+
   updateCustomPattern(id: number, item: Partial<CreateLibraryItemRequest>): LibraryItem {
     const lastModified = new Date().toISOString();
     const stmt = this.db.prepare(`
