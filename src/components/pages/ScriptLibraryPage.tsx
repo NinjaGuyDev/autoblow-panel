@@ -3,16 +3,18 @@
  * Supports single-script looping and randomized continuous playback.
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { Search, RefreshCw, Trash2, Play, Square, FileText, Shuffle, ListOrdered, Zap, Pause, Pencil, CopyPlus } from 'lucide-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { Search, RefreshCw, Trash2, Play, Square, FileText, Shuffle, ListOrdered, Zap, Pause, Pencil, CopyPlus, Flag } from 'lucide-react';
 import type { LibraryItem } from '../../../server/types/shared';
 import type { Funscript, FunscriptAction } from '@/types/funscript';
 import type { RandomizeMode } from '@/hooks/useScriptPlayback';
 import { Timeline } from '@/components/timeline/Timeline';
 import { ScriptEditorDialog } from '@/components/script-library/ScriptEditorDialog';
+import { ClimaxPromptOverlay } from '@/components/script-library/ClimaxPromptOverlay';
+import { ClimaxEditorDialog } from '@/components/script-library/ClimaxEditorDialog';
 import { useUndoableActions } from '@/hooks/useUndoableActions';
 import { exportFunscript } from '@/lib/funscriptExport';
-import { libraryApi } from '@/lib/apiClient';
+import { libraryApi, analyticsApi } from '@/lib/apiClient';
 
 interface ScriptLibraryPageProps {
   scripts: LibraryItem[];
@@ -117,6 +119,9 @@ export function ScriptLibraryPage({
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [copyingId, setCopyingId] = useState<number | null>(null);
   const [editingItem, setEditingItem] = useState<LibraryItem | null>(null);
+  const [climaxEditorItem, setClimaxEditorItem] = useState<LibraryItem | null>(null);
+  const [showClimaxPrompt, setShowClimaxPrompt] = useState(false);
+  const climaxCandidateTimeMsRef = useRef<number>(0);
   const [showTimeline, setShowTimeline] = useState(() => localStorage.getItem('script-library-show-timeline') === 'true');
 
   // Undoable editing state for the timeline
@@ -141,6 +146,48 @@ export function ScriptLibraryPage({
     const filename = currentScript?.funscriptName?.replace('.funscript', '-edited.funscript') ?? 'script-edited.funscript';
     exportFunscript(editableActions, filename);
   }, [editableActions, scripts, currentScriptId]);
+
+  // Show the climax prompt whenever the user pauses; dismiss if they resume first
+  const prevIsPausedRef = useRef(false);
+  useEffect(() => {
+    if (isPaused && !prevIsPausedRef.current) {
+      // Just became paused — capture position and show prompt
+      climaxCandidateTimeMsRef.current = currentTimeMs;
+      setShowClimaxPrompt(true);
+    } else if (!isPaused && prevIsPausedRef.current) {
+      // Resumed before answering — treat as No
+      setShowClimaxPrompt(false);
+    }
+    prevIsPausedRef.current = isPaused;
+  }, [isPaused, currentTimeMs]);
+
+  const handleClimaxYes = useCallback(async () => {
+    setShowClimaxPrompt(false);
+    if (currentScriptId === null) return;
+
+    const climaxTimeMs = climaxCandidateTimeMsRef.current;
+
+    // Build runway: last 30 s of script actions ending at climax position
+    const runwayStartMs = Math.max(0, climaxTimeMs - 30_000);
+    const runwayActions = currentActions.filter(
+      a => a.at >= runwayStartMs && a.at <= climaxTimeMs,
+    );
+
+    try {
+      await analyticsApi.createClimaxRecord({
+        sessionId: null,
+        libraryItemId: currentScriptId,
+        timestamp: new Date().toISOString(),
+        runwayData: JSON.stringify({ climaxTimeMs, actions: runwayActions }),
+      });
+    } catch (err) {
+      console.error('Failed to record climax:', err);
+    }
+  }, [currentScriptId, currentActions]);
+
+  const handleClimaxNo = useCallback(() => {
+    setShowClimaxPrompt(false);
+  }, []);
 
   const timelineDurationMs = scriptDurationMs > 0
     ? scriptDurationMs
@@ -452,6 +499,13 @@ export function ScriptLibraryPage({
                       <Pencil className="w-4 h-4" />
                     </button>
                     <button
+                      onClick={() => setClimaxEditorItem(item)}
+                      className="px-3 py-2 bg-stone-700 text-stone-200 rounded-lg hover:bg-stone-600 transition-colors"
+                      title="View / manage climax records"
+                    >
+                      <Flag className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => handleCopy(item)}
                       disabled={copyingId === item.id}
                       className="px-3 py-2 bg-stone-700 text-stone-200 rounded-lg hover:bg-stone-600 transition-colors disabled:opacity-50"
@@ -482,6 +536,22 @@ export function ScriptLibraryPage({
           item={editingItem}
           onClose={() => setEditingItem(null)}
           onSaved={refresh}
+        />
+      )}
+
+      {/* Climax editor dialog */}
+      {climaxEditorItem && (
+        <ClimaxEditorDialog
+          item={climaxEditorItem}
+          onClose={() => setClimaxEditorItem(null)}
+        />
+      )}
+
+      {/* Climax prompt — shown while paused, waiting for user answer */}
+      {showClimaxPrompt && isPlaying && isPaused && (
+        <ClimaxPromptOverlay
+          onYes={handleClimaxYes}
+          onNo={handleClimaxNo}
         />
       )}
 

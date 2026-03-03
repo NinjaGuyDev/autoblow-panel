@@ -14,7 +14,9 @@ import type {
   AddPlaylistItemRequest,
   ReorderPlaylistItemsRequest,
   Session,
-  CreateSessionRequest
+  CreateSessionRequest,
+  ClimaxRecord,
+  CreateClimaxRecordRequest,
 } from '../../server/types/shared';
 
 const API_BASE = '/api/library';
@@ -183,6 +185,26 @@ export const playlistApi = {
   async reorderItems(playlistId: number, itemIds: number[]): Promise<void> {
     const body: ReorderPlaylistItemsRequest = { itemIds };
     return fetchVoid(`${PLAYLIST_BASE}/${playlistId}/items/reorder`, jsonBody('PUT', body));
+  },
+};
+
+/**
+ * Analytics API client
+ * Climax records and pause event tracking
+ */
+const ANALYTICS_BASE = '/api/analytics';
+
+export const analyticsApi = {
+  async createClimaxRecord(data: CreateClimaxRecordRequest): Promise<ClimaxRecord> {
+    return fetchJson(`${ANALYTICS_BASE}/climax-records`, jsonBody('POST', data));
+  },
+
+  async getClimaxRecordsByLibraryItem(libraryItemId: number): Promise<ClimaxRecord[]> {
+    return fetchJson(`${ANALYTICS_BASE}/climax-records?libraryItemId=${libraryItemId}`);
+  },
+
+  async deleteClimaxRecord(id: number): Promise<void> {
+    return fetchVoid(`${ANALYTICS_BASE}/climax-records/${id}`, { method: 'DELETE' });
   },
 };
 
