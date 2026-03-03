@@ -37,6 +37,14 @@ export class LibraryService {
     return this.repository.findCustomPatterns();
   }
 
+  updateItemById(id: number, data: Partial<CreateLibraryItemRequest>): LibraryItem {
+    const item = this.repository.findById(id);
+    if (!item) {
+      throw new Error(`Library item with id ${id} not found`);
+    }
+    return this.repository.updateById(id, data);
+  }
+
   updateCustomPattern(id: number, data: Partial<CreateLibraryItemRequest>): LibraryItem {
     // Verify item exists and is a custom pattern
     const item = this.repository.findById(id);

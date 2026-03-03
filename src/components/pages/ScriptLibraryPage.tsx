@@ -4,13 +4,15 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
-import { Search, RefreshCw, Trash2, Play, Square, FileText, Shuffle, ListOrdered, Zap, Pause } from 'lucide-react';
+import { Search, RefreshCw, Trash2, Play, Square, FileText, Shuffle, ListOrdered, Zap, Pause, Pencil, CopyPlus } from 'lucide-react';
 import type { LibraryItem } from '../../../server/types/shared';
 import type { Funscript, FunscriptAction } from '@/types/funscript';
 import type { RandomizeMode } from '@/hooks/useScriptPlayback';
 import { Timeline } from '@/components/timeline/Timeline';
+import { ScriptEditorDialog } from '@/components/script-library/ScriptEditorDialog';
 import { useUndoableActions } from '@/hooks/useUndoableActions';
 import { exportFunscript } from '@/lib/funscriptExport';
+import { libraryApi } from '@/lib/apiClient';
 
 interface ScriptLibraryPageProps {
   scripts: LibraryItem[];
@@ -113,6 +115,8 @@ export function ScriptLibraryPage({
   onSeek,
 }: ScriptLibraryPageProps) {
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [copyingId, setCopyingId] = useState<number | null>(null);
+  const [editingItem, setEditingItem] = useState<LibraryItem | null>(null);
   const [showTimeline, setShowTimeline] = useState(() => localStorage.getItem('script-library-show-timeline') === 'true');
 
   // Undoable editing state for the timeline
@@ -155,6 +159,24 @@ export function ScriptLibraryPage({
       console.error('Failed to delete script:', err);
     } finally {
       setDeletingId(null);
+    }
+  };
+
+  const handleCopy = async (item: LibraryItem) => {
+    setCopyingId(item.id);
+    try {
+      const baseName = item.funscriptName?.replace('.funscript', '') ?? 'script';
+      await libraryApi.create({
+        videoName: null,
+        funscriptName: `${baseName}-copy.funscript`,
+        funscriptData: item.funscriptData,
+        duration: item.duration,
+      });
+      await refresh();
+    } catch (err) {
+      console.error('Failed to copy script:', err);
+    } finally {
+      setCopyingId(null);
     }
   };
 
@@ -423,6 +445,21 @@ export function ScriptLibraryPage({
                       </button>
                     )}
                     <button
+                      onClick={() => setEditingItem(item)}
+                      className="px-3 py-2 bg-stone-700 text-stone-200 rounded-lg hover:bg-stone-600 transition-colors"
+                      title="Edit script (smooth, humanize, draw)"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => handleCopy(item)}
+                      disabled={copyingId === item.id}
+                      className="px-3 py-2 bg-stone-700 text-stone-200 rounded-lg hover:bg-stone-600 transition-colors disabled:opacity-50"
+                      title="Duplicate script"
+                    >
+                      <CopyPlus className="w-4 h-4" />
+                    </button>
+                    <button
                       onClick={() => handleDelete(item.id, item.funscriptName || 'this script')}
                       disabled={deletingId === item.id}
                       className="px-3 py-2 border border-orange-700 text-orange-400 rounded-lg hover:bg-orange-700 hover:text-white transition-colors disabled:opacity-50"
@@ -437,6 +474,15 @@ export function ScriptLibraryPage({
           })}
         </div>
         </div>
+      )}
+
+      {/* Script editor dialog */}
+      {editingItem && (
+        <ScriptEditorDialog
+          item={editingItem}
+          onClose={() => setEditingItem(null)}
+          onSaved={refresh}
+        />
       )}
 
       {/* Sticky timeline panel */}

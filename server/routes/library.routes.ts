@@ -28,6 +28,9 @@ export function createLibraryRouter(controller: LibraryController): Router {
   // Save or update library item
   router.put('/', controller.save);
 
+  // Update any library item by id (funscriptData, funscriptName, duration)
+  router.put('/:id', controller.updateById);
+
   // Update custom pattern
   router.patch('/:id', controller.updateCustomPattern);
 
