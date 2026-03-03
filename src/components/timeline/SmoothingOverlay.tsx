@@ -8,10 +8,11 @@ interface SmoothingOverlayProps {
   viewEnd: number;
   width: number;
   height: number;
+  lineColor?: string;
 }
 
 export const SmoothingOverlay = React.memo<SmoothingOverlayProps>(
-  ({ smoothedActions, viewStart, viewEnd, width, height }) => {
+  ({ smoothedActions, viewStart, viewEnd, width, height, lineColor = 'rgba(34, 197, 94, 0.7)' }) => {
     const canvasRef = useRef<HTMLCanvasElement>(null);
 
     useEffect(() => {
@@ -38,8 +39,8 @@ export const SmoothingOverlay = React.memo<SmoothingOverlayProps>(
 
       if (visibleActions.length === 0) return;
 
-      // Render smoothed preview as green line
-      ctx.strokeStyle = 'rgba(34, 197, 94, 0.7)'; // green
+      // Render preview line
+      ctx.strokeStyle = lineColor;
       ctx.lineWidth = 2.5;
       ctx.beginPath();
 
@@ -77,7 +78,8 @@ export const SmoothingOverlay = React.memo<SmoothingOverlayProps>(
       prevProps.viewStart === nextProps.viewStart &&
       prevProps.viewEnd === nextProps.viewEnd &&
       prevProps.width === nextProps.width &&
-      prevProps.height === nextProps.height
+      prevProps.height === nextProps.height &&
+      prevProps.lineColor === nextProps.lineColor
     );
   }
 );

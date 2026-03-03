@@ -105,6 +105,11 @@ Plans:
 **Requirements:** SLEN-01, SLEN-02, SLEN-03, SLEN-04
 **Dependencies:** None (parallel with 18, 19, 21)
 
+**Plans:** 1 plan
+
+Plans:
+- [x] 20-01-PLAN.md — Script length classification, colored badges, filter chips, randomization pool filtering
+
 **Scope:**
 - classifyScriptLength() utility: short (<40s), medium (40s-2min), long (>2min)
 - ScriptLength type enum
@@ -166,7 +171,7 @@ Plans:
 | 17. Session & Climax Backend | v1.3 | 2/2 | Complete | 2026-02-10 |
 | 18. Session Tracking UI | v1.3 | 1/1 | Complete | 2026-02-10 |
 | 19. Climax Tracker | v1.3 | 0/3 | Pending | — |
-| 20. Script Length Filter | v1.3 | 0/? | Pending | — |
+| 20. Script Length Filter | v1.3 | 1/1 | Complete | 2026-02-12 |
 | 21. Script Chapters | v1.3 | 0/? | Pending | — |
 | 22. Usage Dashboard & Analytics | v1.3 | 0/? | Pending | — |
 
