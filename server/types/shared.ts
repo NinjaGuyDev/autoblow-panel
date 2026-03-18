@@ -160,7 +160,7 @@ export interface DeviceConnectResponse {
 
 export interface DeviceStatusResponse {
   connection: 'connected' | 'disconnected';
-  playback: 'playing' | 'stopped';
+  playback: 'playing' | 'paused' | 'stopped';
   durationMs: number;
   looping: boolean;
   lastError: string | null;

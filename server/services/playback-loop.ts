@@ -26,12 +26,14 @@ export class PlaybackLoop {
   private currentActions: FunscriptAction[] | null = null;
   private scriptDurationMs: number = 0;
   private isPlaying: boolean = false;
+  private isPaused: boolean = false;
   private cancelled: boolean = false;
   private lastError: string | null = null;
 
-  getState(): { isPlaying: boolean; durationMs: number; lastError: string | null } {
+  getState(): { isPlaying: boolean; isPaused: boolean; durationMs: number; lastError: string | null } {
     return {
       isPlaying: this.isPlaying,
+      isPaused: this.isPaused,
       durationMs: this.scriptDurationMs,
       lastError: this.lastError,
     };
@@ -76,6 +78,7 @@ export class PlaybackLoop {
     }
     this.clearTimer();
     this.cancelled = false;
+    this.isPaused = false;
     this.lastError = null;
 
     const prepared = this.prepareActions(actions);
@@ -117,6 +120,31 @@ export class PlaybackLoop {
   }
 
   /**
+   * Pause playback — stops the device and loop timer but retains
+   * the current pattern so it can be resumed.
+   */
+  async pause(ultra: Ultra): Promise<void> {
+    if (!this.isPlaying || this.isPaused) return;
+
+    this.clearTimer();
+    await ultra.syncScriptStop();
+    this.isPaused = true;
+  }
+
+  /**
+   * Resume paused playback — restarts the pattern from the beginning
+   * and re-engages the loop scheduler.
+   */
+  async resume(ultra: Ultra): Promise<void> {
+    if (!this.isPlaying || !this.isPaused) return;
+
+    this.isPaused = false;
+    this.cancelled = false;
+    await ultra.syncScriptStart(0);
+    this.scheduleCheck(ultra, Date.now());
+  }
+
+  /**
    * Clean up all timers without device communication.
    * Use when disconnecting or shutting down.
    */
@@ -124,6 +152,7 @@ export class PlaybackLoop {
     this.cancelled = true;
     this.clearTimer();
     this.isPlaying = false;
+    this.isPaused = false;
     this.currentActions = null;
     this.scriptDurationMs = 0;
     this.lastError = null;

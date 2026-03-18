@@ -17,6 +17,7 @@ export class DeviceService {
   private inactivityTimer: ReturnType<typeof setTimeout> | null = null;
   private lastError: string | null = null;
   private playbackLoop: PlaybackLoop;
+  private pauseButtonHandler: (() => void) | null = null;
 
   constructor(private libraryService: LibraryService) {
     this.playbackLoop = new PlaybackLoop();
@@ -41,6 +42,7 @@ export class DeviceService {
     this.lastError = null;
 
     const latencyMs = await this.ultra.estimateLatency();
+    this.subscribeToButtonEvents();
     this.resetInactivityTimer();
 
     return { status: 'connected', latencyMs };
@@ -59,6 +61,7 @@ export class DeviceService {
       }
     }
 
+    this.unsubscribeFromButtonEvents();
     this.playbackLoop.destroy();
     this.ultra = null;
     this.connectionState = 'disconnected';
@@ -68,11 +71,15 @@ export class DeviceService {
 
   getStatus(): DeviceStatusResponse {
     const loopState = this.playbackLoop.getState();
+    let playback: 'playing' | 'paused' | 'stopped' = 'stopped';
+    if (loopState.isPlaying) {
+      playback = loopState.isPaused ? 'paused' : 'playing';
+    }
     return {
       connection: this.connectionState,
-      playback: loopState.isPlaying ? 'playing' : 'stopped',
+      playback,
       durationMs: loopState.durationMs,
-      looping: loopState.isPlaying,
+      looping: loopState.isPlaying && !loopState.isPaused,
       lastError: this.lastError ?? loopState.lastError,
     };
   }
@@ -131,6 +138,51 @@ export class DeviceService {
       throw err;
     }
     this.resetInactivityTimer();
+  }
+
+  async pause(): Promise<void> {
+    if (!this.ultra || !this.playbackLoop.getState().isPlaying) return;
+    await this.playbackLoop.pause(this.ultra);
+    this.resetInactivityTimer();
+  }
+
+  async resume(): Promise<void> {
+    if (!this.ultra || !this.playbackLoop.getState().isPaused) return;
+    await this.playbackLoop.resume(this.ultra);
+    this.resetInactivityTimer();
+  }
+
+  async togglePause(): Promise<'paused' | 'resumed' | 'no-op'> {
+    const state = this.playbackLoop.getState();
+    if (!this.ultra || !state.isPlaying) return 'no-op';
+
+    if (state.isPaused) {
+      await this.resume();
+      return 'resumed';
+    } else {
+      await this.pause();
+      return 'paused';
+    }
+  }
+
+  private subscribeToButtonEvents(): void {
+    if (!this.ultra) return;
+
+    this.pauseButtonHandler = () => {
+      console.log('[DeviceService] Pause button pressed');
+      this.togglePause().catch((err) => {
+        console.warn('[DeviceService] Toggle pause failed:', err);
+      });
+    };
+
+    this.ultra.deviceEvents.addEventListener('pause-button-pressed', this.pauseButtonHandler);
+  }
+
+  private unsubscribeFromButtonEvents(): void {
+    if (this.ultra && this.pauseButtonHandler) {
+      this.ultra.deviceEvents.removeEventListener('pause-button-pressed', this.pauseButtonHandler);
+    }
+    this.pauseButtonHandler = null;
   }
 
   private requireConnection(): void {

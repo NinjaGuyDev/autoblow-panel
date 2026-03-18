@@ -82,6 +82,33 @@ export class DeviceController {
     }
   };
 
+  pause = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      await this.service.pause();
+      res.json({ status: 'paused' });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  resume = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      await this.service.resume();
+      res.json({ status: 'resumed' });
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  togglePause = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+      const result = await this.service.togglePause();
+      res.json({ status: result });
+    } catch (error) {
+      next(error);
+    }
+  };
+
   stop = async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       await this.service.stop();
