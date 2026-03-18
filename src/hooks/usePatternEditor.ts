@@ -3,7 +3,7 @@ import type { Ultra } from '@xsense/autoblow-sdk';
 import type { FunscriptAction } from '@/types/funscript';
 import type { CustomPatternDefinition } from '@/types/patterns';
 import { scalePatternDuration, adjustIntensity, createLoopTransition } from '@/lib/patternTransform';
-import { customPatternApi } from '@/lib/apiClient';
+import { customPatternApi, mediaApi } from '@/lib/apiClient';
 import { getErrorMessage } from '@/lib/getErrorMessage';
 import { useDemoLoop } from '@/hooks/useDemoLoop';
 
@@ -20,6 +20,9 @@ export function usePatternEditor() {
   const [demoError, setDemoError] = useState<string | null>(null);
   const [scriptDurationMs, setScriptDurationMs] = useState(0);
   const ultraRef = useRef<Ultra | null>(null);
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [audioError, setAudioError] = useState<string | null>(null);
+  const [audioFileSize, setAudioFileSize] = useState<number | null>(null);
 
   useDemoLoop(ultraRef.current, isDemoPlaying, scriptDurationMs);
 
@@ -184,6 +187,7 @@ export function usePatternEditor() {
         intensity: editedPattern.intensity,
         tags: editedPattern.tags,
         durationMs: editedPattern.durationMs,
+        ...(editedPattern.audioFile ? { audioFile: editedPattern.audioFile } : {}),
       });
 
       let savedItem;
@@ -225,6 +229,48 @@ export function usePatternEditor() {
     }
   }, [editedPattern]);
 
+  /**
+   * Uploads an audio file and attaches it to the current pattern.
+   * Replaces the existing audio file if one is already attached.
+   * @throws Never — errors are surfaced via audioError state
+   */
+  const uploadAudio = useCallback(async (file: File) => {
+    if (!editedPattern) return;
+    try {
+      setIsUploadingAudio(true);
+      setAudioError(null);
+      const result = await mediaApi.uploadAudio(file, editedPattern.audioFile);
+      setAudioFileSize(result.size);
+      setEditedPattern((prev) => {
+        if (!prev) return null;
+        return { ...prev, audioFile: result.stored, lastModified: Date.now() };
+      });
+    } catch (err) {
+      setAudioError(getErrorMessage(err, 'Failed to upload audio'));
+    } finally {
+      setIsUploadingAudio(false);
+    }
+  }, [editedPattern]);
+
+  /**
+   * Removes the audio file attached to the current pattern.
+   * Deletes the file from the backend media directory.
+   * @throws Never — errors are surfaced via audioError state
+   */
+  const removeAudio = useCallback(async () => {
+    if (!editedPattern?.audioFile) return;
+    try {
+      setAudioError(null);
+      await mediaApi.deleteAudio(editedPattern.audioFile);
+      setEditedPattern((prev) => {
+        if (!prev) return null;
+        return { ...prev, audioFile: undefined, lastModified: Date.now() };
+      });
+    } catch (err) {
+      setAudioError(getErrorMessage(err, 'Failed to remove audio'));
+    }
+  }, [editedPattern]);
+
   return {
     editedPattern,
     isEditorOpen,
@@ -232,6 +278,9 @@ export function usePatternEditor() {
     saveError,
     isDemoPlaying,
     demoError,
+    isUploadingAudio,
+    audioError,
+    audioFileSize,
     openEditor,
     closeEditor,
     changeName,
@@ -241,5 +290,7 @@ export function usePatternEditor() {
     startDemo,
     stopDemo,
     savePattern,
+    uploadAudio,
+    removeAudio,
   };
 }
