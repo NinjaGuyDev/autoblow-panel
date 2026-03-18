@@ -142,6 +142,19 @@ export const mediaApi = {
     formData.append('thumbnail', blob, thumbFilename);
     return fetchVoid(`${MEDIA_BASE}/thumbnail`, { method: 'POST', body: formData });
   },
+
+  async uploadAudio(file: File, replaceFilename?: string): Promise<{ name: string; size: number; stored: string }> {
+    const formData = new FormData();
+    formData.append('audio', file);
+    if (replaceFilename) {
+      formData.append('replaceFilename', replaceFilename);
+    }
+    return fetchJson(`${MEDIA_BASE}/upload-audio`, { method: 'POST', body: formData });
+  },
+
+  async deleteAudio(filename: string): Promise<void> {
+    return fetchVoid(`${MEDIA_BASE}/audio/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+  },
 };
 
 /**

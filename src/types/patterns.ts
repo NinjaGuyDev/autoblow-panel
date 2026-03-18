@@ -93,6 +93,8 @@ export interface CustomPatternDefinition {
   lastModified: number;
   /** Backend library_items.id once saved */
   libraryItemId?: number;
+  /** Audio file attached to this pattern (filename in media directory) */
+  audioFile?: string;
 }
 
 /**
