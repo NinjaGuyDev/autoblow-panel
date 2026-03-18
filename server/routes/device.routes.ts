@@ -12,6 +12,9 @@ export function createDeviceRouter(controller: DeviceController): Router {
   // Playback control
   router.post('/play', controller.play);
   router.post('/play/:id', controller.playById);
+  router.post('/pause', controller.pause);
+  router.post('/resume', controller.resume);
+  router.post('/toggle-pause', controller.togglePause);
   router.post('/stop', controller.stop);
 
   return router;
