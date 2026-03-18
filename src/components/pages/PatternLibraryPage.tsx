@@ -40,6 +40,7 @@ function itemToCustomPattern(item: LibraryItem): CustomPatternDefinition {
     originalPatternId: item.originalPatternId || 'unknown',
     lastModified: new Date(item.lastModified).getTime(),
     libraryItemId: item.id,
+    audioFile: metadata.audioFile || undefined,
   };
 }
 
@@ -293,6 +294,12 @@ export function PatternLibraryPage({
         isSaving={patternEditor.isSaving}
         saveError={patternEditor.saveError}
         isDeviceConnected={isDeviceConnected}
+        audioFile={patternEditor.editedPattern?.audioFile}
+        audioFileSize={patternEditor.audioFileSize ?? undefined}
+        isUploadingAudio={patternEditor.isUploadingAudio}
+        audioError={patternEditor.audioError}
+        onUploadAudio={patternEditor.uploadAudio}
+        onRemoveAudio={patternEditor.removeAudio}
       />
 
       {/* Insert Position Dialog */}
