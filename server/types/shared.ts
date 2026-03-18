@@ -146,3 +146,40 @@ export interface MostPlayedScript {
   playCount: number;
   totalDurationSeconds: number;
 }
+
+// === Device Control API Types ===
+
+export interface DeviceConnectRequest {
+  deviceKey: string;
+}
+
+export interface DeviceConnectResponse {
+  status: 'connected';
+  latencyMs: number;
+}
+
+export interface DeviceStatusResponse {
+  connection: 'connected' | 'disconnected';
+  playback: 'playing' | 'stopped';
+  durationMs: number;
+  looping: boolean;
+  lastError: string | null;
+}
+
+export interface DevicePlayRequest {
+  actions: Array<{ pos: number; at: number }>;
+}
+
+export interface DevicePlayResponse {
+  status: 'playing';
+  durationMs: number;
+  name?: string;
+}
+
+export interface DeviceStopResponse {
+  status: 'stopped';
+}
+
+export interface DeviceDisconnectResponse {
+  status: 'disconnected';
+}
