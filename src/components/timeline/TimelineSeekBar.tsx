@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 
 interface TimelineSeekBarProps {
   durationMs: number;
@@ -24,7 +24,8 @@ const SEEKBAR_HEIGHT = 20;
  *
  * Supports:
  * - Click to seek to position
- * - Drag to pan viewport
+ * - Drag to pan viewport (global document listeners prevent drag cancellation
+ *   when the cursor leaves the element bounds)
  */
 export const TimelineSeekBar = React.memo<TimelineSeekBarProps>(
   ({
@@ -39,7 +40,50 @@ export const TimelineSeekBar = React.memo<TimelineSeekBarProps>(
     onPanEnd,
   }) => {
     const isDraggingRef = useRef(false);
-    const dragStartXRef = useRef(0);
+    const divRef = useRef<HTMLDivElement>(null);
+
+    // Keep a mutable snapshot of props that global handlers need — avoids stale closures
+    const propsRef = useRef({ onPanMove, onPanEnd, width });
+    propsRef.current = { onPanMove, onPanEnd, width };
+
+    // Mutable handler bodies updated each render
+    const handlersRef = useRef({
+      move: null as ((e: MouseEvent) => void) | null,
+      up: null as (() => void) | null,
+    });
+
+    // Stable function references (created once) — safe to add/remove from document
+    const stableMove = useRef((e: MouseEvent) => {
+      handlersRef.current.move?.(e);
+    }).current;
+
+    const stableUp = useRef(() => {
+      handlersRef.current.up?.();
+    }).current;
+
+    handlersRef.current.move = (e: MouseEvent) => {
+      if (!isDraggingRef.current || !divRef.current) return;
+      const rect = divRef.current.getBoundingClientRect();
+      const currentX = e.clientX - rect.left;
+      const currentRatio = currentX / propsRef.current.width;
+      propsRef.current.onPanMove(currentRatio);
+    };
+
+    handlersRef.current.up = () => {
+      if (!isDraggingRef.current) return;
+      isDraggingRef.current = false;
+      document.removeEventListener('mousemove', stableMove);
+      document.removeEventListener('mouseup', stableUp);
+      propsRef.current.onPanEnd();
+    };
+
+    // Cleanup global listeners if component unmounts mid-drag
+    useEffect(() => {
+      return () => {
+        document.removeEventListener('mousemove', stableMove);
+        document.removeEventListener('mouseup', stableUp);
+      };
+    }, [stableMove, stableUp]);
 
     if (durationMs === 0 || width === 0) {
       return (
@@ -69,9 +113,9 @@ export const TimelineSeekBar = React.memo<TimelineSeekBarProps>(
       const clickedInViewport = clickRatio >= viewStartRatio && clickRatio <= viewEndRatio;
 
       if (clickedInViewport) {
-        // Start dragging viewport
         isDraggingRef.current = true;
-        dragStartXRef.current = clickX;
+        document.addEventListener('mousemove', stableMove);
+        document.addEventListener('mouseup', stableUp);
         onPanStart(clickRatio);
       } else {
         // Jump to clicked position (center viewport at click)
@@ -80,38 +124,12 @@ export const TimelineSeekBar = React.memo<TimelineSeekBarProps>(
       }
     };
 
-    const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-      if (!isDraggingRef.current) return;
-
-      const rect = e.currentTarget.getBoundingClientRect();
-      const currentX = e.clientX - rect.left;
-      const currentRatio = currentX / width;
-
-      onPanMove(currentRatio);
-    };
-
-    const handleMouseUp = () => {
-      if (isDraggingRef.current) {
-        isDraggingRef.current = false;
-        onPanEnd();
-      }
-    };
-
-    const handleMouseLeave = () => {
-      if (isDraggingRef.current) {
-        isDraggingRef.current = false;
-        onPanEnd();
-      }
-    };
-
     return (
       <div
+        ref={divRef}
         className="relative bg-stone-950 border-t border-stone-800 cursor-pointer"
         style={{ height: `${SEEKBAR_HEIGHT}px`, width: `${width}px` }}
         onMouseDown={handleMouseDown}
-        onMouseMove={handleMouseMove}
-        onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseLeave}
       >
         {/* Viewport window indicator */}
         <div
