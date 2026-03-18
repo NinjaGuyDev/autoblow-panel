@@ -8,7 +8,7 @@
  *   - Export as .funscript file
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { X, Save, Copy, Download, AlertCircle, CheckCircle } from 'lucide-react';
 import type { LibraryItem } from '../../../../server/types/shared';
 import type { Funscript, FunscriptAction } from '@/types/funscript';
@@ -53,10 +53,14 @@ export function ScriptEditorDialog({ item, onClose, onSaved }: ScriptEditorDialo
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isDirty, setIsDirty] = useState(false);
+  const [scriptName, setScriptName] = useState(item.funscriptName ?? '');
+  const [currentTimeMs, setCurrentTimeMs] = useState(0);
 
   // Reset when the item changes (e.g. dialog reused for a different script)
   useEffect(() => {
     reset(parseActions(item));
+    setScriptName(item.funscriptName ?? '');
+    setCurrentTimeMs(0);
     setIsDirty(false);
     setSaveStatus('idle');
     setSaveError(null);
@@ -67,13 +71,18 @@ export function ScriptEditorDialog({ item, onClose, onSaved }: ScriptEditorDialo
     setIsDirty(true);
   }, [setActions]);
 
+  const handleNameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setScriptName(e.target.value);
+    setIsDirty(true);
+  }, []);
+
   const handleSave = useCallback(async () => {
     setSaveStatus('saving');
     setSaveError(null);
     try {
       await libraryApi.updateById(item.id, {
         funscriptData: buildFunscriptData(actions),
-        funscriptName: item.funscriptName,
+        funscriptName: scriptName || item.funscriptName,
         duration: actions.length > 0 ? actions[actions.length - 1].at / 1000 : item.duration,
       });
       setSaveStatus('saved');
@@ -84,13 +93,13 @@ export function ScriptEditorDialog({ item, onClose, onSaved }: ScriptEditorDialo
       setSaveStatus('error');
       setSaveError(err instanceof Error ? err.message : 'Save failed');
     }
-  }, [item, actions, onSaved]);
+  }, [item, actions, scriptName, onSaved]);
 
   const handleSaveAsCopy = useCallback(async () => {
     setSaveStatus('saving');
     setSaveError(null);
     try {
-      const baseName = item.funscriptName?.replace('.funscript', '') ?? 'script';
+      const baseName = (scriptName || (item.funscriptName ?? 'script')).replace('.funscript', '');
       const copyName = `${baseName}-copy.funscript`;
       await libraryApi.create({
         videoName: null,
@@ -105,24 +114,28 @@ export function ScriptEditorDialog({ item, onClose, onSaved }: ScriptEditorDialo
       setSaveStatus('error');
       setSaveError(err instanceof Error ? err.message : 'Save failed');
     }
-  }, [item, actions, onSaved]);
+  }, [item, actions, scriptName, onSaved]);
 
   const handleExport = useCallback(() => {
-    const filename = item.funscriptName?.replace('.funscript', '-edited.funscript') ?? 'script-edited.funscript';
-    exportFunscript(actions, filename);
-  }, [item.funscriptName, actions]);
+    const baseName = (scriptName || (item.funscriptName ?? 'script')).replace('.funscript', '');
+    exportFunscript(actions, `${baseName}-edited.funscript`);
+  }, [scriptName, item.funscriptName, actions]);
 
   const durationMs = deriveDuration(item, actions);
-  const scriptName = item.funscriptName ?? 'Unnamed Script';
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-stone-950">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-stone-800 bg-stone-900 flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0">
-          <h2 className="text-base font-semibold text-stone-200 truncate" title={scriptName}>
-            {scriptName}
-          </h2>
+          <input
+            type="text"
+            value={scriptName}
+            onChange={handleNameChange}
+            className="text-base font-semibold text-stone-200 bg-transparent border-b border-transparent hover:border-stone-600 focus:border-amber-500 focus:outline-none truncate min-w-0 w-64 transition-colors"
+            title="Click to rename"
+            placeholder="Unnamed Script"
+          />
           {isDirty && (
             <span className="text-xs text-amber-400 flex-shrink-0">Unsaved changes</span>
           )}
@@ -192,10 +205,10 @@ export function ScriptEditorDialog({ item, onClose, onSaved }: ScriptEditorDialo
         ) : (
           <Timeline
             actions={actions}
-            currentTimeMs={0}
+            currentTimeMs={currentTimeMs}
             durationMs={durationMs}
             isPlaying={false}
-            onSeek={() => {}}
+            onSeek={(timeS: number) => setCurrentTimeMs(timeS * 1000)}
             onActionsChange={handleActionsChange}
             onUndo={undo}
             onRedo={redo}

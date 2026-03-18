@@ -110,11 +110,11 @@ export function useTimelineViewport({
     // Calculate how far the cursor moved (in ratio units)
     const deltaRatio = currentXRatio - panStartXRatio.current;
 
-    // Translate to time offset
-    const deltaTime = deltaRatio * viewportDuration;
+    // Translate to time offset — seek bar spans the full duration, not just the viewport
+    const deltaTime = deltaRatio * durationMs;
 
-    // Update viewStart (inverted: drag right = scroll left)
-    const newViewStart = panStartViewStart.current - deltaTime;
+    // Drag amber window right → reveal later content → viewStart increases
+    const newViewStart = panStartViewStart.current + deltaTime;
 
     // Clamp to valid range
     const clampedViewStart = Math.max(0, Math.min(newViewStart, durationMs - viewportDuration));
