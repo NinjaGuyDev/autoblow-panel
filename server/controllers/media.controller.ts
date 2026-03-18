@@ -67,7 +67,7 @@ export class MediaController {
       const stat = fs.statSync(filePath);
       const fileSize = stat.size;
       const ext = path.extname(filename).toLowerCase();
-      const contentType = this.mimeType(ext);
+      const contentType = this.mimeType(ext, filename);
 
       const range = req.headers.range;
       if (range) {
@@ -137,6 +137,48 @@ export class MediaController {
     }
   };
 
+  uploadAudio = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const file = (req as any).file;
+      if (!file) {
+        res.status(400).json({ error: 'No audio file provided' });
+        return;
+      }
+      const replaceFilename = req.body?.replaceFilename;
+      if (replaceFilename) {
+        this.deleteAudioFileFromDisk(replaceFilename);
+      }
+      res.json({
+        name: file.originalname,
+        size: file.size,
+        stored: file.filename,
+      });
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  deleteAudioEndpoint = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+      const filename = req.params.filename as string;
+      this.deleteAudioFileFromDisk(filename);
+      res.status(204).send();
+    } catch (err) {
+      next(err);
+    }
+  };
+
+  deleteAudioFileFromDisk(filename: string): void {
+    const sanitized = path.basename(filename);
+    const filePath = path.join(this.mediaDir, sanitized);
+    if (!filePath.startsWith(path.resolve(this.mediaDir))) {
+      return;
+    }
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  }
+
   /**
    * GET /api/media/thumbnail/:filename — serve a thumbnail image
    */
@@ -205,13 +247,15 @@ export class MediaController {
     return filePath;
   }
 
-  private mimeType(ext: string): string {
+  private mimeType(ext: string, filename?: string): string {
     const types: Record<string, string> = {
       '.mp4': 'video/mp4',
       '.webm': 'video/webm',
-      '.ogg': 'video/ogg',
+      '.ogg': filename?.startsWith('audio-') ? 'audio/ogg' : 'video/ogg',
       '.mkv': 'video/x-matroska',
       '.avi': 'video/x-msvideo',
+      '.mp3': 'audio/mpeg',
+      '.wav': 'audio/wav',
     };
     return types[ext] || 'application/octet-stream';
   }
