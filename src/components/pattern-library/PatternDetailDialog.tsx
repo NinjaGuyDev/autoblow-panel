@@ -6,6 +6,7 @@ import { createSmoothTransition } from '@/lib/patternInsertion';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/getErrorMessage';
 import { useDemoLoop } from '@/hooks/useDemoLoop';
+import { mediaApi } from '@/lib/apiClient';
 
 interface PatternDetailDialogProps {
   pattern: AnyPattern | null;
@@ -37,6 +38,7 @@ export function PatternDetailDialog({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationFrameRef = useRef<number | null>(null);
   const startTimeRef = useRef<number | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isDemoPlaying, setIsDemoPlaying] = useState(false);
   const [demoError, setDemoError] = useState<string | null>(null);
   const [scriptDurationMs, setScriptDurationMs] = useState(0);
@@ -171,6 +173,14 @@ export function PatternDetailDialog({
       await ultra.syncScriptStart(0);
 
       setIsDemoPlaying(true);
+
+      // Play attached audio if present (once, no looping)
+      if (isCustomPattern(pattern) && pattern.audioFile) {
+        const audio = new Audio(mediaApi.streamUrl(pattern.audioFile));
+        audio.preload = 'auto';
+        audio.play().catch(() => {});
+        audioRef.current = audio;
+      }
     } catch (err) {
       setDemoError(getErrorMessage(err, 'Failed to start demo'));
     }
@@ -184,15 +194,27 @@ export function PatternDetailDialog({
       setIsDemoPlaying(false);
       setScriptDurationMs(0);
       setDemoError(null);
+
+      // Stop attached audio
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current.src = '';
+        audioRef.current = null;
+      }
     } catch (err) {
       setDemoError(getErrorMessage(err, 'Failed to stop demo'));
     }
   }, [ultra]);
 
-  // Stop demo when dialog closes
+  // Stop demo and audio when dialog closes
   useEffect(() => {
     if (!isOpen && isDemoPlaying) {
       stopDemo();
+    }
+    if (!isOpen && audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.src = '';
+      audioRef.current = null;
     }
   }, [isOpen, isDemoPlaying, stopDemo]);
 
