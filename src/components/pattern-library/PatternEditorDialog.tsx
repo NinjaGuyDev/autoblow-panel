@@ -1,6 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { FunscriptAction } from '@/types/funscript';
 import type { CustomPatternDefinition } from '@/types/patterns';
+import { mediaApi } from '@/lib/apiClient';
 import { PatternDialogShell } from './PatternDialogShell';
 import { usePatternCanvas } from './usePatternCanvas';
 import {
@@ -30,6 +31,12 @@ interface PatternEditorDialogProps {
   isSaving: boolean;
   saveError: string | null;
   isDeviceConnected: boolean;
+  audioFile?: string;
+  audioFileSize?: number;
+  isUploadingAudio: boolean;
+  audioError: string | null;
+  onUploadAudio: (file: File) => void;
+  onRemoveAudio: () => void;
 }
 
 const POINT_RADIUS = 6;
@@ -55,9 +62,33 @@ export function PatternEditorDialog({
   isSaving,
   saveError,
   isDeviceConnected,
+  audioFile,
+  audioFileSize,
+  isUploadingAudio,
+  audioError,
+  onUploadAudio,
+  onRemoveAudio,
 }: PatternEditorDialogProps) {
   const { canvasRef, containerRef, canvasWidth, draggedIndex, setDraggedIndex } =
     usePatternCanvas();
+
+  const previewAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPreviewPlaying, setIsPreviewPlaying] = useState(false);
+
+  const togglePreview = () => {
+    if (!audioFile) return;
+    if (isPreviewPlaying && previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      previewAudioRef.current = null;
+      setIsPreviewPlaying(false);
+    } else {
+      const audio = new Audio(mediaApi.streamUrl(audioFile));
+      audio.addEventListener('ended', () => setIsPreviewPlaying(false));
+      audio.play().catch(() => {});
+      previewAudioRef.current = audio;
+      setIsPreviewPlaying(true);
+    }
+  };
 
   // --- Canvas drawing ---
 
@@ -229,6 +260,51 @@ export function PatternEditorDialog({
             {pattern.actions.length}
           </div>
         </div>
+      </div>
+
+      {/* Audio attachment */}
+      <div className="mb-4">
+        <label className="text-xs text-stone-500 block mb-1">Audio Description</label>
+        {audioFile ? (
+          <div className="flex items-center gap-3 px-3 py-2 rounded bg-stone-800 border border-stone-700">
+            <button
+              onClick={togglePreview}
+              className="text-amber-500 hover:text-amber-400 transition-colors"
+            >
+              {isPreviewPlaying ? '⏸' : '▶'}
+            </button>
+            <span className="text-stone-300 text-sm truncate flex-1">{audioFile}</span>
+            {audioFileSize && (
+              <span className="text-stone-500 text-xs">{(audioFileSize / 1024).toFixed(0)} KB</span>
+            )}
+            <button
+              onClick={onRemoveAudio}
+              className="text-stone-500 hover:text-red-400 transition-colors text-sm"
+            >
+              Remove
+            </button>
+          </div>
+        ) : (
+          <label className="flex items-center justify-center gap-2 px-3 py-2 rounded bg-stone-800 border border-stone-700 border-dashed cursor-pointer hover:border-amber-700/40 transition-colors">
+            <span className="text-stone-400 text-sm">
+              {isUploadingAudio ? 'Uploading...' : 'Drop or click to attach audio (.mp3, .wav, .ogg)'}
+            </span>
+            <input
+              type="file"
+              accept=".mp3,.wav,.ogg"
+              className="hidden"
+              disabled={isUploadingAudio}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) onUploadAudio(file);
+                e.target.value = '';
+              }}
+            />
+          </label>
+        )}
+        {audioError && (
+          <p className="text-red-400 text-xs mt-1">{audioError}</p>
+        )}
       </div>
     </PatternDialogShell>
   );
