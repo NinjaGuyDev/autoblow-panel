@@ -3,6 +3,7 @@ import type { LibraryRepository } from '../repositories/library.repository.js';
 
 export interface MediaCleanup {
   deleteFiles(videoName: string): void;
+  deleteAudioFileFromDisk(filename: string): void;
 }
 
 export class LibraryService {
@@ -80,7 +81,6 @@ export class LibraryService {
   }
 
   deleteItem(id: number): void {
-    // Look up item first to get videoName for media cleanup
     const item = this.repository.findById(id);
     if (!item) {
       throw new Error(`Library item with id ${id} not found`);
@@ -88,13 +88,22 @@ export class LibraryService {
 
     this.repository.delete(id);
 
-    // Clean up associated media files
     if (item.videoName && this.mediaCleanup) {
       try {
         this.mediaCleanup.deleteFiles(item.videoName);
       } catch (err) {
-        // Log but don't fail the delete — DB record is already gone
         console.warn(`Failed to clean up media files for ${item.videoName}:`, err);
+      }
+    }
+
+    if (item.patternMetadata && this.mediaCleanup) {
+      try {
+        const metadata = JSON.parse(item.patternMetadata);
+        if (metadata.audioFile) {
+          this.mediaCleanup.deleteAudioFileFromDisk(metadata.audioFile);
+        }
+      } catch {
+        // Malformed metadata — skip audio cleanup
       }
     }
   }
