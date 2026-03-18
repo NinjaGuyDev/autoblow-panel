@@ -25,6 +25,9 @@ import { createMediaRouter } from './routes/media.routes.js';
 import { localhostOnly } from './middleware/localhost-only.js';
 import { createSecurityMiddleware } from './middleware/security.js';
 import healthRouter from './routes/health.js';
+import { DeviceService } from './services/device.service.js';
+import { DeviceController } from './controllers/device.controller.js';
+import { createDeviceRouter } from './routes/device.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 // Initialize database schema
@@ -61,6 +64,11 @@ const analyticsRouter = createAnalyticsRouter(analyticsController);
 const mediaController = new MediaController(MEDIA_DIR);
 const mediaRouter = createMediaRouter(mediaController, MEDIA_DIR);
 
+// Wire up device control dependency chain
+const deviceService = new DeviceService(service);
+const deviceController = new DeviceController(deviceService);
+const deviceRouter = createDeviceRouter(deviceController);
+
 // Connect media cleanup to library service for cascading deletes
 service.setMediaCleanup(mediaController);
 
@@ -95,6 +103,7 @@ app.use('/api/playlists', playlistRouter);
 app.use('/api/sessions', sessionRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/media', mediaRouter);
+app.use('/api/device', deviceRouter);
 
 // Error handler (must be last)
 app.use(errorHandler);
