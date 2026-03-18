@@ -63,5 +63,26 @@ export function createMediaRouter(controller: MediaController, mediaDir: string)
   // Upload thumbnail
   router.post('/thumbnail', thumbUpload.single('thumbnail'), controller.uploadThumbnail);
 
+  const audioStorage = multer.diskStorage({
+    destination: (_req, _file, cb) => cb(null, mediaDir),
+    filename: (_req, file, cb) => {
+      const sanitized = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '');
+      cb(null, `audio-${Date.now()}-${sanitized}`);
+    },
+  });
+
+  const audioUpload = multer({
+    storage: audioStorage,
+    fileFilter: (_req, file, cb) => {
+      const ext = path.extname(file.originalname).toLowerCase();
+      const allowed = new Set(['.mp3', '.wav', '.ogg']);
+      cb(null, allowed.has(ext));
+    },
+    limits: { fileSize: 5 * 1024 * 1024 },
+  });
+
+  router.post('/upload-audio', audioUpload.single('audio'), controller.uploadAudio);
+  router.delete('/audio/:filename', controller.deleteAudioEndpoint);
+
   return router;
 }
