@@ -7,6 +7,9 @@ interface PatternCardProps {
   onClick: () => void;
   isCreationMode?: boolean;
   onQuickAdd?: () => void;
+  isRandomizeMode?: boolean;
+  isSelected?: boolean;
+  onToggleSelect?: () => void;
 }
 
 /**
@@ -18,6 +21,9 @@ export const PatternCard = memo(function PatternCard({
   onClick,
   isCreationMode = false,
   onQuickAdd,
+  isRandomizeMode = false,
+  isSelected = false,
+  onToggleSelect,
 }: PatternCardProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isHovered, setIsHovered] = useState(false);
@@ -151,7 +157,11 @@ export const PatternCard = memo(function PatternCard({
   const handleClick = () => {
     // Clear hover state to prevent animation leak
     setIsHovered(false);
-    onClick();
+    if (isRandomizeMode) {
+      onToggleSelect?.();
+    } else {
+      onClick();
+    }
   };
 
   const handleQuickAdd = (e: React.MouseEvent) => {
@@ -172,12 +182,26 @@ export const PatternCard = memo(function PatternCard({
     <div
       className={cn(
         'border border-stone-800 rounded-lg p-4 bg-stone-900/50 cursor-pointer transition-colors relative',
-        'hover:border-stone-600 hover:bg-stone-900/80'
+        'hover:border-stone-600 hover:bg-stone-900/80',
+        isSelected ? 'ring-2 ring-amber-500' : ''
       )}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       onClick={handleClick}
     >
+      {/* Randomize mode selection checkbox */}
+      {isRandomizeMode && (
+        <div className="absolute top-2 right-2 z-10">
+          <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
+            isSelected
+              ? 'bg-amber-500 border-amber-500'
+              : 'border-stone-500 bg-stone-800/80'
+          }`}>
+            {isSelected && <span className="text-white text-xs">✓</span>}
+          </div>
+        </div>
+      )}
+
       {/* Quick add button (creation mode only) */}
       {isCreationMode && (
         <button
