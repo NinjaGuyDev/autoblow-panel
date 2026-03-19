@@ -16,5 +16,5 @@ export const TABS: readonly Tab[] = [
   { id: 'video-sync', label: 'Video Sync' },
   { id: 'manual-control', label: 'Manual Control' },
   { id: 'device-log', label: 'Device Log' },
-  { id: 'pattern-library', label: 'Pattern Library' },
+  { id: 'pattern-library', label: 'Patterns' },
 ] as const;

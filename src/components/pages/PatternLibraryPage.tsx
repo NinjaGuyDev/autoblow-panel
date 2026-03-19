@@ -269,14 +269,14 @@ export function PatternLibraryPage({
     >
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-stone-200" style={{ fontFamily: 'var(--font-display)' }}>
-          Pattern Library
+          Patterns
         </h1>
         <div className="flex items-center gap-3">
           <button
             onClick={toggleRandomizeMode}
-            className={`px-3 py-1.5 rounded text-sm transition-colors ${
+            className={`px-4 py-2 rounded-lg font-medium shadow-sm transition-colors ${
               isRandomizeMode
-                ? 'bg-amber-600 text-white'
+                ? 'bg-amber-600 text-white hover:bg-amber-500'
                 : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
             }`}
           >
