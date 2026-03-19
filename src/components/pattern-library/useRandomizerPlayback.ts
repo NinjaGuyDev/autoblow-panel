@@ -31,6 +31,8 @@ export function useRandomizerPlayback(
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentSegRef = useRef(-1);
+  /** Tracks which audioTimeline cues have already been triggered this playback */
+  const triggeredCuesRef = useRef<Set<number>>(new Set());
 
   const cleanupAudio = useCallback(() => {
     if (audioRef.current) {
@@ -64,6 +66,7 @@ export function useRandomizerPlayback(
       await ultra.syncScriptStart(0);
 
       currentSegRef.current = -1;
+      triggeredCuesRef.current = new Set();
 
       setState((prev) => ({
         ...prev,
@@ -89,16 +92,33 @@ export function useRandomizerPlayback(
             }
           }
 
-          if (segIdx !== currentSegRef.current && segIdx >= 0) {
-            currentSegRef.current = segIdx;
-            const seg = script.segments[segIdx];
-            if (seg.audioFile) {
-              cleanupAudio();
-              const audio = new Audio(mediaApi.streamUrl(seg.audioFile));
-              audio.play().catch(() => {});
-              audioRef.current = audio;
+          // Audio triggering: audioTimeline takes priority over segment-based audio
+          if (script.audioTimeline && script.audioTimeline.length > 0) {
+            // Timeline mode: trigger cues at specific timestamps
+            for (let ci = 0; ci < script.audioTimeline.length; ci++) {
+              const cue = script.audioTimeline[ci];
+              if (timeMs >= cue.startMs && !triggeredCuesRef.current.has(ci)) {
+                triggeredCuesRef.current.add(ci);
+                cleanupAudio();
+                const audio = new Audio(mediaApi.streamUrl(cue.audioFile));
+                audio.play().catch(() => {});
+                audioRef.current = audio;
+                break; // Only trigger one cue per poll cycle
+              }
+            }
+          } else {
+            // Segment mode: trigger audio on segment boundary change
+            if (segIdx !== currentSegRef.current && segIdx >= 0) {
+              const seg = script.segments[segIdx];
+              if (seg.audioFile) {
+                cleanupAudio();
+                const audio = new Audio(mediaApi.streamUrl(seg.audioFile));
+                audio.play().catch(() => {});
+                audioRef.current = audio;
+              }
             }
           }
+          currentSegRef.current = segIdx;
 
           setState((prev) => ({
             ...prev,
@@ -141,6 +161,7 @@ export function useRandomizerPlayback(
     clearPollInterval();
     cleanupAudio();
     currentSegRef.current = -1;
+    triggeredCuesRef.current = new Set();
 
     setState({
       isPlaying: false,
