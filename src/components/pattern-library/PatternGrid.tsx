@@ -9,6 +9,9 @@ interface PatternGridProps {
   onClearFilters: () => void;
   isCreationMode?: boolean;
   onQuickAdd?: (pattern: AnyPattern) => void;
+  isRandomizeMode?: boolean;
+  selectedPatternIds?: Set<string>;
+  onToggleSelect?: (patternId: string) => void;
 }
 
 /**
@@ -22,6 +25,9 @@ export function PatternGrid({
   onClearFilters,
   isCreationMode = false,
   onQuickAdd,
+  isRandomizeMode = false,
+  selectedPatternIds,
+  onToggleSelect,
 }: PatternGridProps) {
   const isFiltered = patterns.length < totalCount;
 
@@ -55,9 +61,12 @@ export function PatternGrid({
                 onClick={() => onPatternClick(pattern)}
                 isCreationMode={isCreationMode}
                 onQuickAdd={onQuickAdd ? () => onQuickAdd(pattern) : undefined}
+                isRandomizeMode={isRandomizeMode}
+                isSelected={selectedPatternIds?.has(pattern.id) ?? false}
+                onToggleSelect={onToggleSelect ? () => onToggleSelect(pattern.id) : undefined}
               />
               {isCustomPattern(pattern) && (
-                <div className="absolute top-2 right-2 bg-amber-700 text-white text-xs px-1.5 py-0.5 rounded shadow-sm pointer-events-none">
+                <div className={`absolute top-2 bg-amber-700 text-white text-xs px-1.5 py-0.5 rounded shadow-sm pointer-events-none ${isRandomizeMode ? 'left-2' : 'right-2'}`}>
                   Custom
                 </div>
               )}

@@ -15,6 +15,9 @@ import { InsertPositionDialog } from '@/components/pattern-library/InsertPositio
 import { createEditableCopy } from '@/lib/patternTransform';
 import { customPatternApi } from '@/lib/apiClient';
 import type { LibraryItem } from '../../../server/types/shared';
+import { generateRandomizedScript } from '@/lib/randomizer';
+import type { RandomizedScript } from '@/types/randomizer';
+import { RandomizerToolbar } from '@/components/pattern-library/RandomizerToolbar';
 
 interface PatternLibraryPageProps {
   onInsert: (pattern: AnyPattern, position: 'cursor' | 'end') => void;
@@ -90,6 +93,13 @@ export function PatternLibraryPage({
     clearFilters,
     filteredPatterns,
   } = usePatternFilters(PATTERN_DEFINITIONS, customPatterns);
+
+  // Randomize mode state
+  const [isRandomizeMode, setIsRandomizeMode] = useState(false);
+  const [selectedPatternIds, setSelectedPatternIds] = useState<Set<string>>(new Set());
+  const [randomizerDuration, setRandomizerDuration] = useState(5);
+  const [randomizedScript, setRandomizedScript] = useState<RandomizedScript | null>(null);
+  const [showPreviewDialog, setShowPreviewDialog] = useState(false);
 
   // Dialog state
   const [selectedPattern, setSelectedPattern] = useState<AnyPattern | null>(null);
@@ -186,6 +196,32 @@ export function PatternLibraryPage({
     onInsert(pattern, 'end');
   };
 
+  const toggleRandomizeMode = () => {
+    setIsRandomizeMode((prev) => {
+      if (prev) setSelectedPatternIds(new Set());
+      return !prev;
+    });
+  };
+
+  const togglePatternSelection = (patternId: string) => {
+    setSelectedPatternIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(patternId)) next.delete(patternId);
+      else next.add(patternId);
+      return next;
+    });
+  };
+
+  const handleGenerate = () => {
+    const allPatterns: AnyPattern[] = [...PATTERN_DEFINITIONS, ...customPatterns];
+    const selected = allPatterns.filter((p) => selectedPatternIds.has(p.id));
+    if (selected.length < 2) return;
+
+    const script = generateRandomizedScript(selected, randomizerDuration * 60 * 1000);
+    setRandomizedScript(script);
+    setShowPreviewDialog(true);
+  };
+
   // Refresh custom patterns after save
   const handlePatternSave = async () => {
     await patternEditor.savePattern();
@@ -234,12 +270,24 @@ export function PatternLibraryPage({
         <h1 className="text-2xl font-bold text-stone-200" style={{ fontFamily: 'var(--font-display)' }}>
           Pattern Library
         </h1>
-        <button
-          onClick={waypointBuilder.openBuilder}
-          className="px-4 py-2 rounded-lg bg-amber-700 text-white hover:bg-amber-600 transition-colors font-medium shadow-sm"
-        >
-          + Create Pattern
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={toggleRandomizeMode}
+            className={`px-3 py-1.5 rounded text-sm transition-colors ${
+              isRandomizeMode
+                ? 'bg-amber-600 text-white'
+                : 'bg-stone-800 text-stone-300 hover:bg-stone-700'
+            }`}
+          >
+            {isRandomizeMode ? 'Exit Randomize' : 'Randomize Mode'}
+          </button>
+          <button
+            onClick={waypointBuilder.openBuilder}
+            className="px-4 py-2 rounded-lg bg-amber-700 text-white hover:bg-amber-600 transition-colors font-medium shadow-sm"
+          >
+            + Create Pattern
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -262,6 +310,9 @@ export function PatternLibraryPage({
         onClearFilters={clearFilters}
         isCreationMode={isCreationMode}
         onQuickAdd={handleQuickAdd}
+        isRandomizeMode={isRandomizeMode}
+        selectedPatternIds={selectedPatternIds}
+        onToggleSelect={togglePatternSelection}
       />
 
       {/* Detail Dialog */}
@@ -344,6 +395,17 @@ export function PatternLibraryPage({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Randomizer Toolbar */}
+      {isRandomizeMode && (
+        <RandomizerToolbar
+          selectedCount={selectedPatternIds.size}
+          durationMinutes={randomizerDuration}
+          onDurationChange={setRandomizerDuration}
+          onGenerate={handleGenerate}
+          onCancel={toggleRandomizeMode}
+        />
       )}
 
       {/* Waypoint Builder Dialog */}
