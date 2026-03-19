@@ -18,6 +18,7 @@ import type { LibraryItem } from '../../../server/types/shared';
 import { generateRandomizedScript } from '@/lib/randomizer';
 import type { RandomizedScript } from '@/types/randomizer';
 import { RandomizerToolbar } from '@/components/pattern-library/RandomizerToolbar';
+import { RandomizerPreviewDialog } from '@/components/pattern-library/RandomizerPreviewDialog';
 
 interface PatternLibraryPageProps {
   onInsert: (pattern: AnyPattern, position: 'cursor' | 'end') => void;
@@ -405,6 +406,21 @@ export function PatternLibraryPage({
           onDurationChange={setRandomizerDuration}
           onGenerate={handleGenerate}
           onCancel={toggleRandomizeMode}
+        />
+      )}
+
+      {/* Randomizer Preview Dialog */}
+      {showPreviewDialog && randomizedScript && (
+        <RandomizerPreviewDialog
+          script={randomizedScript}
+          isOpen={showPreviewDialog}
+          onClose={() => {
+            setShowPreviewDialog(false);
+            setRandomizedScript(null);
+          }}
+          onRegenerate={handleGenerate}
+          ultra={ultra}
+          isDeviceConnected={isDeviceConnected}
         />
       )}
 
