@@ -8,7 +8,8 @@ export class DeviceController {
 
   connect = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { deviceKey } = req.body as DeviceConnectRequest;
+      const body = req.body ?? {};
+      const { deviceKey } = body as DeviceConnectRequest;
       if (!deviceKey || typeof deviceKey !== 'string') {
         res.status(400).json({ error: 'deviceKey is required and must be a string' });
         return;
@@ -44,7 +45,8 @@ export class DeviceController {
 
   play = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { actions } = req.body as DevicePlayRequest;
+      const body = req.body ?? {};
+      const { actions } = body as DevicePlayRequest;
       const validationError = validateActions(actions);
       if (validationError) {
         res.status(400).json({ error: validationError });
