@@ -3,6 +3,7 @@ import type { Ultra } from '@xsense/autoblow-sdk';
 import { PlaybackLoop } from './playback-loop.js';
 import type { LibraryService } from './library.service.js';
 import type {
+  FunscriptActionDto,
   DeviceConnectResponse,
   DeviceStatusResponse,
   DevicePlayResponse,
@@ -31,7 +32,14 @@ export class DeviceService {
       return { status: 'connected', latencyMs };
     }
 
-    const result = await deviceInit(deviceKey);
+    // Wrap SDK calls so all failures surface as "Device connection failed: ..."
+    let result;
+    try {
+      result = await deviceInit(deviceKey);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown device error';
+      throw new Error(`Device connection failed: ${msg}`);
+    }
 
     if (result.deviceType !== 'autoblow-ultra' || !result.ultra) {
       throw new Error('Device connection failed: unsupported device type');
@@ -41,7 +49,17 @@ export class DeviceService {
     this.connectionState = 'connected';
     this.lastError = null;
 
-    const latencyMs = await this.ultra.estimateLatency();
+    // Fresh PlaybackLoop for the new connection (previous may have been destroyed)
+    this.playbackLoop = new PlaybackLoop();
+
+    let latencyMs: number;
+    try {
+      latencyMs = await this.ultra.estimateLatency();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown device error';
+      throw new Error(`Device connection failed: ${msg}`);
+    }
+
     this.subscribeToButtonEvents();
     this.resetInactivityTimer();
 
@@ -84,7 +102,7 @@ export class DeviceService {
     };
   }
 
-  async play(actions: Array<{ pos: number; at: number }>): Promise<DevicePlayResponse> {
+  async play(actions: FunscriptActionDto[]): Promise<DevicePlayResponse> {
     this.requireConnection();
     this.lastError = null;
 
@@ -103,11 +121,19 @@ export class DeviceService {
     this.lastError = null;
 
     const item = this.libraryService.getItemById(id);
-    const parsed = JSON.parse(item.funscriptData);
+
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(item.funscriptData);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown parse error';
+      throw new Error(`Failed to parse funscriptData for library item ${id}: ${msg}`);
+    }
+
     // funscriptData may be { actions: [...], version } or raw array
-    const actions: Array<{ pos: number; at: number }> = Array.isArray(parsed)
+    const actions: FunscriptActionDto[] = Array.isArray(parsed)
       ? parsed
-      : parsed.actions;
+      : (parsed as any).actions;
 
     if (!actions || actions.length === 0) {
       throw new Error('Library item has no funscript actions');
@@ -199,6 +225,8 @@ export class DeviceService {
         console.warn('[DeviceService] Auto-disconnect failed:', err);
       });
     }, INACTIVITY_TIMEOUT_MS);
+    // Don't block graceful shutdown
+    this.inactivityTimer?.unref?.();
   }
 
   private clearInactivityTimer(): void {

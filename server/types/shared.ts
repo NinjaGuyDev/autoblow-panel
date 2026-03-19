@@ -149,6 +149,11 @@ export interface MostPlayedScript {
 
 // === Device Control API Types ===
 
+export interface FunscriptActionDto {
+  pos: number;
+  at: number;
+}
+
 export interface DeviceConnectRequest {
   deviceKey: string;
 }
@@ -167,7 +172,7 @@ export interface DeviceStatusResponse {
 }
 
 export interface DevicePlayRequest {
-  actions: Array<{ pos: number; at: number }>;
+  actions: FunscriptActionDto[];
 }
 
 export interface DevicePlayResponse {

@@ -14,7 +14,7 @@
 
 ## File Structure
 
-```
+```text
 server/
 ├── services/playback-loop.ts           — CREATE: Loop scheduling (setTimeout-based restart)
 ├── services/device.service.ts          — CREATE: Connection lifecycle + playback orchestration
