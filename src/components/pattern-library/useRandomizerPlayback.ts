@@ -5,6 +5,8 @@ import { mediaApi } from '@/lib/apiClient';
 import { getErrorMessage } from '@/lib/getErrorMessage';
 
 const POSITION_POLL_MS = 200;
+/** Stop polling after this many consecutive device errors */
+const MAX_POLL_FAILURES = 10;
 
 interface PlaybackState {
   isPlaying: boolean;
@@ -33,6 +35,10 @@ export function useRandomizerPlayback(
   const currentSegRef = useRef(-1);
   /** Tracks which audioTimeline cues have already been triggered this playback */
   const triggeredCuesRef = useRef<Set<number>>(new Set());
+  /** Mutable ref for current position — used by togglePause to avoid stale closure */
+  const currentTimeMsRef = useRef(0);
+  /** Consecutive poll failure counter */
+  const pollFailureCountRef = useRef(0);
 
   const cleanupAudio = useCallback(() => {
     if (audioRef.current) {
@@ -52,6 +58,14 @@ export function useRandomizerPlayback(
   const startDemo = useCallback(async () => {
     if (!ultra || !script || script.actions.length === 0) return;
 
+    // Clean up any existing playback before starting fresh
+    clearPollInterval();
+    cleanupAudio();
+    currentSegRef.current = -1;
+    triggeredCuesRef.current = new Set();
+    currentTimeMsRef.current = 0;
+    pollFailureCountRef.current = 0;
+
     try {
       setState((prev) => ({ ...prev, error: null, isComplete: false }));
 
@@ -65,9 +79,6 @@ export function useRandomizerPlayback(
       await ultra.syncScriptUploadFunscriptFile(funscript as any);
       await ultra.syncScriptStart(0);
 
-      currentSegRef.current = -1;
-      triggeredCuesRef.current = new Set();
-
       setState((prev) => ({
         ...prev,
         isPlaying: true,
@@ -79,8 +90,12 @@ export function useRandomizerPlayback(
       pollIntervalRef.current = setInterval(async () => {
         try {
           const deviceState = await ultra.getState();
+          pollFailureCountRef.current = 0; // Reset on success
+
           const timeMs = deviceState.syncScriptCurrentTime ?? 0;
           const isDevicePlaying = deviceState.operationalMode === 'SYNC_SCRIPT_PLAYING';
+
+          currentTimeMsRef.current = timeMs;
 
           let segIdx = -1;
           if (script.segments.length > 0) {
@@ -137,7 +152,17 @@ export function useRandomizerPlayback(
             }));
           }
         } catch {
-          // Device communication error — continue polling
+          pollFailureCountRef.current++;
+          if (pollFailureCountRef.current >= MAX_POLL_FAILURES) {
+            clearPollInterval();
+            cleanupAudio();
+            setState((prev) => ({
+              ...prev,
+              isPlaying: false,
+              isPaused: false,
+              error: 'Device communication lost',
+            }));
+          }
         }
       }, POSITION_POLL_MS);
     } catch (err) {
@@ -162,6 +187,8 @@ export function useRandomizerPlayback(
     cleanupAudio();
     currentSegRef.current = -1;
     triggeredCuesRef.current = new Set();
+    currentTimeMsRef.current = 0;
+    pollFailureCountRef.current = 0;
 
     setState({
       isPlaying: false,
@@ -178,7 +205,8 @@ export function useRandomizerPlayback(
 
     try {
       if (state.isPaused) {
-        await ultra.syncScriptStart(state.currentTimeMs);
+        // Resume from the latest polled position (ref avoids stale closure)
+        await ultra.syncScriptStart(currentTimeMsRef.current);
         setState((prev) => ({ ...prev, isPaused: false }));
       } else {
         await ultra.syncScriptStop();
@@ -191,7 +219,7 @@ export function useRandomizerPlayback(
         error: getErrorMessage(err, 'Pause/resume failed'),
       }));
     }
-  }, [ultra, state.isPlaying, state.isPaused, state.currentTimeMs, cleanupAudio]);
+  }, [ultra, state.isPlaying, state.isPaused, cleanupAudio]);
 
   useEffect(() => {
     return () => {

@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { generateRandomizedScript } from '../randomizer';
 import type { FunscriptAction } from '@/types/funscript';
 
@@ -73,6 +73,12 @@ describe('generateRandomizedScript', () => {
   });
 
   it('inserts smooth transitions between patterns with different end/start positions', () => {
+    // Force deterministic selection: A first, then B (different start/end positions)
+    const randomSpy = vi.spyOn(Math, 'random');
+    randomSpy.mockReturnValueOnce(0.0); // picks patternA (first)
+    randomSpy.mockReturnValueOnce(0.99); // picks patternB (last)
+    randomSpy.mockRestore();
+
     const result = generateRandomizedScript([patternA, patternB], 5000);
     const rawTotal = patternA.actions.length + patternB.actions.length;
     expect(result.actions.length).toBeGreaterThan(rawTotal);
