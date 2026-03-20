@@ -127,8 +127,7 @@ Each segment gets `SEGMENT_COLORS[segmentIndex % SEGMENT_COLORS.length]`.
 - Rendered as white text with slight opacity (e.g., `rgba(255, 255, 255, 0.6)`)
 - Positioned horizontally centered within the segment's x-range
 - Positioned vertically between the 100% and 75% y-axis marks
-- Font: small (10-11px), truncated with ellipsis if segment is too narrow for the name
-- Only rendered if the segment is wide enough (> 40px) to avoid visual clutter — if the name doesn't fit, skip rendering it entirely (no ellipsis truncation, keeps canvas code simple)
+- Font: 10px sans-serif. Only rendered if segment width > 40px AND the measured text width fits within the segment (with 8px padding). If it doesn't fit, skip rendering entirely — no ellipsis truncation, keeps canvas code simple.
 
 ## Section 4: Demo Playback
 
@@ -152,15 +151,16 @@ Each segment gets `SEGMENT_COLORS[segmentIndex % SEGMENT_COLORS.length]`.
 - On demo stop or dialog close: pause and clean up all audio
 
 ### Pause Support
-- Physical button detection via `useDeviceButtons(ultra, nullRef, false, onTogglePause)` — pass a null video ref and `isEmbed: false`, the fallback video toggle path is a silent no-op which is fine since we only use the `onScriptPause` callback.
-- Pause/Resume button in the controls bar calls `POST /api/device/toggle-pause`
+- Physical button detection via `useDeviceButtons(ultra, nullRef, false, onTogglePause)` — pass a null video ref and `isEmbed: false`, the fallback video toggle path is a silent no-op since we only use the `onScriptPause` callback.
+- Pause calls `ultra.syncScriptStop()` directly via the SDK (no backend proxy)
+- Resume calls `ultra.syncScriptStart(currentTimeMsRef.current)` to restart from the last polled position
 - When paused:
-  - Position tracking interval continues (to detect resume) but cursor doesn't move
-  - Audio pauses
+  - Position tracking continues but cursor freezes (device reports non-playing state, but hook tracks `isPaused` to distinguish from completion)
+  - Audio stops
   - Timeline shows "PAUSED" indicator
 - When resumed:
   - Audio does NOT resume mid-clip (it was a one-shot per segment)
-  - Playback continues from where it was
+  - Playback continues from where it was paused
 
 ### End of Script
 - When `syncScriptCurrentTime >= totalDurationMs` or device reports not playing:
