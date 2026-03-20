@@ -19,11 +19,15 @@ export function generateRandomizedScript(
   const usageCount = new Map<string, number>();
   let currentTimeMs = 0;
 
-  while (true) {
-    const picked = weightedRandomPick(patterns, usageCount);
-    const patternActions = getPatternActions(picked);
+  // Pre-filter to patterns that actually have actions
+  const viablePatterns = patterns.filter((p) => getPatternActions(p).length > 0);
+  if (viablePatterns.length === 0) {
+    return { actions: [], segments: [], totalDurationMs: 0 };
+  }
 
-    if (patternActions.length === 0) continue;
+  while (true) {
+    const picked = weightedRandomPick(viablePatterns, usageCount);
+    const patternActions = getPatternActions(picked);
 
     // Insert smooth transition if needed
     if (allActions.length > 0) {

@@ -190,7 +190,7 @@ Each segment gets `SEGMENT_COLORS[segmentIndex % SEGMENT_COLORS.length]`.
 
 ## New Files
 
-```
+```text
 src/
 ├── lib/randomizer.ts                           — Pure randomizer algorithm
 ├── components/pattern-library/
@@ -202,7 +202,7 @@ src/
 
 ## Modified Files
 
-```
+```text
 src/
 ├── components/pattern-library/PatternCard.tsx   — Checkbox overlay in randomize mode
 ├── components/pages/PatternLibraryPage.tsx       — Randomize mode state, selection logic, toolbar
