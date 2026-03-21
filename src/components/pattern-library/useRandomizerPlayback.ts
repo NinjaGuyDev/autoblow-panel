@@ -80,8 +80,15 @@ export function useRandomizerPlayback(
         }
       }
 
+      // Clean up audio on segment change regardless of mode
+      const segmentChanged = segIdx !== currentSegRef.current && segIdx >= 0;
+
       // Audio triggering: audioTimeline takes priority over segment-based audio
       if (scriptRef.audioTimeline && scriptRef.audioTimeline.length > 0) {
+        // Timeline mode: cleanup on segment change, then check for cue triggers
+        if (segmentChanged) {
+          cleanupAudio();
+        }
         for (let ci = 0; ci < scriptRef.audioTimeline.length; ci++) {
           const cue = scriptRef.audioTimeline[ci];
           if (timeMs >= cue.startMs && !triggeredCuesRef.current.has(ci)) {
