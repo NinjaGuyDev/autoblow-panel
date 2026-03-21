@@ -1,11 +1,20 @@
 import type { Request, Response, NextFunction } from 'express';
 import fs from 'fs';
 import path from 'path';
+import type { MediaFileService } from '../services/media-file.service.js';
+
+/** Express Request with multer's single-file attachment */
+interface MulterRequest extends Request {
+  file?: Express.Multer.File;
+}
 
 const VIDEO_EXTENSIONS = new Set(['.mp4', '.webm', '.ogg', '.mkv', '.avi']);
 
 export class MediaController {
-  constructor(private mediaDir: string) {}
+  constructor(
+    private mediaDir: string,
+    private mediaFileService: MediaFileService,
+  ) {}
 
   /**
    * GET /api/media — list available video files in media directory
@@ -101,9 +110,9 @@ export class MediaController {
    * POST /api/media/upload — upload a video file to media directory
    * Expects multipart form data with a 'video' field
    */
-  upload = async (req: Request, res: Response, next: NextFunction) => {
+  upload = async (req: MulterRequest, res: Response, next: NextFunction) => {
     try {
-      const file = (req as any).file;
+      const file = req.file;
       if (!file) {
         res.status(400).json({ error: 'No video file provided' });
         return;
@@ -123,9 +132,9 @@ export class MediaController {
    * POST /api/media/thumbnail — upload a thumbnail JPEG for a video
    * Expects multipart form data with a 'thumbnail' field and 'videoName' in body
    */
-  uploadThumbnail = async (req: Request, res: Response, next: NextFunction) => {
+  uploadThumbnail = async (req: MulterRequest, res: Response, next: NextFunction) => {
     try {
-      const file = (req as any).file;
+      const file = req.file;
       if (!file) {
         res.status(400).json({ error: 'No thumbnail file provided' });
         return;
@@ -137,9 +146,9 @@ export class MediaController {
     }
   };
 
-  uploadAudio = async (req: Request, res: Response, next: NextFunction) => {
+  uploadAudio = async (req: MulterRequest, res: Response, next: NextFunction) => {
     try {
-      const file = (req as any).file;
+      const file = req.file;
       if (!file) {
         res.status(400).json({ error: 'No audio file provided' });
         return;
@@ -169,14 +178,7 @@ export class MediaController {
   };
 
   deleteAudioFileFromDisk(filename: string): void {
-    const sanitized = path.basename(filename);
-    const filePath = path.join(this.mediaDir, sanitized);
-    if (!filePath.startsWith(path.resolve(this.mediaDir))) {
-      return;
-    }
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
+    this.mediaFileService.deleteAudioFile(filename);
   }
 
   /**
@@ -209,23 +211,11 @@ export class MediaController {
 
   /**
    * Delete a video file and its thumbnail from the media directory.
-   * Called by LibraryService via MediaCleanup interface — not an HTTP endpoint.
+   * Delegates to MediaFileService for actual disk operations.
    */
   deleteFiles(videoName: string): void {
-    const sanitized = path.basename(videoName);
-
-    // Delete video file
-    const videoPath = path.join(this.mediaDir, sanitized);
-    if (fs.existsSync(videoPath)) {
-      fs.unlinkSync(videoPath);
-    }
-
-    // Delete thumbnail
-    const thumbName = this.thumbnailName(sanitized);
-    const thumbPath = path.join(this.mediaDir, 'thumbnails', thumbName);
-    if (fs.existsSync(thumbPath)) {
-      fs.unlinkSync(thumbPath);
-    }
+    this.mediaFileService.deleteVideoFile(videoName);
+    this.mediaFileService.deleteThumbnailFile(videoName);
   }
 
   /**

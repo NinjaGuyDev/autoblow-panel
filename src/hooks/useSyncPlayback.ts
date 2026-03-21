@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, type RefObject } from 'react';
 import type { Ultra } from '@xsense/autoblow-sdk';
 import type { Funscript } from '@/types/funscript';
-import type { SyncStatus, UseSyncPlaybackReturn } from '@/types/sync';
+import type { SyncStatus, SyncPlaybackState } from '@/types/sync';
 import { convertToSDKFunscript } from '@/lib/funscriptConverter';
 import { getErrorMessage } from '@/lib/getErrorMessage';
 
@@ -47,7 +47,7 @@ export function useSyncPlayback(
     isPlaying: boolean;        // from useEmbedPlayback
     manualOffsetMs: number;    // from useManualSync
   }
-): UseSyncPlaybackReturn {
+): SyncPlaybackState {
   // State
   const [syncStatus, setSyncStatus] = useState<SyncStatus>('idle');
   const [scriptUploaded, setScriptUploaded] = useState(false);

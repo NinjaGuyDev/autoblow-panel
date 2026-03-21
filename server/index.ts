@@ -22,10 +22,13 @@ import { AnalyticsController } from './controllers/analytics.controller.js';
 import { createAnalyticsRouter } from './routes/analytics.routes.js';
 import { MediaController } from './controllers/media.controller.js';
 import { createMediaRouter } from './routes/media.routes.js';
+import { MediaFileService } from './services/media-file.service.js';
 import { localhostOnly } from './middleware/localhost-only.js';
 import { createSecurityMiddleware } from './middleware/security.js';
-import healthRouter from './routes/health.js';
+import { createHealthRouter } from './routes/health.js';
+import { HealthService } from './services/health.service.js';
 import { DeviceService } from './services/device.service.js';
+import { PlaybackLoop } from './services/playback-loop.js';
 import { DeviceController } from './controllers/device.controller.js';
 import { createDeviceRouter } from './routes/device.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
@@ -36,9 +39,12 @@ initializeSchema(db);
 // Media directory — configurable for Docker volume mounts
 const MEDIA_DIR = path.resolve(process.env.MEDIA_DIR || './media');
 
+// Wire up media file service (shared by MediaController and LibraryService)
+const mediaFileService = new MediaFileService(MEDIA_DIR);
+
 // Wire up dependency chain
 const repository = new LibraryRepository(db);
-const service = new LibraryService(repository);
+const service = new LibraryService(repository, mediaFileService);
 const controller = new LibraryController(service);
 const libraryRouter = createLibraryRouter(controller);
 
@@ -61,16 +67,17 @@ const climaxService = new ClimaxService(climaxRepository, pauseEventRepository);
 const analyticsController = new AnalyticsController(climaxService);
 const analyticsRouter = createAnalyticsRouter(analyticsController);
 
-const mediaController = new MediaController(MEDIA_DIR);
+const mediaController = new MediaController(MEDIA_DIR, mediaFileService);
 const mediaRouter = createMediaRouter(mediaController, MEDIA_DIR);
 
+// Wire up health service
+const healthService = new HealthService(db);
+const healthRouter = createHealthRouter(healthService);
+
 // Wire up device control dependency chain
-const deviceService = new DeviceService(service);
+const deviceService = new DeviceService(service, () => new PlaybackLoop());
 const deviceController = new DeviceController(deviceService);
 const deviceRouter = createDeviceRouter(deviceController);
-
-// Connect media cleanup to library service for cascading deletes
-service.setMediaCleanup(mediaController);
 
 // Create Express app
 const app = express();

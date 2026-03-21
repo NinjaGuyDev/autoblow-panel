@@ -59,15 +59,6 @@ export class ClimaxRepository {
     return result.changes;
   }
 
-  countBySessionId(sessionId: number): number {
-    const stmt = this.db.prepare(`
-      SELECT COUNT(*) as count FROM climax_records
-      WHERE sessionId = ?
-    `);
-    const result = stmt.get(sessionId) as { count: number };
-    return result.count;
-  }
-
   getClimaxCountByScript(limit: number = 10): Array<{libraryItemId: number, climaxCount: number}> {
     const stmt = this.db.prepare(`
       SELECT

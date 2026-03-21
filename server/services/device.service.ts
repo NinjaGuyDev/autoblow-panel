@@ -1,7 +1,9 @@
 import { deviceInit } from '@xsense/autoblow-sdk';
 import type { Ultra } from '@xsense/autoblow-sdk';
-import { PlaybackLoop } from './playback-loop.js';
+import type { PlaybackLoop } from './playback-loop.js';
 import type { LibraryService } from './library.service.js';
+
+export type PlaybackLoopFactory = () => PlaybackLoop;
 import type {
   FunscriptActionDto,
   DeviceConnectResponse,
@@ -21,8 +23,11 @@ export class DeviceService {
   private playbackLoop: PlaybackLoop;
   private pauseButtonHandler: (() => void) | null = null;
 
-  constructor(private libraryService: LibraryService) {
-    this.playbackLoop = new PlaybackLoop();
+  constructor(
+    private libraryService: LibraryService,
+    private createPlaybackLoop: PlaybackLoopFactory,
+  ) {
+    this.playbackLoop = createPlaybackLoop();
   }
 
   async connect(deviceKey: string): Promise<DeviceConnectResponse> {
@@ -51,7 +56,7 @@ export class DeviceService {
     this.lastError = null;
 
     // Fresh PlaybackLoop for the new connection (previous may have been destroyed)
-    this.playbackLoop = new PlaybackLoop();
+    this.playbackLoop = this.createPlaybackLoop();
 
     let latencyMs: number;
     try {

@@ -17,7 +17,7 @@ import type {
   CreateSessionRequest,
   ClimaxRecord,
   CreateClimaxRecordRequest,
-} from '../../server/types/shared';
+} from '@server/types/shared';
 
 const API_BASE = '/api/library';
 const MEDIA_BASE = '/api/media';

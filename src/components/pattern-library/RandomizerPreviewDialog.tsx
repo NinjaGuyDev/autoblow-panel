@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Ultra } from '@xsense/autoblow-sdk';
 import type { RandomizedScript } from '@/types/randomizer';
-import { useRandomizerPlayback } from './useRandomizerPlayback';
+import { useRandomizerPlayback } from '@/hooks/useRandomizerPlayback';
 import { useDeviceButtons } from '@/hooks/useDeviceButtons';
 import { libraryApi } from '@/lib/apiClient';
 import { getErrorMessage } from '@/lib/getErrorMessage';

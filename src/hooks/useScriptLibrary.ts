@@ -7,7 +7,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { libraryApi } from '@/lib/apiClient';
 import { useAsyncOperation } from '@/hooks/useAsyncOperation';
-import type { LibraryItem } from '../../server/types/shared';
+import type { LibraryItem } from '@server/types/shared';
 
 interface UseScriptLibraryReturn {
   scripts: LibraryItem[];

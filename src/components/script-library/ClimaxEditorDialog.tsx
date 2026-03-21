@@ -12,7 +12,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { X, Trash2, RefreshCw, Flag } from 'lucide-react';
-import type { LibraryItem, ClimaxRecord } from '../../../../server/types/shared';
+import type { LibraryItem, ClimaxRecord } from '@server/types/shared';
 import { analyticsApi } from '@/lib/apiClient';
 import { formatTimeMs } from '@/lib/format';
 

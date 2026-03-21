@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, RefreshCw, Trash2, Play, Square, FileText, Shuffle, ListOrdered, Zap, Pause, Pencil, CopyPlus, Flag } from 'lucide-react';
-import type { LibraryItem } from '../../../server/types/shared';
+import type { LibraryItem } from '@server/types/shared';
 import type { FunscriptAction } from '@/types/funscript';
 import type { RandomizeMode } from '@/hooks/useScriptPlayback';
 import { Timeline } from '@/components/timeline/Timeline';

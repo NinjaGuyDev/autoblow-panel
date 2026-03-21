@@ -14,7 +14,7 @@ import { WaypointBuilderDialog } from '@/components/pattern-library/WaypointBuil
 import { InsertPositionDialog } from '@/components/pattern-library/InsertPositionDialog';
 import { createEditableCopy } from '@/lib/patternTransform';
 import { customPatternApi } from '@/lib/apiClient';
-import type { LibraryItem } from '../../../server/types/shared';
+import type { LibraryItem } from '@server/types/shared';
 import { generateRandomizedScript } from '@/lib/randomizer';
 import type { RandomizedScript } from '@/types/randomizer';
 import { RandomizerToolbar } from '@/components/pattern-library/RandomizerToolbar';

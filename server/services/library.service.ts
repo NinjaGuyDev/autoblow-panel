@@ -1,20 +1,13 @@
 import type { LibraryItem, CreateLibraryItemRequest } from '../types/shared.js';
 import type { LibraryRepository } from '../repositories/library.repository.js';
 import { NotFoundError, ValidationError, ConflictError } from '../errors/domain-errors.js';
-
-export interface MediaCleanup {
-  deleteFiles(videoName: string): void;
-  deleteAudioFileFromDisk(filename: string): void;
-}
+import type { MediaFileService } from './media-file.service.js';
 
 export class LibraryService {
-  private mediaCleanup: MediaCleanup | null = null;
-
-  constructor(private repository: LibraryRepository) {}
-
-  setMediaCleanup(cleanup: MediaCleanup): void {
-    this.mediaCleanup = cleanup;
-  }
+  constructor(
+    private repository: LibraryRepository,
+    private mediaFileService: MediaFileService,
+  ) {}
 
   getAllItems(): LibraryItem[] {
     return this.repository.findAll();
@@ -89,19 +82,20 @@ export class LibraryService {
 
     this.repository.delete(id);
 
-    if (item.videoName && this.mediaCleanup) {
+    if (item.videoName) {
       try {
-        this.mediaCleanup.deleteFiles(item.videoName);
+        this.mediaFileService.deleteVideoFile(item.videoName);
+        this.mediaFileService.deleteThumbnailFile(item.videoName);
       } catch (err) {
         console.warn(`Failed to clean up media files for ${item.videoName}:`, err);
       }
     }
 
-    if (item.patternMetadata && this.mediaCleanup) {
+    if (item.patternMetadata) {
       try {
         const metadata = JSON.parse(item.patternMetadata);
         if (metadata.audioFile) {
-          this.mediaCleanup.deleteAudioFileFromDisk(metadata.audioFile);
+          this.mediaFileService.deleteAudioFile(metadata.audioFile);
         }
       } catch {
         // Malformed metadata — skip audio cleanup

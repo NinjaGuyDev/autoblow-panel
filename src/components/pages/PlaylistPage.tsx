@@ -8,7 +8,7 @@ import { Plus, RefreshCw, ListMusic } from 'lucide-react';
 import { PlaylistCard } from '@/components/playlist/PlaylistCard';
 import { PlaylistEditor } from '@/components/playlist/PlaylistEditor';
 import { CreatePlaylistDialog } from '@/components/playlist/CreatePlaylistDialog';
-import type { Playlist, PlaylistItem, LibraryItem } from '../../../server/types/shared';
+import type { Playlist, PlaylistItem, LibraryItem } from '@server/types/shared';
 
 interface PlaylistPageProps {
   playlists: Playlist[];

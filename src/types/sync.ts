@@ -10,5 +10,3 @@ export interface SyncPlaybackState {
   error: string | null;
 }
 
-// Return type for useSyncPlayback hook (no public methods - sync is event-driven)
-export interface UseSyncPlaybackReturn extends SyncPlaybackState {}
