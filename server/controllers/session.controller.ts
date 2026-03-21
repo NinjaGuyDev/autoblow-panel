@@ -1,7 +1,7 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { SessionService } from '../services/session.service.js';
 import type { CreateSessionRequest, UpdateSessionRequest } from '../types/shared.js';
-import { parseIdParam, parseQueryParamInt } from '../middleware/validation.js';
+import { parseIdParam, parseQueryParamInt, requireStringQueryParam } from '../middleware/validation.js';
 
 export class SessionController {
   constructor(private service: SessionService) {}
@@ -95,7 +95,8 @@ export class SessionController {
 
   getMostPlayed = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const limit = parseQueryParamInt(req.query.limit as string | undefined, 'limit', 10);
+      const limitRaw = requireStringQueryParam(req.query.limit, 'limit');
+      const limit = parseQueryParamInt(limitRaw, 'limit', 10);
       const mostPlayed = this.service.getMostPlayed(limit);
       res.json(mostPlayed);
     } catch (error) {

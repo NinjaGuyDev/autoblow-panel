@@ -8,7 +8,7 @@ import type {
   DeviceStatusResponse,
   DevicePlayResponse,
 } from '../types/shared.js';
-import { ValidationError } from '../errors/domain-errors.js';
+import { ValidationError, ConflictError } from '../errors/domain-errors.js';
 
 /** Auto-disconnect after 30 minutes of inactivity */
 const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
@@ -214,7 +214,7 @@ export class DeviceService {
 
   private requireConnection(): void {
     if (this.connectionState !== 'connected' || !this.ultra) {
-      throw new ValidationError('No device connected');
+      throw new ConflictError('No device connected');
     }
   }
 
