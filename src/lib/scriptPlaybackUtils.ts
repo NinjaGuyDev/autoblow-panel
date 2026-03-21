@@ -13,7 +13,14 @@ import { createSmoothTransition } from '@/lib/patternInsertion';
  */
 export function parseFunscript(item: LibraryItem): Funscript {
   try {
-    return JSON.parse(item.funscriptData) as Funscript;
+    const parsed: unknown = JSON.parse(item.funscriptData);
+    if (Array.isArray(parsed)) {
+      return { actions: parsed };
+    }
+    if (parsed !== null && typeof parsed === 'object' && 'actions' in parsed) {
+      return parsed as Funscript;
+    }
+    return { actions: [] };
   } catch {
     return { actions: [] };
   }
