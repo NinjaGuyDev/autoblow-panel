@@ -63,6 +63,8 @@ The returned `RandomizedScript` may optionally include an `audioTimeline` — an
 4. Compute `totalDurationMs` from final action time
 5. Return `{ actions, segments, totalDurationMs, audioTimeline? }`
 
+**Note on `audioTimeline`:** The randomizer algorithm does NOT build `audioTimeline` — it only populates segment-level `audioFile` from source patterns. `audioTimeline` is an externally-provided array for scripts with pre-generated timed audio cues (e.g., narrated scripts like Tidal Crescendo II where audio files are created separately and mapped to specific timestamps). When present in `patternMetadata`, it is passed through to the playback hook which uses it instead of segment-level audio.
+
 ### Output Types
 ```typescript
 interface RandomizedSegment {
@@ -153,7 +155,7 @@ Each segment gets `SEGMENT_COLORS[segmentIndex % SEGMENT_COLORS.length]`.
 ### Audio Triggers
 **Priority:** If `script.audioTimeline` exists and is non-empty, use timeline cues. Otherwise fall back to segment-level `audioFile`.
 
-**Timeline mode:** Track which cues have been triggered (Set). On each poll tick, check if `currentTimeMs >= cue.startMs` for any untriggered cue. Stop prior audio and play the new cue.
+**Timeline mode:** Track which cues have been triggered (Set). On any segment change, call `cleanupAudio()` first to stop prior audio — even if no new cue triggers at that boundary. Then check if `currentTimeMs >= cue.startMs` for any untriggered cue. If found, stop any audio again (in case a cue and segment change coincide) and play the new cue. The triggered Set persists for the entire playback session — cues are not re-eligible on segment transitions.
 
 **Segment mode:** Track `currentSegmentIndex` (initially -1). When segment changes, always stop prior audio. If the new segment has `audioFile`, play it. Silent segments cleanly stop any prior audio.
 
