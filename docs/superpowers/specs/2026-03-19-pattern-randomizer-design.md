@@ -60,7 +60,8 @@ The returned `RandomizedScript` may optionally include an `audioTimeline` — an
    g. Update `currentTimeMs` to end of appended actions
    h. Increment usage count
    i. If `currentTimeMs >= desiredDurationMs` → stop (always add the pattern that pushes over, then stop)
-4. Return `{ actions, segments }`
+4. Compute `totalDurationMs` from final action time
+5. Return `{ actions, segments, totalDurationMs, audioTimeline? }`
 
 ### Output Types
 ```typescript
