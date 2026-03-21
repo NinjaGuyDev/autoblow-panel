@@ -1,4 +1,5 @@
 import type { Request, Response } from 'express';
+import { ValidationError } from '../errors/domain-errors.js';
 
 /**
  * Parse a numeric route parameter, sending a 400 response if invalid.
@@ -12,4 +13,28 @@ export function parseIdParam(req: Request, res: Response, paramName: string = 'i
     return null;
   }
   return value;
+}
+
+/**
+ * Parse an optional integer query parameter.
+ * Returns the parsed integer, or `defaultValue` when the parameter is absent.
+ * Throws ValidationError when the value is present but not a valid integer.
+ */
+export function parseQueryParamInt(
+  value: string | undefined,
+  paramName: string,
+  defaultValue?: number
+): number {
+  if (value === undefined) {
+    if (defaultValue !== undefined) {
+      return defaultValue;
+    }
+    throw new ValidationError(`${paramName} query parameter is required`);
+  }
+
+  const parsed = parseInt(value, 10);
+  if (!Number.isInteger(parsed)) {
+    throw new ValidationError(`${paramName} must be a valid integer`);
+  }
+  return parsed;
 }

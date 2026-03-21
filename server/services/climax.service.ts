@@ -1,6 +1,7 @@
 import type { ClimaxRecord, CreateClimaxRecordRequest, PauseEvent, CreatePauseEventRequest } from '../types/shared.js';
 import type { ClimaxRepository } from '../repositories/climax.repository.js';
 import type { PauseEventRepository } from '../repositories/pause-event.repository.js';
+import { NotFoundError, ValidationError, ConflictError } from '../errors/domain-errors.js';
 
 export class ClimaxService {
   constructor(
@@ -17,7 +18,7 @@ export class ClimaxService {
   getClimaxRecordById(id: number): ClimaxRecord {
     const record = this.climaxRepository.findById(id);
     if (!record) {
-      throw new Error(`Climax record with id ${id} not found`);
+      throw new NotFoundError(`Climax record with id ${id} not found`);
     }
     return record;
   }
@@ -33,18 +34,18 @@ export class ClimaxService {
   createClimaxRecord(data: CreateClimaxRecordRequest): ClimaxRecord {
     // Validate timestamp is non-empty
     if (!data.timestamp || data.timestamp.trim() === '') {
-      throw new Error('timestamp is required and cannot be empty');
+      throw new ValidationError('timestamp is required and cannot be empty');
     }
 
     if (!data.runwayData || data.runwayData.trim() === '') {
-      throw new Error('runwayData is required and cannot be empty');
+      throw new ValidationError('runwayData is required and cannot be empty');
     }
 
     // Validate runwayData is valid JSON
     try {
       JSON.parse(data.runwayData);
     } catch (error) {
-      throw new Error(`Invalid runwayData JSON: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new ValidationError(`Invalid runwayData JSON: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 
     return this.climaxRepository.create(data);
@@ -69,12 +70,12 @@ export class ClimaxService {
   createPauseEvent(data: CreatePauseEventRequest): PauseEvent {
     // Validate sessionId is provided and positive
     if (!data.sessionId || data.sessionId <= 0) {
-      throw new Error('sessionId is required and must be a positive integer');
+      throw new ValidationError('sessionId is required and must be a positive integer');
     }
 
     // Validate timestamp is non-empty
     if (!data.timestamp || data.timestamp.trim() === '') {
-      throw new Error('timestamp is required and cannot be empty');
+      throw new ValidationError('timestamp is required and cannot be empty');
     }
 
     return this.pauseEventRepository.create(data);
@@ -83,22 +84,22 @@ export class ClimaxService {
   resumePauseEvent(id: number, resumedAt: string): PauseEvent {
     const event = this.pauseEventRepository.findById(id);
     if (!event) {
-      throw new Error(`Pause event with id ${id} not found`);
+      throw new NotFoundError(`Pause event with id ${id} not found`);
     }
 
     if (event.resumedAt) {
-      throw new Error(`Pause event with id ${id} has already been resumed`);
+      throw new ConflictError(`Pause event with id ${id} has already been resumed`);
     }
 
     const pauseTime = new Date(event.timestamp).getTime();
     const resumeTime = new Date(resumedAt).getTime();
 
     if (!isFinite(pauseTime) || !isFinite(resumeTime)) {
-      throw new Error('Invalid date format for pause timestamp or resumedAt');
+      throw new ValidationError('Invalid date format for pause timestamp or resumedAt');
     }
 
     if (resumeTime < pauseTime) {
-      throw new Error('resumedAt cannot be before the original pause timestamp');
+      throw new ValidationError('resumedAt cannot be before the original pause timestamp');
     }
 
     const durationSeconds = (resumeTime - pauseTime) / 1000;
@@ -112,7 +113,7 @@ export class ClimaxService {
   deletePauseEvent(id: number): void {
     const event = this.pauseEventRepository.findById(id);
     if (!event) {
-      throw new Error(`Pause event with id ${id} not found`);
+      throw new NotFoundError(`Pause event with id ${id} not found`);
     }
     this.pauseEventRepository.delete(id);
   }

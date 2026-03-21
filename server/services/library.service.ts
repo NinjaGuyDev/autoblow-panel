@@ -1,5 +1,6 @@
 import type { LibraryItem, CreateLibraryItemRequest } from '../types/shared.js';
 import type { LibraryRepository } from '../repositories/library.repository.js';
+import { NotFoundError, ValidationError, ConflictError } from '../errors/domain-errors.js';
 
 export interface MediaCleanup {
   deleteFiles(videoName: string): void;
@@ -22,7 +23,7 @@ export class LibraryService {
   getItemById(id: number): LibraryItem {
     const item = this.repository.findById(id);
     if (!item) {
-      throw new Error(`Library item with id ${id} not found`);
+      throw new NotFoundError(`Library item with id ${id} not found`);
     }
     return item;
   }
@@ -41,7 +42,7 @@ export class LibraryService {
   updateItemById(id: number, data: Partial<CreateLibraryItemRequest>): LibraryItem {
     const item = this.repository.findById(id);
     if (!item) {
-      throw new Error(`Library item with id ${id} not found`);
+      throw new NotFoundError(`Library item with id ${id} not found`);
     }
     return this.repository.updateById(id, data);
   }
@@ -50,10 +51,10 @@ export class LibraryService {
     // Verify item exists and is a custom pattern
     const item = this.repository.findById(id);
     if (!item) {
-      throw new Error(`Library item with id ${id} not found`);
+      throw new NotFoundError(`Library item with id ${id} not found`);
     }
     if (item.isCustomPattern !== 1) {
-      throw new Error(`Library item with id ${id} is not a custom pattern`);
+      throw new ValidationError(`Library item with id ${id} is not a custom pattern`);
     }
     return this.repository.updateCustomPattern(id, data);
   }
@@ -61,21 +62,21 @@ export class LibraryService {
   softDeleteCustomPattern(id: number): void {
     const item = this.repository.findById(id);
     if (!item) {
-      throw new Error(`Library item with id ${id} not found`);
+      throw new NotFoundError(`Library item with id ${id} not found`);
     }
     if (item.isCustomPattern !== 1) {
-      throw new Error(`Library item with id ${id} is not a custom pattern`);
+      throw new ValidationError(`Library item with id ${id} is not a custom pattern`);
     }
     const changes = this.repository.softDelete(id);
     if (changes === 0) {
-      throw new Error(`Library item with id ${id} is already deleted`);
+      throw new ConflictError(`Library item with id ${id} is already deleted`);
     }
   }
 
   createItem(data: CreateLibraryItemRequest): LibraryItem {
     // Validate required fields
     if (!data.funscriptData) {
-      throw new Error('funscriptData is required');
+      throw new ValidationError('funscriptData is required');
     }
     return this.repository.create(data);
   }
@@ -83,7 +84,7 @@ export class LibraryService {
   deleteItem(id: number): void {
     const item = this.repository.findById(id);
     if (!item) {
-      throw new Error(`Library item with id ${id} not found`);
+      throw new NotFoundError(`Library item with id ${id} not found`);
     }
 
     this.repository.delete(id);
@@ -116,10 +117,10 @@ export class LibraryService {
     return this.repository.getMigrationStatus();
   }
 
-  migrateFromIndexedDB(items: CreateLibraryItemRequest[]): void {
+  migrateFromIndexedDB(items: CreateLibraryItemRequest[]): number {
     // Check if migration already completed - return silently for idempotency
     if (this.repository.getMigrationStatus()) {
-      return;
+      return 0;
     }
 
     // Bulk insert items
@@ -127,5 +128,7 @@ export class LibraryService {
 
     // Mark migration as complete
     this.repository.setMigrationComplete();
+
+    return items.length;
   }
 }

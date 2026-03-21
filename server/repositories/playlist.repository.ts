@@ -30,6 +30,23 @@ export class PlaylistRepository {
     return stmt.get(id) as Playlist | undefined;
   }
 
+  findItemById(itemId: number): PlaylistItem | undefined {
+    const stmt = this.db.prepare(`
+      SELECT
+        pi.id,
+        pi.playlist_id as playlistId,
+        pi.library_item_id as libraryItemId,
+        pi.position,
+        li.videoName,
+        li.funscriptName,
+        li.duration
+      FROM playlist_items pi
+      INNER JOIN library_items li ON pi.library_item_id = li.id
+      WHERE pi.id = ?
+    `);
+    return stmt.get(itemId) as PlaylistItem | undefined;
+  }
+
   findItemsByPlaylistId(playlistId: number): PlaylistItem[] {
     const stmt = this.db.prepare(`
       SELECT
@@ -61,7 +78,7 @@ export class PlaylistRepository {
 
   update(id: number, data: UpdatePlaylistRequest): Playlist {
     const lastModified = new Date().toISOString();
-    const stmt = this.db.prepare(`
+    const updateStmt = this.db.prepare(`
       UPDATE playlists
       SET name = COALESCE(?, name),
           description = COALESCE(?, description),
@@ -69,19 +86,23 @@ export class PlaylistRepository {
       WHERE id = ?
       RETURNING *
     `);
-    const row = stmt.get(
-      data.name ?? null,
-      data.description ?? null,
-      lastModified,
-      id
-    ) as Playlist;
-
-    // Get item count
     const countStmt = this.db.prepare(`
       SELECT COUNT(*) as itemCount FROM playlist_items WHERE playlist_id = ?
     `);
-    const { itemCount } = countStmt.get(id) as { itemCount: number };
-    return { ...row, itemCount };
+
+    const runUpdate = this.db.transaction(() => {
+      const row = updateStmt.get(
+        data.name ?? null,
+        data.description ?? null,
+        lastModified,
+        id
+      ) as Playlist;
+
+      const { itemCount } = countStmt.get(id) as { itemCount: number };
+      return { ...row, itemCount };
+    });
+
+    return runUpdate();
   }
 
   delete(id: number): number {
@@ -93,28 +114,16 @@ export class PlaylistRepository {
   }
 
   addItem(playlistId: number, libraryItemId: number): PlaylistItem {
-    // Calculate next position
     const positionStmt = this.db.prepare(`
       SELECT COALESCE(MAX(position), -1) + 1 as nextPosition
       FROM playlist_items
       WHERE playlist_id = ?
     `);
-    const { nextPosition } = positionStmt.get(playlistId) as { nextPosition: number };
-
-    // Insert the item
     const insertStmt = this.db.prepare(`
       INSERT INTO playlist_items (playlist_id, library_item_id, position)
       VALUES (?, ?, ?)
       RETURNING *
     `);
-    const insertedRow = insertStmt.get(playlistId, libraryItemId, nextPosition) as {
-      id: number;
-      playlist_id: number;
-      library_item_id: number;
-      position: number;
-    };
-
-    // Get library item details
     const selectStmt = this.db.prepare(`
       SELECT
         pi.id,
@@ -128,33 +137,48 @@ export class PlaylistRepository {
       INNER JOIN library_items li ON pi.library_item_id = li.id
       WHERE pi.id = ?
     `);
-    return selectStmt.get(insertedRow.id) as PlaylistItem;
+
+    const runAddItem = this.db.transaction(() => {
+      const { nextPosition } = positionStmt.get(playlistId) as { nextPosition: number };
+
+      const insertedRow = insertStmt.get(playlistId, libraryItemId, nextPosition) as {
+        id: number;
+        playlist_id: number;
+        library_item_id: number;
+        position: number;
+      };
+
+      return selectStmt.get(insertedRow.id) as PlaylistItem;
+    });
+
+    return runAddItem();
   }
 
   removeItem(itemId: number): void {
-    // Get the item's playlist_id and position first
     const selectStmt = this.db.prepare(`
       SELECT playlist_id, position FROM playlist_items WHERE id = ?
     `);
-    const item = selectStmt.get(itemId) as { playlist_id: number; position: number } | undefined;
-
-    if (!item) {
-      return; // Item doesn't exist, nothing to do
-    }
-
-    // Delete the item
     const deleteStmt = this.db.prepare(`
       DELETE FROM playlist_items WHERE id = ?
     `);
-    deleteStmt.run(itemId);
-
-    // Compact positions - shift down all items that were after this one
-    const updateStmt = this.db.prepare(`
+    const compactStmt = this.db.prepare(`
       UPDATE playlist_items
       SET position = position - 1
       WHERE playlist_id = ? AND position > ?
     `);
-    updateStmt.run(item.playlist_id, item.position);
+
+    const runRemove = this.db.transaction(() => {
+      const item = selectStmt.get(itemId) as { playlist_id: number; position: number } | undefined;
+
+      if (!item) {
+        return; // Item doesn't exist, nothing to do
+      }
+
+      deleteStmt.run(itemId);
+      compactStmt.run(item.playlist_id, item.position);
+    });
+
+    runRemove();
   }
 
   reorderItems(playlistId: number, itemIds: number[]): void {

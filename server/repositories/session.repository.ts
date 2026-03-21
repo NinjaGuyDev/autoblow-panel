@@ -68,8 +68,17 @@ export class SessionRepository {
   }
 
   getStats(context?: string): SessionStats {
-    const whereClause = context ? 'WHERE context = ?' : 'WHERE context = ?';
-    const contextValue = context ?? 'normal';
+    if (context) {
+      const stmt = this.db.prepare(`
+        SELECT
+          COUNT(*) as totalSessions,
+          COALESCE(SUM(durationSeconds), 0) as totalDurationSeconds,
+          COALESCE(AVG(durationSeconds), 0) as avgDurationSeconds
+        FROM sessions
+        WHERE context = ?
+      `);
+      return stmt.get(context) as SessionStats;
+    }
 
     const stmt = this.db.prepare(`
       SELECT
@@ -77,9 +86,8 @@ export class SessionRepository {
         COALESCE(SUM(durationSeconds), 0) as totalDurationSeconds,
         COALESCE(AVG(durationSeconds), 0) as avgDurationSeconds
       FROM sessions
-      ${whereClause}
     `);
-    return stmt.get(contextValue) as SessionStats;
+    return stmt.get() as SessionStats;
   }
 
   getMostPlayed(limit: number = 10): MostPlayedScript[] {
