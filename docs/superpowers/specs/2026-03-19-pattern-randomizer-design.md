@@ -36,7 +36,9 @@ This feature requires two unmerged branches to be merged to main first:
 
 ## Section 2: Randomizer Algorithm
 
-Pure function: `generateRandomizedScript(patterns, desiredDurationMs) => { actions, segments }`
+Pure function: `generateRandomizedScript(patterns, desiredDurationMs) => { actions, segments, totalDurationMs, audioTimeline? }`
+
+The returned `RandomizedScript` may optionally include an `audioTimeline` — an array of `AudioTimelineCue` entries that trigger audio at specific timestamps. When present, playback uses `audioTimeline` cues instead of segment-level `audioFile` fields.
 
 ### Input
 - `patterns: AnyPattern[]` — the selected patterns
@@ -70,10 +72,17 @@ interface RandomizedSegment {
   audioFile?: string;
 }
 
+interface AudioTimelineCue {
+  startMs: number;
+  audioFile: string;
+  durationSec: number;
+}
+
 interface RandomizedScript {
   actions: FunscriptAction[];
   segments: RandomizedSegment[];
   totalDurationMs: number;
+  audioTimeline?: AudioTimelineCue[];
 }
 ```
 
@@ -136,18 +145,17 @@ Each segment gets `SEGMENT_COLORS[segmentIndex % SEGMENT_COLORS.length]`.
 - **No looping** — plays once through. When device reports playback complete or `syncScriptCurrentTime >= totalDurationMs`, stop automatically.
 
 ### Playback Position Tracking
-- `setInterval` every 200ms calls `ultra.getState()` to get `syncScriptCurrentTime`
-- Updates the timeline cursor position
+- Self-scheduling `setTimeout` loop: awaits `ultra.getState()` to read `syncScriptCurrentTime`, updates the timeline cursor, then schedules the next tick ~200ms later. This prevents overlapping async calls (unlike `setInterval`).
 - Checks current time against segment map to determine active segment
+- First tick fires immediately on demo start (no initial 200ms delay) to handle cues at timestamp 0
 
 ### Audio Triggers
-- Track `currentSegmentIndex` (initially -1)
-- On each position check, find which segment the cursor is in
-- When `currentSegmentIndex` changes to a new segment with `audioFile`:
-  - Stop any currently playing audio
-  - `const audio = new Audio(mediaApi.streamUrl(audioFile))`
-  - `audio.play().catch(() => {})` — silently skip if file missing
-  - Store ref for cleanup
+**Priority:** If `script.audioTimeline` exists and is non-empty, use timeline cues. Otherwise fall back to segment-level `audioFile`.
+
+**Timeline mode:** Track which cues have been triggered (Set). On each poll tick, check if `currentTimeMs >= cue.startMs` for any untriggered cue. Stop prior audio and play the new cue.
+
+**Segment mode:** Track `currentSegmentIndex` (initially -1). When segment changes, always stop prior audio. If the new segment has `audioFile`, play it. Silent segments cleanly stop any prior audio.
+
 - On demo stop or dialog close: pause and clean up all audio
 
 ### Pause Support
