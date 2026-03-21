@@ -33,15 +33,10 @@ export function useRandomizerPlayback(
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const currentSegRef = useRef(-1);
-  /** Tracks which audioTimeline cues have already been triggered this playback */
   const triggeredCuesRef = useRef<Set<number>>(new Set());
-  /** Mutable ref for current position — used by togglePause to avoid stale closure */
   const currentTimeMsRef = useRef(0);
-  /** Consecutive poll failure counter */
   const pollFailureCountRef = useRef(0);
-  /** Whether the hook is currently paused (mutable for poll access) */
   const isPausedRef = useRef(false);
-  /** Whether polling is active — prevents scheduling after stop */
   const isPollingActiveRef = useRef(false);
 
   const cleanupAudio = useCallback(() => {
@@ -60,108 +55,112 @@ export function useRandomizerPlayback(
     isPollingActiveRef.current = false;
   }, []);
 
-  /** Self-scheduling poll tick — avoids overlapping async calls */
+  /** Core poll logic — extracted so it can be called immediately and from setTimeout */
+  const executePollTick = useCallback(async (ultraRef: Ultra, scriptRef: RandomizedScript): Promise<boolean> => {
+    if (!isPollingActiveRef.current) return false;
+
+    try {
+      const deviceState = await ultraRef.getState();
+      if (!isPollingActiveRef.current) return false;
+
+      pollFailureCountRef.current = 0;
+
+      const timeMs = deviceState.syncScriptCurrentTime ?? 0;
+      const isDevicePlaying = deviceState.operationalMode === 'SYNC_SCRIPT_PLAYING';
+
+      currentTimeMsRef.current = timeMs;
+
+      let segIdx = -1;
+      if (scriptRef.segments.length > 0) {
+        for (let i = scriptRef.segments.length - 1; i >= 0; i--) {
+          if (timeMs >= scriptRef.segments[i].startMs) {
+            segIdx = i;
+            break;
+          }
+        }
+      }
+
+      // Audio triggering: audioTimeline takes priority over segment-based audio
+      if (scriptRef.audioTimeline && scriptRef.audioTimeline.length > 0) {
+        for (let ci = 0; ci < scriptRef.audioTimeline.length; ci++) {
+          const cue = scriptRef.audioTimeline[ci];
+          if (timeMs >= cue.startMs && !triggeredCuesRef.current.has(ci)) {
+            triggeredCuesRef.current.add(ci);
+            cleanupAudio();
+            const audio = new Audio(mediaApi.streamUrl(cue.audioFile));
+            audio.play().catch(() => {});
+            audioRef.current = audio;
+            break;
+          }
+        }
+      } else {
+        // Segment mode: always cleanup on segment change, then play new audio if present
+        if (segIdx !== currentSegRef.current && segIdx >= 0) {
+          cleanupAudio();
+          const seg = scriptRef.segments[segIdx];
+          if (seg.audioFile) {
+            const audio = new Audio(mediaApi.streamUrl(seg.audioFile));
+            audio.play().catch(() => {});
+            audioRef.current = audio;
+          }
+        }
+      }
+      currentSegRef.current = segIdx;
+
+      setState((prev) => ({
+        ...prev,
+        currentTimeMs: timeMs,
+        currentSegmentIndex: segIdx,
+      }));
+
+      // Completion: only finalize if NOT paused and device is not playing
+      const isComplete = !isPausedRef.current && (!isDevicePlaying || timeMs >= scriptRef.totalDurationMs);
+
+      if (isComplete) {
+        clearPollTimer();
+        cleanupAudio();
+        setState((prev) => ({
+          ...prev,
+          isPlaying: false,
+          isPaused: false,
+          isComplete: true,
+        }));
+        return false; // Don't continue polling
+      }
+
+      return true; // Continue polling
+    } catch {
+      pollFailureCountRef.current++;
+      if (pollFailureCountRef.current >= MAX_POLL_FAILURES) {
+        clearPollTimer();
+        cleanupAudio();
+        setState((prev) => ({
+          ...prev,
+          isPlaying: false,
+          isPaused: false,
+          error: 'Device communication lost',
+        }));
+        return false;
+      }
+      return true; // Retry
+    }
+  }, [cleanupAudio, clearPollTimer]);
+
+  /** Self-scheduling poll loop */
   const schedulePollTick = useCallback((ultraRef: Ultra, scriptRef: RandomizedScript) => {
     if (!isPollingActiveRef.current) return;
 
     pollTimerRef.current = setTimeout(async () => {
-      if (!isPollingActiveRef.current) return;
-
-      try {
-        const deviceState = await ultraRef.getState();
-        if (!isPollingActiveRef.current) return; // Stopped during await
-
-        pollFailureCountRef.current = 0;
-
-        const timeMs = deviceState.syncScriptCurrentTime ?? 0;
-        const isDevicePlaying = deviceState.operationalMode === 'SYNC_SCRIPT_PLAYING';
-
-        currentTimeMsRef.current = timeMs;
-
-        let segIdx = -1;
-        if (scriptRef.segments.length > 0) {
-          for (let i = scriptRef.segments.length - 1; i >= 0; i--) {
-            if (timeMs >= scriptRef.segments[i].startMs) {
-              segIdx = i;
-              break;
-            }
-          }
-        }
-
-        // Audio triggering: audioTimeline takes priority over segment-based audio
-        if (scriptRef.audioTimeline && scriptRef.audioTimeline.length > 0) {
-          for (let ci = 0; ci < scriptRef.audioTimeline.length; ci++) {
-            const cue = scriptRef.audioTimeline[ci];
-            if (timeMs >= cue.startMs && !triggeredCuesRef.current.has(ci)) {
-              triggeredCuesRef.current.add(ci);
-              cleanupAudio();
-              const audio = new Audio(mediaApi.streamUrl(cue.audioFile));
-              audio.play().catch(() => {});
-              audioRef.current = audio;
-              break;
-            }
-          }
-        } else {
-          if (segIdx !== currentSegRef.current && segIdx >= 0) {
-            const seg = scriptRef.segments[segIdx];
-            if (seg.audioFile) {
-              cleanupAudio();
-              const audio = new Audio(mediaApi.streamUrl(seg.audioFile));
-              audio.play().catch(() => {});
-              audioRef.current = audio;
-            }
-          }
-        }
-        currentSegRef.current = segIdx;
-
-        setState((prev) => ({
-          ...prev,
-          currentTimeMs: timeMs,
-          currentSegmentIndex: segIdx,
-        }));
-
-        // Completion check: only finalize if NOT paused and device is not playing
-        // When paused, syncScriptStop makes the device report non-playing, but we
-        // distinguish that from real completion via isPausedRef
-        const isComplete = !isPausedRef.current && (!isDevicePlaying || timeMs >= scriptRef.totalDurationMs);
-
-        if (isComplete) {
-          clearPollTimer();
-          cleanupAudio();
-          setState((prev) => ({
-            ...prev,
-            isPlaying: false,
-            isPaused: false,
-            isComplete: true,
-          }));
-          return; // Don't schedule next tick
-        }
-      } catch {
-        pollFailureCountRef.current++;
-        if (pollFailureCountRef.current >= MAX_POLL_FAILURES) {
-          clearPollTimer();
-          cleanupAudio();
-          setState((prev) => ({
-            ...prev,
-            isPlaying: false,
-            isPaused: false,
-            error: 'Device communication lost',
-          }));
-          return;
-        }
-      }
-
-      // Schedule next tick
-      if (isPollingActiveRef.current) {
+      const shouldContinue = await executePollTick(ultraRef, scriptRef);
+      if (shouldContinue && isPollingActiveRef.current) {
         schedulePollTick(ultraRef, scriptRef);
       }
     }, POSITION_POLL_MS);
-  }, [cleanupAudio, clearPollTimer]);
+  }, [executePollTick]);
 
   const startDemo = useCallback(async () => {
     if (!ultra || !script || script.actions.length === 0) return;
 
-    // Clean up any existing playback before starting fresh
     clearPollTimer();
     cleanupAudio();
     currentSegRef.current = -1;
@@ -192,8 +191,14 @@ export function useRandomizerPlayback(
         currentSegmentIndex: -1,
       }));
 
+      // Fire first tick immediately to handle cues at timestamp 0
       isPollingActiveRef.current = true;
-      schedulePollTick(ultra, script);
+      await executePollTick(ultra, script);
+
+      // Then schedule the regular polling loop
+      if (isPollingActiveRef.current) {
+        schedulePollTick(ultra, script);
+      }
     } catch (err) {
       setState((prev) => ({
         ...prev,
@@ -201,10 +206,9 @@ export function useRandomizerPlayback(
         isPlaying: false,
       }));
     }
-  }, [ultra, script, cleanupAudio, clearPollTimer, schedulePollTick]);
+  }, [ultra, script, cleanupAudio, clearPollTimer, executePollTick, schedulePollTick]);
 
   const stopDemo = useCallback(async () => {
-    // Always clean up local state, even if ultra is null (e.g., device disconnected)
     if (ultra) {
       try {
         await ultra.syncScriptStop();
@@ -236,16 +240,19 @@ export function useRandomizerPlayback(
 
     try {
       if (state.isPaused) {
-        isPausedRef.current = false;
         await ultra.syncScriptStart(currentTimeMsRef.current);
+        // Only update ref after SDK call succeeds
+        isPausedRef.current = false;
         setState((prev) => ({ ...prev, isPaused: false }));
       } else {
-        isPausedRef.current = true;
         await ultra.syncScriptStop();
+        // Only update ref after SDK call succeeds
+        isPausedRef.current = true;
         cleanupAudio();
         setState((prev) => ({ ...prev, isPaused: true }));
       }
     } catch (err) {
+      // isPausedRef unchanged on failure — stays consistent with actual device state
       setState((prev) => ({
         ...prev,
         error: getErrorMessage(err, 'Pause/resume failed'),
