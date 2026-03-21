@@ -36,15 +36,16 @@ export class PlaylistService {
   }
 
   updatePlaylist(id: number, data: UpdatePlaylistRequest): Playlist {
-    // Verify exists
-    this.getPlaylistById(id);
-
     // Validate name if provided
     if (data.name !== undefined && data.name.trim() === '') {
       throw new ValidationError('Playlist name cannot be empty');
     }
 
-    return this.playlistRepository.update(id, data);
+    const updated = this.playlistRepository.update(id, data);
+    if (!updated) {
+      throw new NotFoundError(`Playlist with id ${id} not found`);
+    }
+    return updated;
   }
 
   deletePlaylist(id: number): void {
@@ -67,11 +68,10 @@ export class PlaylistService {
   }
 
   removeItem(itemId: number): void {
-    const item = this.playlistRepository.findItemById(itemId);
-    if (!item) {
+    const removed = this.playlistRepository.removeItem(itemId);
+    if (!removed) {
       throw new NotFoundError(`Playlist item with id ${itemId} not found`);
     }
-    this.playlistRepository.removeItem(itemId);
   }
 
   reorderItems(playlistId: number, itemIds: number[]): void {

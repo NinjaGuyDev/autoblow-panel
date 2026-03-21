@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { parseIdParam, parseQueryParamInt } from '../middleware/validation.js';
+import { parseIdParam, parseQueryParamInt, requireStringQueryParam } from '../middleware/validation.js';
 import type { ClimaxService } from '../services/climax.service.js';
 import type { CreateClimaxRecordRequest, CreatePauseEventRequest } from '../types/shared.js';
 
@@ -10,17 +10,18 @@ export class AnalyticsController {
 
   getClimaxRecords = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { sessionId, libraryItemId } = req.query;
+      const sessionIdRaw = requireStringQueryParam(req.query.sessionId, 'sessionId');
+      const libraryItemIdRaw = requireStringQueryParam(req.query.libraryItemId, 'libraryItemId');
 
-      if (sessionId) {
-        const parsed = parseQueryParamInt(sessionId as string, 'sessionId');
+      if (sessionIdRaw !== undefined) {
+        const parsed = parseQueryParamInt(sessionIdRaw, 'sessionId');
         const records = this.climaxService.getClimaxRecordsBySession(parsed);
         res.json(records);
         return;
       }
 
-      if (libraryItemId) {
-        const parsed = parseQueryParamInt(libraryItemId as string, 'libraryItemId');
+      if (libraryItemIdRaw !== undefined) {
+        const parsed = parseQueryParamInt(libraryItemIdRaw, 'libraryItemId');
         const records = this.climaxService.getClimaxRecordsByLibraryItem(parsed);
         res.json(records);
         return;
@@ -69,7 +70,8 @@ export class AnalyticsController {
 
   getPauseEvents = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const parsed = parseQueryParamInt(req.query.sessionId as string | undefined, 'sessionId');
+      const sessionIdRaw = requireStringQueryParam(req.query.sessionId, 'sessionId');
+      const parsed = parseQueryParamInt(sessionIdRaw, 'sessionId');
       const events = this.climaxService.getPauseEventsBySession(parsed);
       res.json(events);
     } catch (error) {
@@ -117,7 +119,8 @@ export class AnalyticsController {
 
   getClimaxCountByScript = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const limit = parseQueryParamInt(req.query.limit as string | undefined, 'limit', 10);
+      const limitRaw = requireStringQueryParam(req.query.limit, 'limit');
+      const limit = parseQueryParamInt(limitRaw, 'limit', 10);
       const counts = this.climaxService.getClimaxCountByScript(limit);
       res.json(counts);
     } catch (error) {
@@ -127,7 +130,8 @@ export class AnalyticsController {
 
   getSessionPauseStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const parsed = parseQueryParamInt(req.query.sessionId as string | undefined, 'sessionId');
+      const sessionIdRaw = requireStringQueryParam(req.query.sessionId, 'sessionId');
+      const parsed = parseQueryParamInt(sessionIdRaw, 'sessionId');
       const stats = this.climaxService.getSessionPauseStats(parsed);
       res.json(stats);
     } catch (error) {

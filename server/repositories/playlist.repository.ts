@@ -76,7 +76,7 @@ export class PlaylistRepository {
     return { ...row, itemCount: 0 };
   }
 
-  update(id: number, data: UpdatePlaylistRequest): Playlist {
+  update(id: number, data: UpdatePlaylistRequest): Playlist | undefined {
     const lastModified = new Date().toISOString();
     const updateStmt = this.db.prepare(`
       UPDATE playlists
@@ -96,7 +96,9 @@ export class PlaylistRepository {
         data.description ?? null,
         lastModified,
         id
-      ) as Playlist;
+      ) as Playlist | undefined;
+
+      if (!row) return undefined;
 
       const { itemCount } = countStmt.get(id) as { itemCount: number };
       return { ...row, itemCount };
@@ -154,7 +156,7 @@ export class PlaylistRepository {
     return runAddItem();
   }
 
-  removeItem(itemId: number): void {
+  removeItem(itemId: number): boolean {
     const selectStmt = this.db.prepare(`
       SELECT playlist_id, position FROM playlist_items WHERE id = ?
     `);
@@ -170,15 +172,14 @@ export class PlaylistRepository {
     const runRemove = this.db.transaction(() => {
       const item = selectStmt.get(itemId) as { playlist_id: number; position: number } | undefined;
 
-      if (!item) {
-        return; // Item doesn't exist, nothing to do
-      }
+      if (!item) return false;
 
       deleteStmt.run(itemId);
       compactStmt.run(item.playlist_id, item.position);
+      return true;
     });
 
-    runRemove();
+    return runRemove();
   }
 
   reorderItems(playlistId: number, itemIds: number[]): void {
