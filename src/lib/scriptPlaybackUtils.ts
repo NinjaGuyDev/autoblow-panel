@@ -17,7 +17,12 @@ export function parseFunscript(item: LibraryItem): Funscript {
     if (Array.isArray(parsed)) {
       return { actions: parsed };
     }
-    if (parsed !== null && typeof parsed === 'object' && 'actions' in parsed) {
+    if (
+      parsed !== null &&
+      typeof parsed === 'object' &&
+      'actions' in parsed &&
+      Array.isArray((parsed as Record<string, unknown>).actions)
+    ) {
       return parsed as Funscript;
     }
     return { actions: [] };
