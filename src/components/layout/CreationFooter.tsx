@@ -2,6 +2,7 @@ import { useRef, useEffect, useState, useCallback } from 'react';
 import type { Ultra } from '@xsense/autoblow-sdk';
 import type { FunscriptAction } from '@/types/funscript';
 import { createSmoothTransition } from '@/lib/patternInsertion';
+import { buildFunscript } from '@/lib/funscriptConverter';
 import { getErrorMessage } from '@/lib/getErrorMessage';
 import { libraryApi } from '@/lib/apiClient';
 import { useDemoLoop } from '@/hooks/useDemoLoop';
@@ -123,15 +124,8 @@ export function CreationFooter({
 
       setScriptDurationMs(demoActions[demoActions.length - 1].at);
 
-      const funscript = {
-        version: '1.0',
-        inverted: false,
-        range: 100,
-        actions: demoActions,
-      };
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await ultra.syncScriptUploadFunscriptFile(funscript as any);
+      await ultra.syncScriptUploadFunscriptFile(buildFunscript(demoActions) as any);
       await ultra.syncScriptStart(0);
 
       setIsDemoPlaying(true);

@@ -8,16 +8,23 @@ import type { LibraryItem } from '../../server/types/shared';
 import { createSmoothTransition } from '@/lib/patternInsertion';
 
 /**
+ * Parse the full Funscript object from a library item's JSON data.
+ * Returns a Funscript with empty actions array if parsing fails.
+ */
+export function parseFunscript(item: LibraryItem): Funscript {
+  try {
+    return JSON.parse(item.funscriptData) as Funscript;
+  } catch {
+    return { actions: [] };
+  }
+}
+
+/**
  * Parse funscript actions from a library item's JSON data.
  * Returns empty array if parsing fails.
  */
 export function parseScriptActions(item: LibraryItem): FunscriptAction[] {
-  try {
-    const parsed: Funscript = JSON.parse(item.funscriptData);
-    return parsed.actions ?? [];
-  } catch {
-    return [];
-  }
+  return parseFunscript(item).actions ?? [];
 }
 
 /**

@@ -2,6 +2,7 @@ import type { FunscriptAction } from '@/types/funscript';
 import type { AnyPattern } from '@/types/patterns';
 import type { RandomizedScript, RandomizedSegment } from '@/types/randomizer';
 import { getPatternActions, isCustomPattern } from '@/types/patterns';
+import { lerp } from '@/lib/mathUtils';
 
 const TRANSITION_DURATION_MS = 300;
 const TRANSITION_STEPS = 5;
@@ -38,7 +39,7 @@ export function generateRandomizedScript(
         for (let i = 1; i <= TRANSITION_STEPS; i++) {
           const t = i / TRANSITION_STEPS;
           allActions.push({
-            pos: Math.round(lastPos + (firstPos - lastPos) * t),
+            pos: lerp(lastPos, firstPos, t),
             at: lastTime + Math.round(TRANSITION_DURATION_MS * t),
           });
         }

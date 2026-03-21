@@ -5,6 +5,8 @@ import { useRandomizerPlayback } from './useRandomizerPlayback';
 import { useDeviceButtons } from '@/hooks/useDeviceButtons';
 import { libraryApi } from '@/lib/apiClient';
 import { getErrorMessage } from '@/lib/getErrorMessage';
+import { formatTimeMs } from '@/lib/format';
+import { buildFunscript } from '@/lib/funscriptConverter';
 
 const CANVAS_HEIGHT = 200;
 
@@ -26,13 +28,6 @@ interface RandomizerPreviewDialogProps {
   onRegenerate: () => void;
   ultra: Ultra | null;
   isDeviceConnected: boolean;
-}
-
-function formatTime(ms: number): string {
-  const totalSeconds = Math.floor(ms / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
 export function RandomizerPreviewDialog({
@@ -170,12 +165,7 @@ export function RandomizerPreviewDialog({
       await libraryApi.create({
         videoName: null,
         funscriptName: `${saveName.trim()}.funscript`,
-        funscriptData: JSON.stringify({
-          version: '1.0',
-          inverted: false,
-          range: 100,
-          actions: script.actions,
-        }),
+        funscriptData: JSON.stringify(buildFunscript(script.actions)),
         duration: script.totalDurationMs / 1000,
         isCustomPattern: 0,
         patternMetadata: JSON.stringify({ segments: script.segments }),
@@ -202,7 +192,7 @@ export function RandomizerPreviewDialog({
               Randomized Script
             </h2>
             <p className="text-stone-400 text-sm mt-1">
-              {formatTime(script.totalDurationMs)} · {script.segments.length} patterns
+              {formatTimeMs(script.totalDurationMs)} · {script.segments.length} patterns
             </p>
           </div>
           <button onClick={onClose} className="text-stone-400 hover:text-white text-2xl">&times;</button>
@@ -220,8 +210,8 @@ export function RandomizerPreviewDialog({
           </div>
 
           <div className="flex justify-between text-xs text-stone-500 mt-1">
-            <span>{formatTime(playback.currentTimeMs)}</span>
-            <span>{formatTime(script.totalDurationMs)}</span>
+            <span>{formatTimeMs(playback.currentTimeMs)}</span>
+            <span>{formatTimeMs(script.totalDurationMs)}</span>
           </div>
         </div>
 

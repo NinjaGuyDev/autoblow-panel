@@ -18,6 +18,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { ArrowLeft, Play, GripVertical, X, Plus } from 'lucide-react';
 import type { Playlist, PlaylistItem, LibraryItem } from '../../../server/types/shared';
+import { formatDuration } from '@/lib/format';
 
 interface PlaylistEditorProps {
   playlist: Playlist;
@@ -28,16 +29,6 @@ interface PlaylistEditorProps {
   onReorder: (itemIds: number[]) => Promise<void>;
   onClose: () => void;
   onPlay: (playlistId: number) => void;
-}
-
-/**
- * Format duration in seconds to mm:ss
- */
-function formatDuration(seconds: number | null): string {
-  if (seconds === null) return '--:--';
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 /**

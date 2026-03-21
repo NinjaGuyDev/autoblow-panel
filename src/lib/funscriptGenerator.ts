@@ -1,5 +1,6 @@
 import type { PatternType } from '@/types/device';
 import type { Funscript } from '@xsense/autoblow-sdk';
+import { generateScriptId } from '@/lib/mathUtils';
 import {
   generateSineWave,
   generateTriangleWave,
@@ -62,7 +63,7 @@ export function generatePatternFunscript(
   // Return SDK-compatible Funscript
   return {
     metadata: {
-      id: Math.floor(Math.random() * 4294967295), // Random 32-bit unsigned int
+      id: generateScriptId(),
       version: 1,
     },
     actions,

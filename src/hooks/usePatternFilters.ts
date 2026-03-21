@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { type Dispatch, type SetStateAction, useMemo, useState } from 'react';
 import type {
   PatternDefinition,
   CustomPatternDefinition,
@@ -9,6 +9,18 @@ import type {
 } from '@/types/patterns';
 import { isCustomPattern } from '@/types/patterns';
 import { getPatternDirection } from '@/lib/patternDefinitions';
+
+/**
+ * Toggle an item in a Set state: adds if absent, removes if present.
+ */
+function toggleSetItem<T>(setter: Dispatch<SetStateAction<Set<T>>>, item: T): void {
+  setter(prev => {
+    const next = new Set(prev);
+    if (next.has(item)) next.delete(item);
+    else next.add(item);
+    return next;
+  });
+}
 
 /**
  * Pattern filtering hook with AND-logic across all filter dimensions
@@ -105,41 +117,9 @@ export function usePatternFilters(
   }, [allPatterns, searchText, intensities, styles, directions, patternDirections]);
 
   // Toggle functions
-  const toggleIntensity = (intensity: Intensity) => {
-    setIntensities((prev) => {
-      const next = new Set(prev);
-      if (next.has(intensity)) {
-        next.delete(intensity);
-      } else {
-        next.add(intensity);
-      }
-      return next;
-    });
-  };
-
-  const toggleStyle = (style: StyleTag) => {
-    setStyles((prev) => {
-      const next = new Set(prev);
-      if (next.has(style)) {
-        next.delete(style);
-      } else {
-        next.add(style);
-      }
-      return next;
-    });
-  };
-
-  const toggleDirection = (direction: PatternDirection) => {
-    setDirections((prev) => {
-      const next = new Set(prev);
-      if (next.has(direction)) {
-        next.delete(direction);
-      } else {
-        next.add(direction);
-      }
-      return next;
-    });
-  };
+  const toggleIntensity = (intensity: Intensity) => toggleSetItem(setIntensities, intensity);
+  const toggleStyle = (style: StyleTag) => toggleSetItem(setStyles, style);
+  const toggleDirection = (direction: PatternDirection) => toggleSetItem(setDirections, direction);
 
   // Clear all filters
   const clearFilters = () => {

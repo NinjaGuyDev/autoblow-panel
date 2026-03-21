@@ -4,6 +4,7 @@ import type { FunscriptAction } from '@/types/funscript';
 import type { WaypointDefinition } from '@/types/patterns';
 import { waypointsToActions } from '@/lib/waypointGenerator';
 import { createLoopTransition } from '@/lib/patternTransform';
+import { buildFunscript } from '@/lib/funscriptConverter';
 import { customPatternApi } from '@/lib/apiClient';
 import { getErrorMessage } from '@/lib/getErrorMessage';
 import { useDemoLoop } from '@/hooks/useDemoLoop';
@@ -180,17 +181,9 @@ export function useWaypointBuilder() {
       ultraRef.current = ultra;
       setScriptDurationMs(loopActions[loopActions.length - 1].at);
 
-      // Create funscript object
-      const funscript = {
-        version: '1.0',
-        inverted: false,
-        range: 100,
-        actions: loopActions,
-      };
-
-      // Upload to device
+      // Create funscript object and upload to device
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await ultra.syncScriptUploadFunscriptFile(funscript as any);
+      await ultra.syncScriptUploadFunscriptFile(buildFunscript(loopActions) as any);
 
       // Start playback from beginning
       await ultra.syncScriptStart(0);

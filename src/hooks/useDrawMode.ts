@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import type { FunscriptAction } from '@/types/funscript';
 import { xToTime, yToPos } from '@/lib/timelineHitDetection';
+import { clampPos } from '@/lib/mathUtils';
 
 const DRAW_SUBSAMPLE_MS = 50;
 
@@ -77,7 +78,7 @@ export function useDrawMode({
     // Convert to clamped FunscriptActions
     const newActions: FunscriptAction[] = subsampled.map((pt) => ({
       at: Math.round(pt.timeMs),
-      pos: Math.round(Math.max(0, Math.min(100, pt.pos))),
+      pos: Math.round(clampPos(pt.pos)),
     }));
 
     // Merge with existing actions and sort

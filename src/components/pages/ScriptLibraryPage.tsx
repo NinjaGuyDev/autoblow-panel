@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, RefreshCw, Trash2, Play, Square, FileText, Shuffle, ListOrdered, Zap, Pause, Pencil, CopyPlus, Flag } from 'lucide-react';
 import type { LibraryItem } from '../../../server/types/shared';
-import type { Funscript, FunscriptAction } from '@/types/funscript';
+import type { FunscriptAction } from '@/types/funscript';
 import type { RandomizeMode } from '@/hooks/useScriptPlayback';
 import { Timeline } from '@/components/timeline/Timeline';
 import { ScriptEditorDialog } from '@/components/script-library/ScriptEditorDialog';
@@ -15,6 +15,8 @@ import { ClimaxEditorDialog } from '@/components/script-library/ClimaxEditorDial
 import { useUndoableActions } from '@/hooks/useUndoableActions';
 import { exportFunscript } from '@/lib/funscriptExport';
 import { libraryApi, analyticsApi } from '@/lib/apiClient';
+import { formatRelativeTime } from '@/lib/format';
+import { parseScriptActions } from '@/lib/scriptPlaybackUtils';
 
 interface ScriptLibraryPageProps {
   scripts: LibraryItem[];
@@ -42,36 +44,14 @@ interface ScriptLibraryPageProps {
   onSeek: (timeMs: number) => Promise<void>;
 }
 
-function formatRelativeTime(isoString: string): string {
-  const date = new Date(isoString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMinutes < 1) return 'just now';
-  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
 /**
  * Compute script length in seconds from funscriptData JSON.
  * Returns null if parsing fails or no actions exist.
  */
 function getScriptLengthSeconds(item: LibraryItem): number | null {
-  try {
-    const parsed: Funscript = JSON.parse(item.funscriptData);
-    const actions = parsed.actions;
-    if (!actions || actions.length === 0) return null;
-    return actions[actions.length - 1].at / 1000;
-  } catch {
-    return null;
-  }
+  const actions = parseScriptActions(item);
+  if (actions.length === 0) return null;
+  return actions[actions.length - 1].at / 1000;
 }
 
 /**

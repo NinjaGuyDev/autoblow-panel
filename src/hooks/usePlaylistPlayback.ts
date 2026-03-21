@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, type RefObject } from 'react';
 import { playlistApi, libraryApi } from '@/lib/apiClient';
+import { parseFunscript } from '@/lib/scriptPlaybackUtils';
 import type { PlaylistItem } from '../../server/types/shared';
 import type { Funscript } from '@/types/funscript';
 
@@ -97,7 +98,7 @@ export function usePlaylistPlayback({
       }
 
       // Parse and load funscript
-      const parsedFunscript: Funscript = JSON.parse(libraryItem.funscriptData);
+      const parsedFunscript = parseFunscript(libraryItem);
       loadFunscriptFromData(
         libraryItem.funscriptName || 'playlist-item.funscript',
         parsedFunscript
