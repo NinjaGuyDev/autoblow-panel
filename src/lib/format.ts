@@ -41,6 +41,8 @@ export function formatTime(seconds: number): string {
  */
 export function formatRelativeTime(dateString: string): string {
   const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'Unknown';
+
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMinutes = Math.floor(diffMs / 60000);
@@ -60,7 +62,7 @@ export function formatRelativeTime(dateString: string): string {
   if (isYesterday) return 'Yesterday';
 
   if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 7) return `${diffDays} day${diffDays === 1 ? '' : 's'} ago`;
 
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
@@ -71,7 +73,7 @@ export function formatRelativeTime(dateString: string): string {
  * @returns Formatted duration string like "3:05" or "--:--" for null
  */
 export function formatDuration(seconds: number | null): string {
-  if (seconds === null) return '--:--';
+  if (seconds === null || !Number.isFinite(seconds) || seconds < 0) return '--:--';
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
@@ -83,6 +85,7 @@ export function formatDuration(seconds: number | null): string {
  * @returns Formatted time string like "2:05"
  */
 export function formatTimeMs(ms: number): string {
+  if (!Number.isFinite(ms) || ms < 0) return '0:00';
   const totalSeconds = Math.floor(ms / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
