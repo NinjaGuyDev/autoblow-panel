@@ -1,12 +1,9 @@
 import type { FunscriptAction } from '@/types/funscript';
-import { type AnyPattern, isCustomPattern } from '@/types/patterns';
+import { type AnyPattern, getPatternActions } from '@/types/patterns';
+import { lerp } from '@/lib/mathUtils';
 
-/**
- * Linear interpolation helper
- */
-function lerp(start: number, end: number, t: number): number {
-  return Math.round(start + (end - start) * t);
-}
+/** Spacing in ms between smooth transition points */
+const TRANSITION_SPACING_MS = 750;
 
 /**
  * Creates smooth transition points between two positions
@@ -33,7 +30,7 @@ export function createSmoothTransition(
   const numPoints = Math.max(1, Math.floor(posDiff / 10));
 
   const transitionActions: FunscriptAction[] = [];
-  const spacing = 750; // 0.75 seconds between points
+  const spacing = TRANSITION_SPACING_MS;
 
   for (let i = 1; i <= numPoints; i++) {
     // For the last point, ensure it's exactly at the end position
@@ -60,7 +57,7 @@ export function insertPatternAtEnd(
   pattern: AnyPattern
 ): FunscriptAction[] {
   // Generate pattern actions
-  const patternActions = isCustomPattern(pattern) ? pattern.actions : pattern.generator();
+  const patternActions = getPatternActions(pattern);
   if (patternActions.length === 0) return currentActions;
 
   // Find max time and last position in current actions
@@ -84,7 +81,7 @@ export function insertPatternAtEnd(
     );
 
     // Calculate total smoothing duration
-    const smoothingDuration = transitionPoints.length * 750;
+    const smoothingDuration = transitionPoints.length * TRANSITION_SPACING_MS;
 
     // Offset pattern to start after smoothing
     const patternStartTime = maxTime + smoothingDuration;
@@ -124,7 +121,7 @@ export function insertPatternAtCursor(
   cursorTimeMs: number
 ): FunscriptAction[] {
   // Generate pattern actions
-  const patternActions = isCustomPattern(pattern) ? pattern.actions : pattern.generator();
+  const patternActions = getPatternActions(pattern);
 
   // Offset pattern to start at cursor
   const offsetPatternActions = patternActions.map((action) => ({
@@ -153,7 +150,7 @@ export function insertPatternAtCursor(
     );
 
     // Calculate transition duration
-    transitionDuration = transitionActions.length * 750;
+    transitionDuration = transitionActions.length * TRANSITION_SPACING_MS;
   }
 
   // Calculate total shift amount: pattern duration + transition duration

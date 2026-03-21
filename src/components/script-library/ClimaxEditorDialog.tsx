@@ -14,6 +14,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { X, Trash2, RefreshCw, Flag } from 'lucide-react';
 import type { LibraryItem, ClimaxRecord } from '../../../../server/types/shared';
 import { analyticsApi } from '@/lib/apiClient';
+import { formatTimeMs } from '@/lib/format';
 
 interface ClimaxEditorDialogProps {
   item: LibraryItem;
@@ -41,13 +42,6 @@ function parseClimaxTimeMs(record: ClimaxRecord): number | null {
     // malformed — fall through
   }
   return null;
-}
-
-function formatScriptTime(ms: number): string {
-  const totalSec = Math.floor(ms / 1000);
-  const mins = Math.floor(totalSec / 60);
-  const secs = totalSec % 60;
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
 function formatWallTime(iso: string): string {
@@ -176,7 +170,7 @@ export function ClimaxEditorDialog({ item, onClose }: ClimaxEditorDialogProps) {
                       </span>
                       <div className="min-w-0">
                         <span className="text-sm font-mono text-rose-300">
-                          {climaxTimeMs !== null ? formatScriptTime(climaxTimeMs) : '—'}
+                          {climaxTimeMs !== null ? formatTimeMs(climaxTimeMs) : '—'}
                         </span>
                         <span className="text-xs text-stone-500 ml-2">
                           {formatWallTime(record.createdAt)}

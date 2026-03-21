@@ -1,33 +1,13 @@
 import { useState } from 'react';
 import { ListMusic, Edit, Play, Trash2 } from 'lucide-react';
 import type { Playlist } from '../../../server/types/shared';
+import { formatRelativeTime } from '@/lib/format';
 
 interface PlaylistCardProps {
   playlist: Playlist;
   onSelect: (id: number) => void;
   onDelete: (id: number) => void;
   onPlay: (id: number) => void;
-}
-
-/**
- * Format relative time from ISO string
- */
-function formatRelativeTime(isoString: string): string {
-  const date = new Date(isoString);
-  const now = new Date();
-  const diffMs = now.getTime() - date.getTime();
-  const diffMinutes = Math.floor(diffMs / 60000);
-  const diffHours = Math.floor(diffMs / 3600000);
-  const diffDays = Math.floor(diffMs / 86400000);
-
-  if (diffMinutes < 1) return 'just now';
-  if (diffMinutes < 60) return `${diffMinutes} minute${diffMinutes > 1 ? 's' : ''} ago`;
-  if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
-  if (diffDays === 1) return 'Yesterday';
-  if (diffDays < 7) return `${diffDays} days ago`;
-
-  // Format as date for older items
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 /**

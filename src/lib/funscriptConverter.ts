@@ -1,5 +1,14 @@
 import type { Funscript as SDKFunscript } from '@xsense/autoblow-sdk';
-import type { Funscript } from '@/types/funscript';
+import type { Funscript, FunscriptAction } from '@/types/funscript';
+import { generateScriptId } from '@/lib/mathUtils';
+
+/**
+ * Build a standard funscript envelope around an actions array.
+ * Used everywhere the app constructs a funscript for device upload or persistence.
+ */
+export function buildFunscript(actions: FunscriptAction[]): { version: string; inverted: boolean; range: number; actions: FunscriptAction[] } {
+  return { version: '1.0', inverted: false, range: 100, actions };
+}
 
 /**
  * Converts app Funscript format to SDK Funscript format
@@ -11,8 +20,7 @@ import type { Funscript } from '@/types/funscript';
  * @returns Funscript in SDK format ready for upload
  */
 export function convertToSDKFunscript(appFunscript: Funscript): SDKFunscript {
-  // Generate random 32-bit unsigned int for script ID
-  const id = Math.floor(Math.random() * 4294967295);
+  const id = generateScriptId();
 
   return {
     metadata: {

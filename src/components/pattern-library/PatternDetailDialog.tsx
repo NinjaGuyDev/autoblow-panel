@@ -3,6 +3,7 @@ import type { Ultra } from '@xsense/autoblow-sdk';
 import { type AnyPattern, isCustomPattern, getPatternActions } from '@/types/patterns';
 import { getPatternDirection } from '@/lib/patternDefinitions';
 import { createSmoothTransition } from '@/lib/patternInsertion';
+import { buildFunscript } from '@/lib/funscriptConverter';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/getErrorMessage';
 import { useDemoLoop } from '@/hooks/useDemoLoop';
@@ -157,17 +158,9 @@ export function PatternDetailDialog({
       // Track script duration for loop detection
       setScriptDurationMs(actions[actions.length - 1].at);
 
-      // Create funscript object
-      const funscript = {
-        version: '1.0',
-        inverted: false,
-        range: 100,
-        actions: actions,
-      };
-
       // Upload to device
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await ultra.syncScriptUploadFunscriptFile(funscript as any);
+      await ultra.syncScriptUploadFunscriptFile(buildFunscript(actions) as any);
 
       // Start playback from beginning
       await ultra.syncScriptStart(0);

@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from 'react';
 import type { FunscriptAction } from '@/types/funscript';
 import { xToTime, yToPos } from '@/lib/timelineHitDetection';
+import { clampPos } from '@/lib/mathUtils';
 
 const DRAG_THRESHOLD_PX = 5;
 
@@ -88,7 +89,7 @@ export function usePointDrag({
 
         const newActions = actions.map((action, i) =>
           i === index
-            ? { at: Math.round(newTimeMs), pos: Math.round(Math.max(0, Math.min(100, newPos))) }
+            ? { at: Math.round(newTimeMs), pos: Math.round(clampPos(newPos)) }
             : action
         );
         newActions.sort((a, b) => a.at - b.at);

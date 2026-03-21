@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import type { FunscriptAction } from '@/types/funscript';
 import type { EditMode, SelectionRect } from '@/types/timeline';
 import { xToTime, yToPos } from '@/lib/timelineHitDetection';
+import { clampPos } from '@/lib/mathUtils';
 import { usePointSelection } from '@/hooks/usePointSelection';
 import { usePointDrag } from '@/hooks/usePointDrag';
 import { useDrawMode } from '@/hooks/useDrawMode';
@@ -64,7 +65,7 @@ export function useTimelineEditor({
     (timeMs: number, pos: number) => {
       const newAction: FunscriptAction = {
         at: Math.round(timeMs),
-        pos: Math.round(Math.max(0, Math.min(100, pos))),
+        pos: Math.round(clampPos(pos)),
       };
       const newActions = [...actions, newAction].sort((a, b) => a.at - b.at);
       setActions(newActions);

@@ -11,11 +11,13 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { X, Save, Copy, Download, AlertCircle, CheckCircle } from 'lucide-react';
 import type { LibraryItem } from '../../../../server/types/shared';
-import type { Funscript, FunscriptAction } from '@/types/funscript';
+import type { FunscriptAction } from '@/types/funscript';
 import { Timeline } from '@/components/timeline/Timeline';
 import { useUndoableActions } from '@/hooks/useUndoableActions';
 import { libraryApi } from '@/lib/apiClient';
 import { exportFunscript } from '@/lib/funscriptExport';
+import { parseScriptActions } from '@/lib/scriptPlaybackUtils';
+import { buildFunscript } from '@/lib/funscriptConverter';
 
 interface ScriptEditorDialogProps {
   item: LibraryItem;
@@ -26,17 +28,8 @@ interface ScriptEditorDialogProps {
 
 type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
-function parseActions(item: LibraryItem): FunscriptAction[] {
-  try {
-    const parsed: Funscript = JSON.parse(item.funscriptData);
-    return parsed.actions ?? [];
-  } catch {
-    return [];
-  }
-}
-
 function buildFunscriptData(actions: FunscriptAction[]): string {
-  return JSON.stringify({ version: '1.0', inverted: false, range: 100, actions });
+  return JSON.stringify(buildFunscript(actions));
 }
 
 function deriveDuration(item: LibraryItem, actions: FunscriptAction[]): number {
@@ -45,7 +38,7 @@ function deriveDuration(item: LibraryItem, actions: FunscriptAction[]): number {
 }
 
 export function ScriptEditorDialog({ item, onClose, onSaved }: ScriptEditorDialogProps) {
-  const initialActions = parseActions(item);
+  const initialActions = parseScriptActions(item);
 
   const { actions, setActions, undo, redo, canUndo, canRedo, reset } =
     useUndoableActions(initialActions);
@@ -58,7 +51,7 @@ export function ScriptEditorDialog({ item, onClose, onSaved }: ScriptEditorDialo
 
   // Reset when the item changes (e.g. dialog reused for a different script)
   useEffect(() => {
-    reset(parseActions(item));
+    reset(parseScriptActions(item));
     setScriptName(item.funscriptName ?? '');
     setCurrentTimeMs(0);
     setIsDirty(false);

@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Ultra } from '@xsense/autoblow-sdk';
 import type { RandomizedScript } from '@/types/randomizer';
+import { buildFunscript } from '@/lib/funscriptConverter';
 import { mediaApi } from '@/lib/apiClient';
 import { getErrorMessage } from '@/lib/getErrorMessage';
 
@@ -179,15 +180,8 @@ export function useRandomizerPlayback(
     try {
       setState((prev) => ({ ...prev, error: null, isComplete: false }));
 
-      const funscript = {
-        version: '1.0',
-        inverted: false,
-        range: 100,
-        actions: script.actions,
-      };
-
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await ultra.syncScriptUploadFunscriptFile(funscript as any);
+      await ultra.syncScriptUploadFunscriptFile(buildFunscript(script.actions) as any);
       await ultra.syncScriptStart(0);
 
       setState((prev) => ({

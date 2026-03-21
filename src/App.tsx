@@ -36,11 +36,12 @@ import { mediaApi } from '@/lib/apiClient';
 import { captureVideoThumbnail } from '@/lib/thumbnailCapture';
 import { exportFunscript } from '@/lib/funscriptExport';
 import { insertPatternAtCursor, insertPatternAtEnd } from '@/lib/patternInsertion';
+import { parseFunscript } from '@/lib/scriptPlaybackUtils';
 import { isEmbedUrl } from '@/lib/videoUtils';
 import type { TabId } from '@/types/navigation';
 import type { AnyPattern } from '@/types/patterns';
 import type { LibraryItem } from '../server/types/shared';
-import type { Funscript } from '@/types/funscript';
+
 
 /**
  * Thin provider shell — wraps AppContent with theme and device contexts.
@@ -388,8 +389,8 @@ function AppContent() {
   // Load item from library
   const handleLoadFromLibrary = async (item: LibraryItem) => {
     try {
-      // Parse funscript data from JSON string
-      const parsedData: Funscript = JSON.parse(item.funscriptData);
+      // Parse funscript data from library item
+      const parsedData = parseFunscript(item);
 
       // Load funscript data using the new loadFunscriptFromData method
       loadFunscriptFromData(item.funscriptName || 'library-item.funscript', parsedData);
