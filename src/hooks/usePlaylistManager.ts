@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { playlistApi, libraryApi } from '@/lib/apiClient';
 import { useAsyncOperation } from '@/hooks/useAsyncOperation';
-import type { Playlist, PlaylistItem, LibraryItem } from '../../server/types/shared';
+import type { Playlist, PlaylistItem, LibraryItem } from '@server/types/shared';
 
 export interface UsePlaylistManagerReturn {
   // Playlist list view

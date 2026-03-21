@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { db } from '@/lib/db';
 import { libraryApi } from '@/lib/apiClient';
 import { getErrorMessage } from '@/lib/getErrorMessage';
-import type { CreateLibraryItemRequest } from '@/../server/types/shared';
+import type { CreateLibraryItemRequest } from '@server/types/shared';
 
 interface UseMigrationReturn {
   migrating: boolean;

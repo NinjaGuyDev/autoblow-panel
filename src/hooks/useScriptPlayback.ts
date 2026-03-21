@@ -6,7 +6,7 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import type { Ultra } from '@xsense/autoblow-sdk';
-import type { LibraryItem } from '../../server/types/shared';
+import type { LibraryItem } from '@server/types/shared';
 import { useScriptLoop } from '@/hooks/useScriptLoop';
 import {
   parseScriptActions,

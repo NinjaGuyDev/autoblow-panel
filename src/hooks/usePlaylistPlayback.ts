@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, type RefObject } from 'react';
 import { playlistApi, libraryApi } from '@/lib/apiClient';
 import { parseFunscript } from '@/lib/scriptPlaybackUtils';
-import type { PlaylistItem } from '../../server/types/shared';
+import type { PlaylistItem } from '@server/types/shared';
 import type { Funscript } from '@/types/funscript';
 
 interface UsePlaylistPlaybackProps {

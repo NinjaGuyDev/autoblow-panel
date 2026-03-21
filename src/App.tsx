@@ -40,8 +40,7 @@ import { parseFunscript } from '@/lib/scriptPlaybackUtils';
 import { isEmbedUrl } from '@/lib/videoUtils';
 import type { TabId } from '@/types/navigation';
 import type { AnyPattern } from '@/types/patterns';
-import type { LibraryItem } from '../server/types/shared';
-
+import type { LibraryItem } from '@server/types/shared';
 
 /**
  * Thin provider shell — wraps AppContent with theme and device contexts.

@@ -8,7 +8,7 @@ import { Search, RefreshCw, Trash2, Play, Video, FileText, Globe } from 'lucide-
 import { mediaApi } from '@/lib/apiClient';
 import { isEmbedUrl } from '@/lib/videoUtils';
 import { formatRelativeTime, formatDuration } from '@/lib/format';
-import type { LibraryItem } from '../../../server/types/shared';
+import type { LibraryItem } from '@server/types/shared';
 import type { LibraryFilter } from '@/hooks/useLibrary';
 
 interface LibraryPageProps {

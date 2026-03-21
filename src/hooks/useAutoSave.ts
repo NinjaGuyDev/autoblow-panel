@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { libraryApi } from '@/lib/apiClient';
 import type { Funscript } from '@/types/funscript';
-import type { LibraryItem } from '@/../server/types/shared';
+import type { LibraryItem } from '@server/types/shared';
 
 interface UseAutoSaveReturn {
   saveSession: (videoName: string | null, funscriptName: string | null, funscriptData: Funscript | null) => Promise<void>;

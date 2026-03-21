@@ -6,7 +6,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { libraryApi } from '@/lib/apiClient';
 import { useAsyncOperation } from '@/hooks/useAsyncOperation';
-import type { LibraryItem } from '../../server/types/shared';
+import type { LibraryItem } from '@server/types/shared';
 
 export type LibraryFilter = 'all' | 'has-video' | 'has-funscript';
 

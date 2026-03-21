@@ -1,5 +1,5 @@
 import { X, SkipBack, SkipForward, ListMusic } from 'lucide-react';
-import type { PlaylistItem } from '../../../server/types/shared';
+import type { PlaylistItem } from '@server/types/shared';
 
 interface PlaylistControlsProps {
   currentIndex: number;

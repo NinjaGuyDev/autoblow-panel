@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ListMusic, Edit, Play, Trash2 } from 'lucide-react';
-import type { Playlist } from '../../../server/types/shared';
+import type { Playlist } from '@server/types/shared';
 import { formatRelativeTime } from '@/lib/format';
 
 interface PlaylistCardProps {

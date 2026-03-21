@@ -17,7 +17,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { ArrowLeft, Play, GripVertical, X, Plus } from 'lucide-react';
-import type { Playlist, PlaylistItem, LibraryItem } from '../../../server/types/shared';
+import type { Playlist, PlaylistItem, LibraryItem } from '@server/types/shared';
 import { formatDuration } from '@/lib/format';
 
 interface PlaylistEditorProps {

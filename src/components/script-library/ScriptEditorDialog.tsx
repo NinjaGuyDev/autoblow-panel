@@ -10,7 +10,7 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { X, Save, Copy, Download, AlertCircle, CheckCircle } from 'lucide-react';
-import type { LibraryItem } from '../../../../server/types/shared';
+import type { LibraryItem } from '@server/types/shared';
 import type { FunscriptAction } from '@/types/funscript';
 import { Timeline } from '@/components/timeline/Timeline';
 import { useUndoableActions } from '@/hooks/useUndoableActions';

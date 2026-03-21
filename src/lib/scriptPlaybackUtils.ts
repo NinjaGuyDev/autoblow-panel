@@ -4,7 +4,7 @@
  */
 
 import type { FunscriptAction, Funscript } from '@/types/funscript';
-import type { LibraryItem } from '../../server/types/shared';
+import type { LibraryItem } from '@server/types/shared';
 import { createSmoothTransition } from '@/lib/patternInsertion';
 
 /**

@@ -17,10 +17,6 @@ export class SessionService {
     return session;
   }
 
-  getSessionsByDateRange(startDate: string, endDate: string): Session[] {
-    return this.sessionRepository.findByDateRange(startDate, endDate);
-  }
-
   createSession(data: CreateSessionRequest): Session {
     // Validate context
     const validContexts = ['normal', 'demo', 'manual'];
