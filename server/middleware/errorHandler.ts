@@ -1,4 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
+import { DomainError } from '../errors/domain-errors.js';
 
 export function errorHandler(
   err: Error,
@@ -9,11 +10,9 @@ export function errorHandler(
   // Log error stack to console
   console.error('Error:', err.stack);
 
-  // Determine status code based on error message
-  let statusCode = 500;
-  if (err.message.includes('not found')) {
-    statusCode = 404;
-  }
+  // Use the statusCode carried by DomainError subclasses;
+  // fall back to 500 for unexpected errors.
+  const statusCode = err instanceof DomainError ? err.statusCode : 500;
 
   // Send error response
   res.status(statusCode).json({

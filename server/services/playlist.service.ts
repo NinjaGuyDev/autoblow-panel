@@ -1,6 +1,7 @@
 import type { Playlist, PlaylistItem, CreatePlaylistRequest, UpdatePlaylistRequest } from '../types/shared.js';
 import type { PlaylistRepository } from '../repositories/playlist.repository.js';
 import type { LibraryRepository } from '../repositories/library.repository.js';
+import { NotFoundError, ValidationError } from '../errors/domain-errors.js';
 
 export class PlaylistService {
   constructor(
@@ -15,7 +16,7 @@ export class PlaylistService {
   getPlaylistById(id: number): Playlist {
     const playlist = this.playlistRepository.findById(id);
     if (!playlist) {
-      throw new Error(`Playlist with id ${id} not found`);
+      throw new NotFoundError(`Playlist with id ${id} not found`);
     }
     return playlist;
   }
@@ -29,7 +30,7 @@ export class PlaylistService {
   createPlaylist(data: CreatePlaylistRequest): Playlist {
     // Validate name is non-empty
     if (!data.name || data.name.trim() === '') {
-      throw new Error('Playlist name cannot be empty');
+      throw new ValidationError('Playlist name cannot be empty');
     }
     return this.playlistRepository.create(data);
   }
@@ -40,7 +41,7 @@ export class PlaylistService {
 
     // Validate name if provided
     if (data.name !== undefined && data.name.trim() === '') {
-      throw new Error('Playlist name cannot be empty');
+      throw new ValidationError('Playlist name cannot be empty');
     }
 
     return this.playlistRepository.update(id, data);
@@ -59,13 +60,17 @@ export class PlaylistService {
     // Verify library item exists
     const libraryItem = this.libraryRepository.findById(libraryItemId);
     if (!libraryItem) {
-      throw new Error(`Library item with id ${libraryItemId} not found`);
+      throw new NotFoundError(`Library item with id ${libraryItemId} not found`);
     }
 
     return this.playlistRepository.addItem(playlistId, libraryItemId);
   }
 
   removeItem(itemId: number): void {
+    const item = this.playlistRepository.findItemById(itemId);
+    if (!item) {
+      throw new NotFoundError(`Playlist item with id ${itemId} not found`);
+    }
     this.playlistRepository.removeItem(itemId);
   }
 

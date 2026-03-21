@@ -123,8 +123,8 @@ export class LibraryController {
   migrate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       const { data } = req.body as MigrationRequest;
-      this.service.migrateFromIndexedDB(data);
-      res.json({ success: true });
+      const count = this.service.migrateFromIndexedDB(data);
+      res.json({ success: true, count });
     } catch (error) {
       next(error);
     }

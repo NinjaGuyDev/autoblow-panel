@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
-import { parseIdParam } from '../middleware/validation.js';
+import { parseIdParam, parseQueryParamInt } from '../middleware/validation.js';
 import type { ClimaxService } from '../services/climax.service.js';
 import type { CreateClimaxRecordRequest, CreatePauseEventRequest } from '../types/shared.js';
 
@@ -13,22 +13,14 @@ export class AnalyticsController {
       const { sessionId, libraryItemId } = req.query;
 
       if (sessionId) {
-        const parsed = parseInt(sessionId as string, 10);
-        if (!Number.isInteger(parsed)) {
-          res.status(400).json({ error: 'sessionId must be a valid integer' });
-          return;
-        }
+        const parsed = parseQueryParamInt(sessionId as string, 'sessionId');
         const records = this.climaxService.getClimaxRecordsBySession(parsed);
         res.json(records);
         return;
       }
 
       if (libraryItemId) {
-        const parsed = parseInt(libraryItemId as string, 10);
-        if (!Number.isInteger(parsed)) {
-          res.status(400).json({ error: 'libraryItemId must be a valid integer' });
-          return;
-        }
+        const parsed = parseQueryParamInt(libraryItemId as string, 'libraryItemId');
         const records = this.climaxService.getClimaxRecordsByLibraryItem(parsed);
         res.json(records);
         return;
@@ -77,19 +69,7 @@ export class AnalyticsController {
 
   getPauseEvents = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { sessionId } = req.query;
-
-      if (!sessionId) {
-        res.status(400).json({ error: 'sessionId query parameter is required' });
-        return;
-      }
-
-      const parsed = parseInt(sessionId as string, 10);
-      if (!Number.isInteger(parsed)) {
-        res.status(400).json({ error: 'sessionId must be a valid integer' });
-        return;
-      }
-
+      const parsed = parseQueryParamInt(req.query.sessionId as string | undefined, 'sessionId');
       const events = this.climaxService.getPauseEventsBySession(parsed);
       res.json(events);
     } catch (error) {
@@ -137,11 +117,7 @@ export class AnalyticsController {
 
   getClimaxCountByScript = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
-      if (!Number.isInteger(limit)) {
-        res.status(400).json({ error: 'limit must be a valid integer' });
-        return;
-      }
+      const limit = parseQueryParamInt(req.query.limit as string | undefined, 'limit', 10);
       const counts = this.climaxService.getClimaxCountByScript(limit);
       res.json(counts);
     } catch (error) {
@@ -151,19 +127,7 @@ export class AnalyticsController {
 
   getSessionPauseStats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { sessionId } = req.query;
-
-      if (!sessionId) {
-        res.status(400).json({ error: 'sessionId query parameter is required' });
-        return;
-      }
-
-      const parsed = parseInt(sessionId as string, 10);
-      if (!Number.isInteger(parsed)) {
-        res.status(400).json({ error: 'sessionId must be a valid integer' });
-        return;
-      }
-
+      const parsed = parseQueryParamInt(req.query.sessionId as string | undefined, 'sessionId');
       const stats = this.climaxService.getSessionPauseStats(parsed);
       res.json(stats);
     } catch (error) {

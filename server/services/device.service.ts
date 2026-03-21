@@ -8,6 +8,7 @@ import type {
   DeviceStatusResponse,
   DevicePlayResponse,
 } from '../types/shared.js';
+import { ValidationError } from '../errors/domain-errors.js';
 
 /** Auto-disconnect after 30 minutes of inactivity */
 const INACTIVITY_TIMEOUT_MS = 30 * 60 * 1000;
@@ -136,7 +137,7 @@ export class DeviceService {
       : (parsed as any).actions;
 
     if (!actions || actions.length === 0) {
-      throw new Error('Library item has no funscript actions');
+      throw new ValidationError('Library item has no funscript actions');
     }
 
     try {
@@ -213,7 +214,7 @@ export class DeviceService {
 
   private requireConnection(): void {
     if (this.connectionState !== 'connected' || !this.ultra) {
-      throw new Error('No device connected');
+      throw new ValidationError('No device connected');
     }
   }
 

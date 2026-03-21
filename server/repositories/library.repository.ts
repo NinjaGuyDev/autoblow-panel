@@ -71,12 +71,13 @@ export class LibraryRepository {
   }
 
   softDelete(id: number): number {
+    const deletedAt = new Date().toISOString();
     const stmt = this.db.prepare(`
       UPDATE library_items
-      SET deletedAt = datetime('now')
+      SET deletedAt = ?
       WHERE id = ? AND deletedAt IS NULL
     `);
-    const result = stmt.run(id);
+    const result = stmt.run(deletedAt, id);
     return result.changes;
   }
 
@@ -162,18 +163,19 @@ export class LibraryRepository {
   }
 
   setMigrationComplete(): void {
+    const migratedAt = new Date().toISOString();
     const stmt = this.db.prepare(`
       UPDATE migration_status
-      SET migrated = 1, migratedAt = datetime('now')
+      SET migrated = 1, migratedAt = ?
       WHERE id = 1
     `);
-    stmt.run();
+    stmt.run(migratedAt);
   }
 
   bulkCreate(items: CreateLibraryItemRequest[]): void {
     const insertStmt = this.db.prepare(`
-      INSERT INTO library_items (videoName, funscriptName, funscriptData, duration, lastModified)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO library_items (videoName, funscriptName, funscriptData, duration, lastModified, isCustomPattern, originalPatternId, patternMetadata)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
     const insertMany = this.db.transaction((items: CreateLibraryItemRequest[]) => {
@@ -184,7 +186,10 @@ export class LibraryRepository {
           item.funscriptName,
           item.funscriptData,
           item.duration,
-          lastModified
+          lastModified,
+          item.isCustomPattern ?? 0,
+          item.originalPatternId ?? null,
+          item.patternMetadata ?? null
         );
       }
     });

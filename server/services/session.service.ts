@@ -1,5 +1,6 @@
 import type { Session, CreateSessionRequest, UpdateSessionRequest, SessionStats, MostPlayedScript, ScriptOrderEntry } from '../types/shared.js';
 import type { SessionRepository } from '../repositories/session.repository.js';
+import { NotFoundError, ValidationError } from '../errors/domain-errors.js';
 
 export class SessionService {
   constructor(private sessionRepository: SessionRepository) {}
@@ -11,7 +12,7 @@ export class SessionService {
   getSessionById(id: number): Session {
     const session = this.sessionRepository.findById(id);
     if (!session) {
-      throw new Error(`Session with id ${id} not found`);
+      throw new NotFoundError(`Session with id ${id} not found`);
     }
     return session;
   }
@@ -24,12 +25,12 @@ export class SessionService {
     // Validate context
     const validContexts = ['normal', 'demo', 'manual'];
     if (!validContexts.includes(data.context)) {
-      throw new Error(`Invalid context: ${data.context}. Must be one of: ${validContexts.join(', ')}`);
+      throw new ValidationError(`Invalid context: ${data.context}. Must be one of: ${validContexts.join(', ')}`);
     }
 
     // Validate startedAt is provided and non-empty
     if (!data.startedAt || data.startedAt.trim() === '') {
-      throw new Error('startedAt is required and cannot be empty');
+      throw new ValidationError('startedAt is required and cannot be empty');
     }
 
     return this.sessionRepository.create(data);
@@ -63,11 +64,11 @@ export class SessionService {
     const endTime = new Date(endedAt).getTime();
 
     if (!isFinite(startTime) || !isFinite(endTime)) {
-      throw new Error('Invalid date format for startedAt or endedAt');
+      throw new ValidationError('Invalid date format for startedAt or endedAt');
     }
 
     if (endTime < startTime) {
-      throw new Error('endedAt cannot be before startedAt');
+      throw new ValidationError('endedAt cannot be before startedAt');
     }
 
     const durationSeconds = (endTime - startTime) / 1000;
