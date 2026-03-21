@@ -1,12 +1,12 @@
 import type { Funscript as SDKFunscript } from '@xsense/autoblow-sdk';
-import type { Funscript, FunscriptAction } from '@/types/funscript';
+import type { Funscript, FunscriptAction, FunscriptEnvelope } from '@/types/funscript';
 import { generateScriptId } from '@/lib/mathUtils';
 
 /**
  * Build a standard funscript envelope around an actions array.
  * Used everywhere the app constructs a funscript for device upload or persistence.
  */
-export function buildFunscript(actions: FunscriptAction[]): { version: string; inverted: boolean; range: number; actions: FunscriptAction[] } {
+export function buildFunscript(actions: FunscriptAction[]): FunscriptEnvelope {
   return { version: '1.0', inverted: false, range: 100, actions };
 }
 

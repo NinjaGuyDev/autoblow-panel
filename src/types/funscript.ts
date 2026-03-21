@@ -26,6 +26,14 @@ export interface Funscript {
   actions: FunscriptAction[];
 }
 
+/** Standard envelope for device upload / persistence with required fields */
+export interface FunscriptEnvelope {
+  version: string;
+  inverted: boolean;
+  range: number;
+  actions: FunscriptAction[];
+}
+
 // Application state types
 export interface LoadedVideo {
   file: File;

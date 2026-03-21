@@ -11,9 +11,19 @@ import { formatRelativeTime, formatDuration } from '@/lib/format';
 import type { LibraryItem } from '../../../server/types/shared';
 import type { LibraryFilter } from '@/hooks/useLibrary';
 
-/**
- * Library page component
- */
+interface LibraryPageProps {
+  items: LibraryItem[];
+  loading: boolean;
+  error: string | null;
+  searchQuery: string;
+  setSearchQuery: (q: string) => void;
+  filter: LibraryFilter;
+  setFilter: (f: LibraryFilter) => void;
+  deleteItem: (id: number) => Promise<void>;
+  refresh: () => Promise<void>;
+  onLoadItem: (item: LibraryItem) => void;
+}
+
 export function LibraryPage({
   items,
   loading,
