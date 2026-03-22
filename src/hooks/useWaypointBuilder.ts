@@ -93,7 +93,8 @@ export function useWaypointBuilder() {
 
       // Apply updates
       const updated = [...prev];
-      updated[index] = { ...updated[index]!, ...updates };
+      const target = { ...updated[index]!, ...updates };
+      updated[index] = target;
 
       // If timeMs changed, validate and clamp
       if (updates.timeMs !== undefined) {
@@ -112,15 +113,15 @@ export function useWaypointBuilder() {
           newTimeMs = Math.min(newTimeMs, nextWaypoint.timeMs - 50);
         }
 
-        updated[index]!.timeMs = Math.round(newTimeMs);
+        target.timeMs = Math.round(newTimeMs);
 
         // Re-sort by timeMs
         updated.sort((a, b) => a.timeMs - b.timeMs);
       }
 
-      // Clamp position to 0-100
+      // Clamp position to 0-100 (on the captured target, not by stale index)
       if (updates.pos !== undefined) {
-        updated[index]!.pos = Math.max(0, Math.min(100, Math.round(updated[index]!.pos)));
+        target.pos = Math.max(0, Math.min(100, Math.round(target.pos)));
       }
 
       return updated;
