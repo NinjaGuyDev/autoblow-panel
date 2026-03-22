@@ -131,6 +131,7 @@ export function usePatternEditor() {
 
       // Track ultra ref and script duration for loop detection
       ultraRef.current = ultra;
+      if (loopActions.length === 0) return;
       setScriptDurationMs(loopActions[loopActions.length - 1]!.at);
 
       // Create funscript object and upload to device

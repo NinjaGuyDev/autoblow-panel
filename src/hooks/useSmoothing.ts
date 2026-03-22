@@ -55,13 +55,13 @@ export function useSmoothing({
       // Sort by index to ensure contiguous region
       selectedActionsList.sort((a, b) => a.index - b.index);
 
-      // Check if selection is contiguous
-      const isContiguous = selectedActionsList.every((item, i) => {
+      if (selectedActionsList.length === 0) {
+        result = smoothFunscript(actions, options);
+        originalCount = actions.length;
+      } else if (!selectedActionsList.every((item, i) => {
         if (i === 0) return true;
         return item.index === selectedActionsList[i - 1]!.index + 1;
-      });
-
-      if (!isContiguous) {
+      })) {
         // For non-contiguous selections, treat as entire script for now
         // (Could enhance later to smooth multiple contiguous segments)
         result = smoothFunscript(actions, options);

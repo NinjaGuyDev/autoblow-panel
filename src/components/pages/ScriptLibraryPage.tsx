@@ -36,7 +36,6 @@ interface ScriptLibraryPageProps {
   playSingle: (item: LibraryItem) => Promise<void>;
   stop: () => Promise<void>;
   startRandomize: () => Promise<void>;
-  togglePause: () => Promise<void>;
   isDeviceConnected: boolean;
   currentActions: FunscriptAction[];
   currentTimeMs: number;
@@ -89,7 +88,6 @@ export function ScriptLibraryPage({
   playSingle,
   stop,
   startRandomize,
-  togglePause: _togglePause,
   isDeviceConnected,
   currentActions,
   currentTimeMs,

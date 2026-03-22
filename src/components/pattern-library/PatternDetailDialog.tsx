@@ -160,6 +160,7 @@ export function PatternDetailDialog({
       }
 
       // Track script duration for loop detection
+      if (actions.length === 0) return;
       setScriptDurationMs(actions[actions.length - 1]!.at);
 
       // Upload to device

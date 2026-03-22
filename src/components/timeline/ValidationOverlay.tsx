@@ -41,10 +41,11 @@ export const ValidationOverlay = React.memo<ValidationOverlayProps>(
         impossible: 'rgba(239, 68, 68, 0.9)', // red
       };
 
-      // Filter segments to viewport range
+      // Filter segments to viewport range, skipping any with stale/out-of-bounds indices
       const visibleSegments = segments.filter((segment) => {
-        const startAction = actions[segment.startIndex]!;
-        const endAction = actions[segment.endIndex]!;
+        const startAction = actions[segment.startIndex];
+        const endAction = actions[segment.endIndex];
+        if (!startAction || !endAction) return false;
         return endAction.at >= viewStart && startAction.at <= viewEnd;
       });
 
@@ -72,8 +73,9 @@ export const ValidationOverlay = React.memo<ValidationOverlayProps>(
         ctx.beginPath();
 
         segs.forEach((segment) => {
-          const startAction = actions[segment.startIndex]!;
-          const endAction = actions[segment.endIndex]!;
+          const startAction = actions[segment.startIndex];
+          const endAction = actions[segment.endIndex];
+          if (!startAction || !endAction) return;
 
           const x1 = timeToX(startAction.at, viewStart, viewEnd, width);
           const y1 = posToY(startAction.pos, height);
@@ -87,17 +89,19 @@ export const ValidationOverlay = React.memo<ValidationOverlayProps>(
         ctx.stroke();
       });
 
-      // Filter gaps to viewport range
+      // Filter gaps to viewport range, skipping stale indices
       const visibleGaps = gaps.filter((gap) => {
-        const startAction = actions[gap.startIndex]!;
-        const endAction = actions[gap.endIndex]!;
+        const startAction = actions[gap.startIndex];
+        const endAction = actions[gap.endIndex];
+        if (!startAction || !endAction) return false;
         return endAction.at >= viewStart && startAction.at <= viewEnd;
       });
 
       // Render gaps (dashed lines with labels)
       visibleGaps.forEach((gap) => {
-        const startAction = actions[gap.startIndex]!;
-        const endAction = actions[gap.endIndex]!;
+        const startAction = actions[gap.startIndex];
+        const endAction = actions[gap.endIndex];
+        if (!startAction || !endAction) return;
 
         const gapStartX = timeToX(startAction.at, viewStart, viewEnd, width);
         const gapEndX = timeToX(endAction.at, viewStart, viewEnd, width);
