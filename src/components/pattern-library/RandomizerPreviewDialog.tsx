@@ -58,8 +58,8 @@ export function RandomizerPreviewDialog({
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    const observer = new ResizeObserver(([entry]) => {
-      setCanvasWidth(Math.floor(entry.contentRect.width));
+    const observer = new ResizeObserver(([entry]: ResizeObserverEntry[]) => {
+      if (entry) setCanvasWidth(Math.floor(entry.contentRect.width));
     });
     observer.observe(container);
     return () => observer.disconnect();
@@ -80,11 +80,11 @@ export function RandomizerPreviewDialog({
 
     // Draw segment backgrounds
     for (let i = 0; i < script.segments.length; i++) {
-      const seg = script.segments[i];
+      const seg = script.segments[i]!;
       const x1 = (seg.startMs / totalMs) * w;
       const x2 = (seg.endMs / totalMs) * w;
 
-      ctx.fillStyle = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
+      ctx.fillStyle = SEGMENT_COLORS[i % SEGMENT_COLORS.length]!;
       ctx.fillRect(x1, 0, x2 - x1, h);
 
       // Draw pattern name in upper region (between 100% and 75% y-axis)
@@ -117,7 +117,7 @@ export function RandomizerPreviewDialog({
     ctx.lineWidth = 2;
     ctx.beginPath();
     for (let i = 0; i < script.actions.length; i++) {
-      const action = script.actions[i];
+      const action = script.actions[i]!;
       const x = (action.at / totalMs) * w;
       const y = h - (action.pos / 100) * h;
       if (i === 0) ctx.moveTo(x, y);

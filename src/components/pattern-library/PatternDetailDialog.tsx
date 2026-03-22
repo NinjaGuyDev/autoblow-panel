@@ -143,8 +143,8 @@ export function PatternDetailDialog({
 
       // Add smoothing at the end if pattern ends at different position than it starts
       if (actions.length > 0) {
-        const firstPos = actions[0].pos;
-        const lastAction = actions[actions.length - 1];
+        const firstPos = actions[0]!.pos;
+        const lastAction = actions[actions.length - 1]!;
         const lastPos = lastAction.pos;
         const lastTime = lastAction.at;
 
@@ -160,7 +160,7 @@ export function PatternDetailDialog({
       }
 
       // Track script duration for loop detection
-      setScriptDurationMs(actions[actions.length - 1].at);
+      setScriptDurationMs(actions[actions.length - 1]!.at);
 
       // Upload to device
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

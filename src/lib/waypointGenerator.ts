@@ -28,15 +28,15 @@ export function waypointsToActions(waypoints: WaypointDefinition[]): FunscriptAc
   }
 
   if (waypoints.length === 1) {
-    return [{ pos: waypoints[0].pos, at: waypoints[0].timeMs }];
+    return [{ pos: waypoints[0]!.pos, at: waypoints[0]!.timeMs }];
   }
 
   const actions: FunscriptAction[] = [];
 
   // Process each segment (from waypoint i to waypoint i+1)
   for (let i = 0; i < waypoints.length - 1; i++) {
-    const start = waypoints[i];
-    const end = waypoints[i + 1];
+    const start = waypoints[i]!;
+    const end = waypoints[i + 1]!;
 
     // Special case: step interpolation - emit only the start point
     if (start.interpolation === 'step') {
@@ -71,7 +71,7 @@ export function waypointsToActions(waypoints: WaypointDefinition[]): FunscriptAc
   }
 
   // Always include the final waypoint (may be duplicate from last segment, filter below)
-  const lastWaypoint = waypoints[waypoints.length - 1];
+  const lastWaypoint = waypoints[waypoints.length - 1]!;
   actions.push({ pos: lastWaypoint.pos, at: lastWaypoint.timeMs });
 
   // Remove duplicate time values (keep last occurrence)
@@ -80,9 +80,9 @@ export function waypointsToActions(waypoints: WaypointDefinition[]): FunscriptAc
 
   // Iterate backwards to keep last occurrence of each time
   for (let i = actions.length - 1; i >= 0; i--) {
-    if (!seenTimes.has(actions[i].at)) {
-      seenTimes.add(actions[i].at);
-      uniqueActions.unshift(actions[i]);
+    if (!seenTimes.has(actions[i]!.at)) {
+      seenTimes.add(actions[i]!.at);
+      uniqueActions.unshift(actions[i]!);
     }
   }
 

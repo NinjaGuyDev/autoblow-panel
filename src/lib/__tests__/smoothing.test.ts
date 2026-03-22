@@ -232,9 +232,9 @@ describe('capSpeed', () => {
 
     // Middle point should be adjusted
     expect(result.length).toBe(3);
-    expect(result[1].pos).not.toBe(50);
-    expect(result[1].pos).toBeLessThan(50);
-    expect(result[1].pos).toBeGreaterThan(0);
+    expect(result[1]!.pos).not.toBe(50);
+    expect(result[1]!.pos).toBeLessThan(50);
+    expect(result[1]!.pos).toBeGreaterThan(0);
   });
 
   it('should NOT modify actions already within speed limit', () => {

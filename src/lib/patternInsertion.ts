@@ -68,12 +68,12 @@ export function insertPatternAtEnd(
 
   const lastPos =
     currentActions.length > 0
-      ? currentActions[currentActions.length - 1].pos
-      : patternActions[0].pos; // If no existing actions, no smoothing needed
+      ? currentActions[currentActions.length - 1]!.pos
+      : patternActions[0]!.pos; // If no existing actions, no smoothing needed
 
   // Create smooth transition from last position to pattern start
   if (currentActions.length > 0) {
-    const patternStartPos = patternActions[0].pos;
+    const patternStartPos = patternActions[0]!.pos;
     const transitionPoints = createSmoothTransition(
       lastPos,
       patternStartPos,
@@ -138,9 +138,9 @@ export function insertPatternAtCursor(
   let transitionDuration = 0;
 
   if (offsetPatternActions.length > 0 && afterActions.length > 0) {
-    const patternEndPos = offsetPatternActions[offsetPatternActions.length - 1].pos;
-    const patternEndTime = offsetPatternActions[offsetPatternActions.length - 1].at;
-    const afterStartPos = afterActions[0].pos;
+    const patternEndPos = offsetPatternActions[offsetPatternActions.length - 1]!.pos;
+    const patternEndTime = offsetPatternActions[offsetPatternActions.length - 1]!.at;
+    const afterStartPos = afterActions[0]!.pos;
 
     // Create smooth transition from pattern end to after actions start
     transitionActions = createSmoothTransition(

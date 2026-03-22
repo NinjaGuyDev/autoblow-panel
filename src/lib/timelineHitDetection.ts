@@ -67,7 +67,7 @@ export function hitTestActionPoint(
   let closestDistance = HIT_RADIUS_PX;
 
   for (let i = 0; i < actions.length; i++) {
-    const action = actions[i];
+    const action = actions[i]!;
 
     // Only check actions within the visible viewport
     if (action.at < viewStart || action.at > viewEnd) {
@@ -114,7 +114,7 @@ export function getPointsInRect(
   const maxY = Math.max(rect.startY, rect.endY);
 
   for (let i = 0; i < actions.length; i++) {
-    const action = actions[i];
+    const action = actions[i]!;
 
     // Only check actions within the visible viewport
     if (action.at < viewStart || action.at > viewEnd) {

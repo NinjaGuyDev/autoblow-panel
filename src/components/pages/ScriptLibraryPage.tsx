@@ -51,7 +51,7 @@ interface ScriptLibraryPageProps {
 function getScriptLengthSeconds(item: LibraryItem): number | null {
   const actions = parseScriptActions(item);
   if (actions.length === 0) return null;
-  return actions[actions.length - 1].at / 1000;
+  return actions[actions.length - 1]!.at / 1000;
 }
 
 /**
@@ -89,7 +89,7 @@ export function ScriptLibraryPage({
   playSingle,
   stop,
   startRandomize,
-  togglePause,
+  togglePause: _togglePause,
   isDeviceConnected,
   currentActions,
   currentTimeMs,
@@ -172,7 +172,7 @@ export function ScriptLibraryPage({
   const timelineDurationMs = scriptDurationMs > 0
     ? scriptDurationMs
     : editableActions.length > 0
-      ? editableActions[editableActions.length - 1].at
+      ? editableActions[editableActions.length - 1]!.at
       : 0;
 
   const handleDelete = async (id: number, name: string) => {

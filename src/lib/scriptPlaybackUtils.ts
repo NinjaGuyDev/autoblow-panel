@@ -49,8 +49,8 @@ export function prepareLoopedScript(actions: FunscriptAction[]): { funscript: Fu
     return { funscript: { actions: [] }, durationMs: 0 };
   }
 
-  const lastAction = actions[actions.length - 1];
-  const firstAction = actions[0];
+  const lastAction = actions[actions.length - 1]!;
+  const firstAction = actions[0]!;
 
   const transition = createSmoothTransition(
     lastAction.pos,
@@ -60,7 +60,7 @@ export function prepareLoopedScript(actions: FunscriptAction[]): { funscript: Fu
 
   const allActions = [...actions, ...transition];
   const durationMs = allActions.length > 0
-    ? allActions[allActions.length - 1].at
+    ? allActions[allActions.length - 1]!.at
     : 0;
 
   return {
@@ -83,16 +83,16 @@ export function prepareTransitionedScript(
   }
 
   const currentEndPos = currentActions.length > 0
-    ? currentActions[currentActions.length - 1].pos
-    : nextActions[0].pos;
+    ? currentActions[currentActions.length - 1]!.pos
+    : nextActions[0]!.pos;
 
-  const nextStartPos = nextActions[0].pos;
+  const nextStartPos = nextActions[0]!.pos;
 
   // Build transition from current end to next start
   const transition = createSmoothTransition(currentEndPos, nextStartPos, 0);
 
   const transitionDuration = transition.length > 0
-    ? transition[transition.length - 1].at
+    ? transition[transition.length - 1]!.at
     : 0;
 
   // Time-shift next actions to start after the transition
@@ -105,13 +105,13 @@ export function prepareTransitionedScript(
 
   // Add loop-back transition for the combined script
   if (allActions.length > 0) {
-    const lastAction = allActions[allActions.length - 1];
+    const lastAction = allActions[allActions.length - 1]!;
     const loopBack = createSmoothTransition(lastAction.pos, nextStartPos, lastAction.at);
     allActions.push(...loopBack);
   }
 
   const durationMs = allActions.length > 0
-    ? allActions[allActions.length - 1].at
+    ? allActions[allActions.length - 1]!.at
     : 0;
 
   return {
@@ -127,7 +127,7 @@ export function shuffleArray<T>(array: T[]): T[] {
   const shuffled = [...array];
   for (let i = shuffled.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    [shuffled[i], shuffled[j]] = [shuffled[j]!, shuffled[i]!];
   }
   return shuffled;
 }

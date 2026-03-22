@@ -28,7 +28,7 @@ export function FileDropzone({
   } = useDropzone({
     onDrop: (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
-        onFileAccepted(acceptedFiles[0]);
+        onFileAccepted(acceptedFiles[0]!);
       }
     },
     accept,

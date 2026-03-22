@@ -131,7 +131,7 @@ export function usePatternEditor() {
 
       // Track ultra ref and script duration for loop detection
       ultraRef.current = ultra;
-      setScriptDurationMs(loopActions[loopActions.length - 1].at);
+      setScriptDurationMs(loopActions[loopActions.length - 1]!.at);
 
       // Create funscript object and upload to device
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

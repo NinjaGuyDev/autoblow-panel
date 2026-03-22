@@ -43,8 +43,8 @@ export const ValidationOverlay = React.memo<ValidationOverlayProps>(
 
       // Filter segments to viewport range
       const visibleSegments = segments.filter((segment) => {
-        const startAction = actions[segment.startIndex];
-        const endAction = actions[segment.endIndex];
+        const startAction = actions[segment.startIndex]!;
+        const endAction = actions[segment.endIndex]!;
         return endAction.at >= viewStart && startAction.at <= viewEnd;
       });
 
@@ -72,8 +72,8 @@ export const ValidationOverlay = React.memo<ValidationOverlayProps>(
         ctx.beginPath();
 
         segs.forEach((segment) => {
-          const startAction = actions[segment.startIndex];
-          const endAction = actions[segment.endIndex];
+          const startAction = actions[segment.startIndex]!;
+          const endAction = actions[segment.endIndex]!;
 
           const x1 = timeToX(startAction.at, viewStart, viewEnd, width);
           const y1 = posToY(startAction.pos, height);
@@ -89,15 +89,15 @@ export const ValidationOverlay = React.memo<ValidationOverlayProps>(
 
       // Filter gaps to viewport range
       const visibleGaps = gaps.filter((gap) => {
-        const startAction = actions[gap.startIndex];
-        const endAction = actions[gap.endIndex];
+        const startAction = actions[gap.startIndex]!;
+        const endAction = actions[gap.endIndex]!;
         return endAction.at >= viewStart && startAction.at <= viewEnd;
       });
 
       // Render gaps (dashed lines with labels)
       visibleGaps.forEach((gap) => {
-        const startAction = actions[gap.startIndex];
-        const endAction = actions[gap.endIndex];
+        const startAction = actions[gap.startIndex]!;
+        const endAction = actions[gap.endIndex]!;
 
         const gapStartX = timeToX(startAction.at, viewStart, viewEnd, width);
         const gapEndX = timeToX(endAction.at, viewStart, viewEnd, width);

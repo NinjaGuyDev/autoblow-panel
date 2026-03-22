@@ -52,13 +52,13 @@ function computeMedianInterval(actions: FunscriptAction[]): number {
   if (actions.length < 2) return 0;
   const intervals: number[] = [];
   for (let i = 1; i < actions.length; i++) {
-    intervals.push(actions[i].at - actions[i - 1].at);
+    intervals.push(actions[i]!.at - actions[i - 1]!.at);
   }
   intervals.sort((a, b) => a - b);
   const mid = Math.floor(intervals.length / 2);
   return intervals.length % 2 === 0
-    ? (intervals[mid - 1] + intervals[mid]) / 2
-    : intervals[mid];
+    ? (intervals[mid - 1]! + intervals[mid]!) / 2
+    : intervals[mid]!;
 }
 
 /**
@@ -84,9 +84,9 @@ function detectOscillationSegments(
   };
 
   for (let i = 1; i < actions.length - 1; i++) {
-    const dt = actions[i + 1].at - actions[i].at;
-    const prevDelta = actions[i].pos - actions[i - 1].pos;
-    const nextDelta = actions[i + 1].pos - actions[i].pos;
+    const dt = actions[i + 1]!.at - actions[i]!.at;
+    const prevDelta = actions[i]!.pos - actions[i - 1]!.pos;
+    const nextDelta = actions[i + 1]!.pos - actions[i]!.pos;
 
     // Direction reversal: signs differ (excluding zero)
     const isReversal = prevDelta * nextDelta < 0;
@@ -158,7 +158,7 @@ function thinOscillations(
       let lastKeptIndex = segment.startIndex;
 
       for (let i = segment.startIndex + 1; i <= segment.endIndex; i++) {
-        const timeSinceLast = actions[i].at - actions[lastKeptIndex].at;
+        const timeSinceLast = actions[i]!.at - actions[lastKeptIndex]!.at;
 
         if (timeSinceLast >= options.targetIntervalMs) {
           // Keep if it's been long enough (simple time-based thinning)
@@ -198,25 +198,25 @@ function capSpeed(
     let violationCount = 0;
 
     for (let i = 1; i < result.length - 1; i++) {
-      const speedBefore = calculateSpeed(result[i - 1], result[i]);
-      const speedAfter = calculateSpeed(result[i], result[i + 1]);
+      const speedBefore = calculateSpeed(result[i - 1]!, result[i]!);
+      const speedAfter = calculateSpeed(result[i]!, result[i + 1]!);
 
       if (speedBefore > options.maxSpeed || speedAfter > options.maxSpeed) {
         violationCount++;
 
         // Compute time-weighted linear interpolation between neighbors
-        const prevPos = result[i - 1].pos;
-        const nextPos = result[i + 1].pos;
-        const prevTime = result[i - 1].at;
-        const nextTime = result[i + 1].at;
-        const currentTime = result[i].at;
+        const prevPos = result[i - 1]!.pos;
+        const nextPos = result[i + 1]!.pos;
+        const prevTime = result[i - 1]!.at;
+        const nextTime = result[i + 1]!.at;
+        const currentTime = result[i]!.at;
 
         const t = (currentTime - prevTime) / (nextTime - prevTime);
         const interpolatedPos = prevPos + (nextPos - prevPos) * t;
 
         // Blend current position toward interpolated position
-        result[i].pos = Math.round(
-          result[i].pos * (1 - options.interpolationWeight) +
+        result[i]!.pos = Math.round(
+          result[i]!.pos * (1 - options.interpolationWeight) +
           interpolatedPos * options.interpolationWeight
         );
       }
@@ -242,14 +242,14 @@ function removeIsolatedSpikes(
   const toRemove = new Set<number>();
 
   for (let i = 2; i < actions.length - 2; i++) {
-    const speedBefore = calculateSpeed(actions[i - 1], actions[i]);
-    const speedAfter = calculateSpeed(actions[i], actions[i + 1]);
-    const dtBefore = actions[i].at - actions[i - 1].at;
-    const dtAfter = actions[i + 1].at - actions[i].at;
+    const speedBefore = calculateSpeed(actions[i - 1]!, actions[i]!);
+    const speedAfter = calculateSpeed(actions[i]!, actions[i + 1]!);
+    const dtBefore = actions[i]!.at - actions[i - 1]!.at;
+    const dtAfter = actions[i + 1]!.at - actions[i]!.at;
 
     // Check for direction reversal
-    const deltaBefore = actions[i].pos - actions[i - 1].pos;
-    const deltaAfter = actions[i + 1].pos - actions[i].pos;
+    const deltaBefore = actions[i]!.pos - actions[i - 1]!.pos;
+    const deltaAfter = actions[i + 1]!.pos - actions[i]!.pos;
     const isReversal = deltaBefore * deltaAfter < 0;
 
     if (!isReversal) continue;
@@ -262,8 +262,8 @@ function removeIsolatedSpikes(
     if (!hasFastTransition) continue;
 
     // Check isolation: 2 steps away are not fast
-    const speed2Before = calculateSpeed(actions[i - 2], actions[i - 1]);
-    const speed2After = calculateSpeed(actions[i + 1], actions[i + 2]);
+    const speed2Before = calculateSpeed(actions[i - 2]!, actions[i - 1]!);
+    const speed2After = calculateSpeed(actions[i + 1]!, actions[i + 2]!);
     const isFast2Before = speed2Before > options.minSpeed;
     const isFast2After = speed2After > options.minSpeed;
     const isIsolated = !isFast2Before && !isFast2After;
@@ -283,12 +283,12 @@ function removeIsolatedSpikes(
 function cleanupDuplicates(actions: FunscriptAction[]): FunscriptAction[] {
   if (actions.length < 2) return actions;
 
-  const result: FunscriptAction[] = [actions[0]];
+  const result: FunscriptAction[] = [actions[0]!];
 
   for (let i = 1; i < actions.length; i++) {
     // Only add if position differs from last kept action
-    if (actions[i].pos !== result[result.length - 1].pos) {
-      result.push(actions[i]);
+    if (actions[i]!.pos !== result[result.length - 1]!.pos) {
+      result.push(actions[i]!);
     }
   }
 

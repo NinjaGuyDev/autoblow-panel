@@ -159,7 +159,7 @@ export function WaypointBuilderDialog({
     let hitWaypoint = false;
 
     for (let i = 0; i < waypoints.length; i++) {
-      const pt = dataToPixel(waypoints[i].timeMs, waypoints[i].pos, tr, canvas.width);
+      const pt = dataToPixel(waypoints[i]!.timeMs, waypoints[i]!.pos, tr, canvas.width);
       if (pointDistance(x, y, pt.x, pt.y) <= HIT_RADIUS) {
         onSelectWaypoint(i);
         setDraggedIndex(i);
@@ -202,7 +202,7 @@ export function WaypointBuilderDialog({
 
   if (!isOpen) return null;
 
-  const selectedWaypoint = selectedIndex !== null ? waypoints[selectedIndex] : null;
+  const selectedWaypoint = selectedIndex !== null ? waypoints[selectedIndex] ?? null : null;
 
   return (
     <PatternDialogShell

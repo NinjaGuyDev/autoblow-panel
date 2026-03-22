@@ -25,8 +25,8 @@ export function scalePatternDuration(
   }
 
   // Calculate original duration
-  const firstAction = actions[0];
-  const lastAction = actions[actions.length - 1];
+  const firstAction = actions[0]!;
+  const lastAction = actions[actions.length - 1]!;
   const originalDuration = lastAction.at - firstAction.at;
 
   // Cannot scale zero-duration pattern (avoid division by zero)
@@ -99,8 +99,8 @@ export function createLoopTransition(
     return [];
   }
 
-  const firstAction = actions[0];
-  const lastAction = actions[actions.length - 1];
+  const firstAction = actions[0]!;
+  const lastAction = actions[actions.length - 1]!;
   const endPos = lastAction.pos;
   const startPos = firstAction.pos;
 

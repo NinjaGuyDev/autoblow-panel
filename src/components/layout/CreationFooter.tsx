@@ -113,8 +113,8 @@ export function CreationFooter({
 
       // Add smooth transition back to start position for seamless looping
       if (demoActions.length > 1) {
-        const firstPos = demoActions[0].pos;
-        const lastAction = demoActions[demoActions.length - 1];
+        const firstPos = demoActions[0]!.pos;
+        const lastAction = demoActions[demoActions.length - 1]!;
 
         if (firstPos !== lastAction.pos) {
           const smoothingActions = createSmoothTransition(
@@ -126,7 +126,7 @@ export function CreationFooter({
         }
       }
 
-      setScriptDurationMs(demoActions[demoActions.length - 1].at);
+      setScriptDurationMs(demoActions[demoActions.length - 1]!.at);
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await ultra.syncScriptUploadFunscriptFile(buildFunscript(demoActions) as any);
@@ -158,7 +158,7 @@ export function CreationFooter({
     setSaveStatus('idle');
     try {
       const funscriptName = `${scriptName || 'Untitled'}.funscript`;
-      const durationSeconds = actions[actions.length - 1].at / 1000;
+      const durationSeconds = actions[actions.length - 1]!.at / 1000;
 
       await libraryApi.create({
         videoName: null,

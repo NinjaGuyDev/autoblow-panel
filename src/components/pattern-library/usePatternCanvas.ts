@@ -14,7 +14,7 @@ export function usePatternCanvas() {
     if (!containerRef.current) return;
 
     const observer = new ResizeObserver((entries) => {
-      setCanvasWidth(entries[0].contentRect.width);
+      if (entries[0]) setCanvasWidth(entries[0].contentRect.width);
     });
 
     observer.observe(containerRef.current);
