@@ -2,55 +2,134 @@ import type Database from 'better-sqlite3';
 import type { LibraryItem, CreateLibraryItemRequest } from '../types/shared.js';
 
 export class LibraryRepository {
-  constructor(private db: Database.Database) {}
+  private readonly findAllStmt: Database.Statement;
+  private readonly findByIdStmt: Database.Statement;
+  private readonly searchStmt: Database.Statement;
+  private readonly findCustomPatternsStmt: Database.Statement;
+  private readonly createStmt: Database.Statement;
+  private readonly deleteStmt: Database.Statement;
+  private readonly softDeleteStmt: Database.Statement;
+  private readonly updateByIdStmt: Database.Statement;
+  private readonly updateCustomPatternStmt: Database.Statement;
+  private readonly findExistingByNameStmt: Database.Statement;
+  private readonly upsertUpdateStmt: Database.Statement;
+  private readonly getMigrationStatusStmt: Database.Statement;
+  private readonly setMigrationCompleteStmt: Database.Statement;
+  private readonly bulkInsertStmt: Database.Statement;
 
-  findAll(): LibraryItem[] {
-    const stmt = this.db.prepare(`
+  constructor(private db: Database.Database) {
+    this.findAllStmt = db.prepare(`
       SELECT * FROM library_items
       WHERE (isCustomPattern = 0 OR isCustomPattern IS NULL)
         AND deletedAt IS NULL
       ORDER BY lastModified DESC
     `);
-    return stmt.all() as LibraryItem[];
-  }
 
-  findById(id: number): LibraryItem | undefined {
-    const stmt = this.db.prepare(`
+    this.findByIdStmt = db.prepare(`
       SELECT * FROM library_items WHERE id = ?
     `);
-    return stmt.get(id) as LibraryItem | undefined;
-  }
 
-  search(query: string): LibraryItem[] {
-    const searchPattern = `%${query}%`;
-    const stmt = this.db.prepare(`
+    this.searchStmt = db.prepare(`
       SELECT * FROM library_items
       WHERE (videoName LIKE ? OR funscriptName LIKE ?)
         AND (isCustomPattern = 0 OR isCustomPattern IS NULL)
         AND deletedAt IS NULL
       ORDER BY lastModified DESC
     `);
-    return stmt.all(searchPattern, searchPattern) as LibraryItem[];
-  }
 
-  findCustomPatterns(): LibraryItem[] {
-    const stmt = this.db.prepare(`
+    this.findCustomPatternsStmt = db.prepare(`
       SELECT * FROM library_items
       WHERE isCustomPattern = 1
         AND deletedAt IS NULL
       ORDER BY lastModified DESC
     `);
-    return stmt.all() as LibraryItem[];
-  }
 
-  create(item: CreateLibraryItemRequest): LibraryItem {
-    const lastModified = new Date().toISOString();
-    const stmt = this.db.prepare(`
+    this.createStmt = db.prepare(`
       INSERT INTO library_items (videoName, funscriptName, funscriptData, duration, lastModified, isCustomPattern, originalPatternId, patternMetadata)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       RETURNING *
     `);
-    return stmt.get(
+
+    this.deleteStmt = db.prepare(`
+      DELETE FROM library_items WHERE id = ?
+    `);
+
+    this.softDeleteStmt = db.prepare(`
+      UPDATE library_items
+      SET deletedAt = ?
+      WHERE id = ? AND deletedAt IS NULL
+    `);
+
+    this.updateByIdStmt = db.prepare(`
+      UPDATE library_items
+      SET funscriptName = COALESCE(?, funscriptName),
+          funscriptData = COALESCE(?, funscriptData),
+          duration = COALESCE(?, duration),
+          lastModified = ?
+      WHERE id = ?
+      RETURNING *
+    `);
+
+    this.updateCustomPatternStmt = db.prepare(`
+      UPDATE library_items
+      SET funscriptData = COALESCE(?, funscriptData),
+          patternMetadata = COALESCE(?, patternMetadata),
+          lastModified = ?
+      WHERE id = ?
+      RETURNING *
+    `);
+
+    this.findExistingByNameStmt = db.prepare(`
+      SELECT id FROM library_items
+      WHERE (videoName IS ? AND videoName IS NOT NULL)
+         OR (funscriptName IS ? AND funscriptName IS NOT NULL AND videoName IS NULL AND ? IS NULL)
+      ORDER BY lastModified DESC
+      LIMIT 1
+    `);
+
+    this.upsertUpdateStmt = db.prepare(`
+      UPDATE library_items
+      SET funscriptName = ?, funscriptData = ?, duration = ?, lastModified = ?
+      WHERE id = ?
+      RETURNING *
+    `);
+
+    this.getMigrationStatusStmt = db.prepare(`
+      SELECT migrated FROM migration_status WHERE id = 1
+    `);
+
+    this.setMigrationCompleteStmt = db.prepare(`
+      UPDATE migration_status
+      SET migrated = 1, migratedAt = ?
+      WHERE id = 1
+    `);
+
+    this.bulkInsertStmt = db.prepare(`
+      INSERT INTO library_items (videoName, funscriptName, funscriptData, duration, lastModified, isCustomPattern, originalPatternId, patternMetadata)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+  }
+
+  findAll(): LibraryItem[] {
+    return this.findAllStmt.all() as LibraryItem[];
+  }
+
+  findById(id: number): LibraryItem | undefined {
+    return this.findByIdStmt.get(id) as LibraryItem | undefined;
+  }
+
+  search(query: string): LibraryItem[] {
+    const searchPattern = `%${query}%`;
+    return this.searchStmt.all(searchPattern, searchPattern) as LibraryItem[];
+  }
+
+  findCustomPatterns(): LibraryItem[] {
+    return this.findCustomPatternsStmt.all() as LibraryItem[];
+  }
+
+  create(item: CreateLibraryItemRequest): LibraryItem {
+    const lastModified = new Date().toISOString();
+    return this.createStmt.get(
       item.videoName,
       item.funscriptName,
       item.funscriptData,
@@ -63,36 +142,19 @@ export class LibraryRepository {
   }
 
   delete(id: number): number {
-    const stmt = this.db.prepare(`
-      DELETE FROM library_items WHERE id = ?
-    `);
-    const result = stmt.run(id);
+    const result = this.deleteStmt.run(id);
     return result.changes;
   }
 
   softDelete(id: number): number {
     const deletedAt = new Date().toISOString();
-    const stmt = this.db.prepare(`
-      UPDATE library_items
-      SET deletedAt = ?
-      WHERE id = ? AND deletedAt IS NULL
-    `);
-    const result = stmt.run(deletedAt, id);
+    const result = this.softDeleteStmt.run(deletedAt, id);
     return result.changes;
   }
 
   updateById(id: number, item: Partial<CreateLibraryItemRequest>): LibraryItem {
     const lastModified = new Date().toISOString();
-    const stmt = this.db.prepare(`
-      UPDATE library_items
-      SET funscriptName = COALESCE(?, funscriptName),
-          funscriptData = COALESCE(?, funscriptData),
-          duration = COALESCE(?, duration),
-          lastModified = ?
-      WHERE id = ?
-      RETURNING *
-    `);
-    return stmt.get(
+    return this.updateByIdStmt.get(
       item.funscriptName ?? null,
       item.funscriptData ?? null,
       item.duration ?? null,
@@ -103,15 +165,7 @@ export class LibraryRepository {
 
   updateCustomPattern(id: number, item: Partial<CreateLibraryItemRequest>): LibraryItem {
     const lastModified = new Date().toISOString();
-    const stmt = this.db.prepare(`
-      UPDATE library_items
-      SET funscriptData = COALESCE(?, funscriptData),
-          patternMetadata = COALESCE(?, patternMetadata),
-          lastModified = ?
-      WHERE id = ?
-      RETURNING *
-    `);
-    return stmt.get(
+    return this.updateCustomPatternStmt.get(
       item.funscriptData ?? null,
       item.patternMetadata ?? null,
       lastModified,
@@ -122,26 +176,14 @@ export class LibraryRepository {
   upsertByVideoName(item: CreateLibraryItemRequest): LibraryItem {
     const lastModified = new Date().toISOString();
 
-    // Check if item with matching videoName or funscriptName exists
-    // Use IS instead of = for proper NULL comparison in SQL
-    const existingStmt = this.db.prepare(`
-      SELECT id FROM library_items
-      WHERE (videoName IS ? AND videoName IS NOT NULL)
-         OR (funscriptName IS ? AND funscriptName IS NOT NULL AND videoName IS NULL AND ? IS NULL)
-      ORDER BY lastModified DESC
-      LIMIT 1
-    `);
-    const existing = existingStmt.get(item.videoName, item.funscriptName, item.videoName) as { id: number } | undefined;
+    const existing = this.findExistingByNameStmt.get(
+      item.videoName,
+      item.funscriptName,
+      item.videoName
+    ) as { id: number } | undefined;
 
     if (existing) {
-      // Update existing item
-      const updateStmt = this.db.prepare(`
-        UPDATE library_items
-        SET funscriptName = ?, funscriptData = ?, duration = ?, lastModified = ?
-        WHERE id = ?
-        RETURNING *
-      `);
-      return updateStmt.get(
+      return this.upsertUpdateStmt.get(
         item.funscriptName,
         item.funscriptData,
         item.duration,
@@ -149,39 +191,25 @@ export class LibraryRepository {
         existing.id
       ) as LibraryItem;
     } else {
-      // Create new item
       return this.create(item);
     }
   }
 
   getMigrationStatus(): boolean {
-    const stmt = this.db.prepare(`
-      SELECT migrated FROM migration_status WHERE id = 1
-    `);
-    const result = stmt.get() as { migrated: number } | undefined;
+    const result = this.getMigrationStatusStmt.get() as { migrated: number } | undefined;
     return result?.migrated === 1;
   }
 
   setMigrationComplete(): void {
     const migratedAt = new Date().toISOString();
-    const stmt = this.db.prepare(`
-      UPDATE migration_status
-      SET migrated = 1, migratedAt = ?
-      WHERE id = 1
-    `);
-    stmt.run(migratedAt);
+    this.setMigrationCompleteStmt.run(migratedAt);
   }
 
   bulkCreate(items: CreateLibraryItemRequest[]): void {
-    const insertStmt = this.db.prepare(`
-      INSERT INTO library_items (videoName, funscriptName, funscriptData, duration, lastModified, isCustomPattern, originalPatternId, patternMetadata)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
     const insertMany = this.db.transaction((items: CreateLibraryItemRequest[]) => {
       const lastModified = new Date().toISOString();
       for (const item of items) {
-        insertStmt.run(
+        this.bulkInsertStmt.run(
           item.videoName,
           item.funscriptName,
           item.funscriptData,

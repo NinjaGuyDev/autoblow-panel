@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import type { PlaylistController } from '../controllers/playlist.controller.js';
+import { validateBody } from '../middleware/validate-body.js';
+import { CreatePlaylistSchema, UpdatePlaylistSchema, AddPlaylistItemSchema, ReorderPlaylistItemsSchema } from '../schemas/playlist.schemas.js';
 
 export function createPlaylistRouter(controller: PlaylistController): Router {
   const router = Router();
@@ -14,16 +16,16 @@ export function createPlaylistRouter(controller: PlaylistController): Router {
   router.get('/:id/items', controller.getItems);
 
   // Create new playlist
-  router.post('/', controller.create);
+  router.post('/', validateBody(CreatePlaylistSchema), controller.create);
 
   // Add item to playlist
-  router.post('/:id/items', controller.addItem);
+  router.post('/:id/items', validateBody(AddPlaylistItemSchema), controller.addItem);
 
   // Reorder playlist items (must come before /:id/items/:itemId to avoid "reorder" matching as :itemId)
-  router.put('/:id/items/reorder', controller.reorderItems);
+  router.put('/:id/items/reorder', validateBody(ReorderPlaylistItemsSchema), controller.reorderItems);
 
   // Update playlist
-  router.patch('/:id', controller.update);
+  router.patch('/:id', validateBody(UpdatePlaylistSchema), controller.update);
 
   // Delete playlist
   router.delete('/:id', controller.delete);

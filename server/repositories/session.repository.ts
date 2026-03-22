@@ -2,48 +2,39 @@ import type Database from 'better-sqlite3';
 import type { Session, CreateSessionRequest, UpdateSessionRequest, SessionStats, MostPlayedScript } from '../types/shared.js';
 
 export class SessionRepository {
-  constructor(private db: Database.Database) {}
+  private readonly findAllStmt: Database.Statement;
+  private readonly findByIdStmt: Database.Statement;
+  private readonly findByDateRangeStmt: Database.Statement;
+  private readonly createStmt: Database.Statement;
+  private readonly updateStmt: Database.Statement;
+  private readonly deleteStmt: Database.Statement;
+  private readonly getStatsByContextStmt: Database.Statement;
+  private readonly getStatsAllStmt: Database.Statement;
+  private readonly getMostPlayedStmt: Database.Statement;
 
-  findAll(): Session[] {
-    const stmt = this.db.prepare(`
+  constructor(private db: Database.Database) {
+    this.findAllStmt = db.prepare(`
       SELECT * FROM sessions
       ORDER BY startedAt DESC
     `);
-    return stmt.all() as Session[];
-  }
 
-  findById(id: number): Session | undefined {
-    const stmt = this.db.prepare(`
+    this.findByIdStmt = db.prepare(`
       SELECT * FROM sessions WHERE id = ?
     `);
-    return stmt.get(id) as Session | undefined;
-  }
 
-  findByDateRange(startDate: string, endDate: string): Session[] {
-    const stmt = this.db.prepare(`
+    this.findByDateRangeStmt = db.prepare(`
       SELECT * FROM sessions
       WHERE startedAt >= ? AND startedAt < ?
       ORDER BY startedAt DESC
     `);
-    return stmt.all(startDate, endDate) as Session[];
-  }
 
-  create(data: CreateSessionRequest): Session {
-    const stmt = this.db.prepare(`
+    this.createStmt = db.prepare(`
       INSERT INTO sessions (startedAt, libraryItemId, context, scriptOrder)
       VALUES (?, ?, ?, ?)
       RETURNING *
     `);
-    return stmt.get(
-      data.startedAt,
-      data.libraryItemId ?? null,
-      data.context,
-      data.scriptOrder ?? '[]'
-    ) as Session;
-  }
 
-  update(id: number, data: UpdateSessionRequest): Session {
-    const stmt = this.db.prepare(`
+    this.updateStmt = db.prepare(`
       UPDATE sessions
       SET endedAt = COALESCE(?, endedAt),
           durationSeconds = COALESCE(?, durationSeconds),
@@ -51,47 +42,29 @@ export class SessionRepository {
       WHERE id = ?
       RETURNING *
     `);
-    return stmt.get(
-      data.endedAt ?? null,
-      data.durationSeconds ?? null,
-      data.scriptOrder ?? null,
-      id
-    ) as Session;
-  }
 
-  delete(id: number): number {
-    const stmt = this.db.prepare(`
+    this.deleteStmt = db.prepare(`
       DELETE FROM sessions WHERE id = ?
     `);
-    const result = stmt.run(id);
-    return result.changes;
-  }
 
-  getStats(context?: string): SessionStats {
-    if (context) {
-      const stmt = this.db.prepare(`
-        SELECT
-          COUNT(*) as totalSessions,
-          COALESCE(SUM(durationSeconds), 0) as totalDurationSeconds,
-          COALESCE(AVG(durationSeconds), 0) as avgDurationSeconds
-        FROM sessions
-        WHERE context = ?
-      `);
-      return stmt.get(context) as SessionStats;
-    }
+    this.getStatsByContextStmt = db.prepare(`
+      SELECT
+        COUNT(*) as totalSessions,
+        COALESCE(SUM(durationSeconds), 0) as totalDurationSeconds,
+        COALESCE(AVG(durationSeconds), 0) as avgDurationSeconds
+      FROM sessions
+      WHERE context = ?
+    `);
 
-    const stmt = this.db.prepare(`
+    this.getStatsAllStmt = db.prepare(`
       SELECT
         COUNT(*) as totalSessions,
         COALESCE(SUM(durationSeconds), 0) as totalDurationSeconds,
         COALESCE(AVG(durationSeconds), 0) as avgDurationSeconds
       FROM sessions
     `);
-    return stmt.get() as SessionStats;
-  }
 
-  getMostPlayed(limit: number = 10): MostPlayedScript[] {
-    const stmt = this.db.prepare(`
+    this.getMostPlayedStmt = db.prepare(`
       SELECT
         libraryItemId,
         COUNT(*) as playCount,
@@ -103,6 +76,51 @@ export class SessionRepository {
       ORDER BY playCount DESC
       LIMIT ?
     `);
-    return stmt.all(limit) as MostPlayedScript[];
+  }
+
+  findAll(): Session[] {
+    return this.findAllStmt.all() as Session[];
+  }
+
+  findById(id: number): Session | undefined {
+    return this.findByIdStmt.get(id) as Session | undefined;
+  }
+
+  findByDateRange(startDate: string, endDate: string): Session[] {
+    return this.findByDateRangeStmt.all(startDate, endDate) as Session[];
+  }
+
+  create(data: CreateSessionRequest): Session {
+    return this.createStmt.get(
+      data.startedAt,
+      data.libraryItemId ?? null,
+      data.context,
+      data.scriptOrder ?? '[]'
+    ) as Session;
+  }
+
+  update(id: number, data: UpdateSessionRequest): Session {
+    return this.updateStmt.get(
+      data.endedAt ?? null,
+      data.durationSeconds ?? null,
+      data.scriptOrder ?? null,
+      id
+    ) as Session;
+  }
+
+  delete(id: number): number {
+    const result = this.deleteStmt.run(id);
+    return result.changes;
+  }
+
+  getStats(context?: string): SessionStats {
+    if (context) {
+      return this.getStatsByContextStmt.get(context) as SessionStats;
+    }
+    return this.getStatsAllStmt.get() as SessionStats;
+  }
+
+  getMostPlayed(limit: number = 10): MostPlayedScript[] {
+    return this.getMostPlayedStmt.all(limit) as MostPlayedScript[];
   }
 }

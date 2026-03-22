@@ -1,7 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { parseIdParam, parseQueryParamInt, requireStringQueryParam } from '../middleware/validation.js';
 import type { ClimaxService } from '../services/climax.service.js';
-import type { CreateClimaxRecordRequest, CreatePauseEventRequest } from '../types/shared.js';
 
 export class AnalyticsController {
   constructor(private climaxService: ClimaxService) {}
@@ -47,8 +46,7 @@ export class AnalyticsController {
 
   createClimaxRecord = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const data = req.body as CreateClimaxRecordRequest;
-      const record = this.climaxService.createClimaxRecord(data);
+      const record = this.climaxService.createClimaxRecord(req.body);
       res.status(201).json(record);
     } catch (error) {
       next(error);
@@ -81,8 +79,7 @@ export class AnalyticsController {
 
   createPauseEvent = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const data = req.body as CreatePauseEventRequest;
-      const event = this.climaxService.createPauseEvent(data);
+      const event = this.climaxService.createPauseEvent(req.body);
       res.status(201).json(event);
     } catch (error) {
       next(error);
