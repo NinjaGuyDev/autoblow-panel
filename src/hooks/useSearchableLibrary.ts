@@ -4,7 +4,7 @@
  * (video library, script-only library, etc.).
  */
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { libraryApi } from '@/lib/apiClient';
 import { useAsyncOperation } from '@/hooks/useAsyncOperation';
@@ -37,16 +37,22 @@ export function useSearchableLibrary({
   const [rawItems, setRawItems] = useState<LibraryItem[]>([]);
   const { loading, error, run, execute } = useAsyncOperation(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const requestIdRef = useRef(0);
 
   const fetchItems = useCallback(async (query: string) => {
+    const requestId = ++requestIdRef.current;
     try {
       const results = await run(
         () => query.trim() === '' ? libraryApi.getAll() : libraryApi.search(query),
         fetchErrorMessage,
       );
-      setRawItems(results);
+      if (requestId === requestIdRef.current) {
+        setRawItems(results);
+      }
     } catch {
-      setRawItems([]);
+      if (requestId === requestIdRef.current) {
+        setRawItems([]);
+      }
     }
   }, [run, fetchErrorMessage]);
 
