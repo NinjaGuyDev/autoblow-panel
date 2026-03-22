@@ -74,8 +74,8 @@ export function validateFunscript(actions: FunscriptAction[]): ValidationResult 
 
   // Process each consecutive pair
   for (let i = 0; i < actions.length - 1; i++) {
-    const currentAction = actions[i];
-    const nextAction = actions[i + 1];
+    const currentAction = actions[i]!;
+    const nextAction = actions[i + 1]!;
 
     const speed = calculateSpeed(currentAction, nextAction);
     const classification = classifySegment(speed);

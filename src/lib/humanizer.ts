@@ -67,12 +67,12 @@ function detectStrokes(actions: FunscriptAction[]): Stroke[] {
   const strokes: Stroke[] = [];
 
   for (let i = 1; i < actions.length - 1; i++) {
-    const prevDelta = actions[i].pos - actions[i - 1].pos;
-    const nextDelta = actions[i + 1].pos - actions[i].pos;
+    const prevDelta = actions[i]!.pos - actions[i - 1]!.pos;
+    const nextDelta = actions[i + 1]!.pos - actions[i]!.pos;
 
     // Turning point: direction reversal
     if (prevDelta * nextDelta < 0) {
-      const intervalMs = actions[i].at - actions[i - 1].at;
+      const intervalMs = actions[i]!.at - actions[i - 1]!.at;
       strokes.push({
         apexIndex: i,
         range: Math.abs(prevDelta),
@@ -113,8 +113,8 @@ function detectRepetitiveRuns(
     if (windowSize < minRepetitions) break;
 
     const windowStrokes = strokes.slice(runStart, runStart + windowSize);
-    const meanRange = windowStrokes.reduce((s, st) => s + st.range, 0) / windowSize;
-    const meanInterval = windowStrokes.reduce((s, st) => s + st.intervalMs, 0) / windowSize;
+    const meanRange = windowStrokes.reduce((s, st: Stroke) => s + st.range, 0) / windowSize;
+    const meanInterval = windowStrokes.reduce((s, st: Stroke) => s + st.intervalMs, 0) / windowSize;
 
     if (meanRange === 0 || meanInterval === 0) {
       runStart++;
@@ -126,7 +126,7 @@ function detectRepetitiveRuns(
     let i = runStart;
 
     while (i < strokes.length) {
-      const st = strokes[i];
+      const st = strokes[i]!;
       const rangeDiff = Math.abs(st.range - meanRange) / meanRange;
       const intervalDiff = Math.abs(st.intervalMs - meanInterval) / meanInterval;
 
@@ -177,20 +177,20 @@ function perturbTiming(
   rand: () => number
 ): number {
   const maxShift = Math.floor(nominalIntervalMs * timingVariance);
-  if (maxShift === 0) return actions[index].at;
+  if (maxShift === 0) return actions[index]!.at;
 
   const rawShift = Math.round(randomSigned(rand) * maxShift);
 
   // Clamp so neither adjacent gap falls below MIN_INTERVAL_MS
-  const prev = index > 0 ? actions[index - 1].at : actions[index].at - MIN_INTERVAL_MS;
-  const next = index < actions.length - 1 ? actions[index + 1].at : actions[index].at + MIN_INTERVAL_MS;
+  const prev = index > 0 ? actions[index - 1]!.at : actions[index]!.at - MIN_INTERVAL_MS;
+  const next = index < actions.length - 1 ? actions[index + 1]!.at : actions[index]!.at + MIN_INTERVAL_MS;
 
   const minAt = prev + MIN_INTERVAL_MS;
   const maxAt = next - MIN_INTERVAL_MS;
 
-  if (minAt > maxAt) return actions[index].at;
+  if (minAt > maxAt) return actions[index]!.at;
 
-  return Math.max(minAt, Math.min(maxAt, actions[index].at + rawShift));
+  return Math.max(minAt, Math.min(maxAt, actions[index]!.at + rawShift));
 }
 
 // ---------------------------------------------------------------------------
@@ -247,7 +247,7 @@ export function humanizeFunscript(
   const perturbSet = new Set<number>();
   for (const run of runs) {
     for (const si of run.strokeIndices) {
-      const apexIndex = strokes[si].apexIndex;
+      const apexIndex = strokes[si]!.apexIndex;
       // Never touch first or last action
       if (apexIndex > 0 && apexIndex < actions.length - 1) {
         perturbSet.add(apexIndex);
@@ -264,16 +264,16 @@ export function humanizeFunscript(
     const nominalInterval = stroke ? stroke.intervalMs : 200;
 
     // Perturb position
-    result[idx].pos = perturbPosition(result[idx].pos, opts.amplitudeVariance, rand);
+    result[idx]!.pos = perturbPosition(result[idx]!.pos, opts.amplitudeVariance, rand);
 
     // Perturb timing (operates on result so adjacent perturbations interact)
-    result[idx].at = perturbTiming(result, idx, nominalInterval, opts.timingVariance, rand);
+    result[idx]!.at = perturbTiming(result, idx, nominalInterval, opts.timingVariance, rand);
   }
 
   // Ensure timestamps remain strictly increasing after timing perturbations
   for (let i = 1; i < result.length; i++) {
-    if (result[i].at <= result[i - 1].at) {
-      result[i].at = result[i - 1].at + MIN_INTERVAL_MS;
+    if (result[i]!.at <= result[i - 1]!.at) {
+      result[i]!.at = result[i - 1]!.at + MIN_INTERVAL_MS;
     }
   }
 

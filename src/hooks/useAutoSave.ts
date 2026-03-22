@@ -29,7 +29,7 @@ export function useAutoSave(): UseAutoSaveReturn {
         const items = await libraryApi.getAll();
         if (items.length > 0) {
           // Get the most recent item (sorted by lastModified descending on backend)
-          setLastSession(items[0]);
+          setLastSession(items[0] ?? null);
         }
       } catch (err) {
         console.error('Failed to load last session:', err);

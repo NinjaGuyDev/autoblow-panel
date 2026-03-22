@@ -41,7 +41,7 @@ export function NavBar({ activeTab, onTabChange }: NavBarProps) {
     }
 
     if (targetIndex !== null) {
-      const targetTab = TABS[targetIndex];
+      const targetTab = TABS[targetIndex]!;
       onTabChange(targetTab.id);
 
       setTimeout(() => {

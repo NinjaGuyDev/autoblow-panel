@@ -41,8 +41,8 @@ export function getPatternDirection(
   const actions = getPatternActions(pattern);
   if (actions.length === 0) return 'neutral';
 
-  const startPos = actions[0].pos;
-  const endPos = actions[actions.length - 1].pos;
+  const startPos = actions[0]!.pos;
+  const endPos = actions[actions.length - 1]!.pos;
 
   if (endPos > startPos) return 'up';
   if (endPos < startPos) return 'down';

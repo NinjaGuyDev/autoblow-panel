@@ -57,7 +57,7 @@ describe('humanizeFunscript — uniform oscillation', () => {
       similarityTolerance: 0.4,
     });
 
-    const changed = result.some((a, i) => a.pos !== actions[i].pos || a.at !== actions[i].at);
+    const changed = result.some((a, i) => a.pos !== actions[i]!.pos || a.at !== actions[i]!.at);
     expect(changed).toBe(true);
   });
 
@@ -87,7 +87,7 @@ describe('humanizeFunscript — uniform oscillation', () => {
     });
 
     for (let i = 1; i < result.length; i++) {
-      expect(result[i].at).toBeGreaterThan(result[i - 1].at);
+      expect(result[i]!.at).toBeGreaterThan(result[i - 1]!.at);
     }
   });
 
@@ -116,7 +116,7 @@ describe('humanizeFunscript — non-repetitive content', () => {
     // With only 2 reversals (3 actions between), may not trigger — result should still be valid
     expect(result.length).toBe(actions.length);
     for (let i = 1; i < result.length; i++) {
-      expect(result[i].at).toBeGreaterThan(result[i - 1].at);
+      expect(result[i]!.at).toBeGreaterThan(result[i - 1]!.at);
     }
   });
 
@@ -166,7 +166,7 @@ describe('humanizeFunscript — mixed content', () => {
     expect(result[result.length - 1]).toEqual(actions[actions.length - 1]);
     // Timestamps still increasing
     for (let i = 1; i < result.length; i++) {
-      expect(result[i].at).toBeGreaterThan(result[i - 1].at);
+      expect(result[i]!.at).toBeGreaterThan(result[i - 1]!.at);
     }
   });
 });

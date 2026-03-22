@@ -45,7 +45,7 @@ export function useDrawMode({
 
       setDrawPoints((prev) => {
         if (prev.length > 0) {
-          const last = prev[prev.length - 1];
+          const last = prev[prev.length - 1]!;
           if (Math.abs(timeMs - last.timeMs) < DRAW_SUBSAMPLE_MS) {
             return prev; // Too close — skip
           }
@@ -64,15 +64,15 @@ export function useDrawMode({
     }
 
     // Subsample to ensure minimum intervals
-    const subsampled: Array<{ timeMs: number; pos: number }> = [drawPoints[0]];
+    const subsampled: Array<{ timeMs: number; pos: number }> = [drawPoints[0]!];
     for (let i = 1; i < drawPoints.length - 1; i++) {
-      const last = subsampled[subsampled.length - 1];
-      if (drawPoints[i].timeMs - last.timeMs >= DRAW_SUBSAMPLE_MS) {
-        subsampled.push(drawPoints[i]);
+      const last = subsampled[subsampled.length - 1]!;
+      if (drawPoints[i]!.timeMs - last.timeMs >= DRAW_SUBSAMPLE_MS) {
+        subsampled.push(drawPoints[i]!);
       }
     }
     if (drawPoints.length > 1) {
-      subsampled.push(drawPoints[drawPoints.length - 1]);
+      subsampled.push(drawPoints[drawPoints.length - 1]!);
     }
 
     // Convert to clamped FunscriptActions

@@ -34,7 +34,7 @@ function buildFunscriptData(actions: FunscriptAction[]): string {
 
 function deriveDuration(item: LibraryItem, actions: FunscriptAction[]): number {
   if (item.duration) return item.duration * 1000;
-  return actions.length > 0 ? actions[actions.length - 1].at : 0;
+  return actions.length > 0 ? actions[actions.length - 1]!.at : 0;
 }
 
 export function ScriptEditorDialog({ item, onClose, onSaved }: ScriptEditorDialogProps) {
@@ -76,7 +76,7 @@ export function ScriptEditorDialog({ item, onClose, onSaved }: ScriptEditorDialo
       await libraryApi.updateById(item.id, {
         funscriptData: buildFunscriptData(actions),
         funscriptName: scriptName || item.funscriptName,
-        duration: actions.length > 0 ? actions[actions.length - 1].at / 1000 : item.duration,
+        duration: actions.length > 0 ? actions[actions.length - 1]!.at / 1000 : item.duration,
       });
       setSaveStatus('saved');
       setIsDirty(false);
@@ -98,7 +98,7 @@ export function ScriptEditorDialog({ item, onClose, onSaved }: ScriptEditorDialo
         videoName: null,
         funscriptName: copyName,
         funscriptData: buildFunscriptData(actions),
-        duration: actions.length > 0 ? actions[actions.length - 1].at / 1000 : item.duration,
+        duration: actions.length > 0 ? actions[actions.length - 1]!.at / 1000 : item.duration,
       });
       setSaveStatus('saved');
       onSaved();

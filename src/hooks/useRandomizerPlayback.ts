@@ -74,7 +74,7 @@ export function useRandomizerPlayback(
       let segIdx = -1;
       if (scriptRef.segments.length > 0) {
         for (let i = scriptRef.segments.length - 1; i >= 0; i--) {
-          if (timeMs >= scriptRef.segments[i].startMs) {
+          if (timeMs >= scriptRef.segments[i]!.startMs) {
             segIdx = i;
             break;
           }
@@ -91,7 +91,7 @@ export function useRandomizerPlayback(
           cleanupAudio();
         }
         for (let ci = 0; ci < scriptRef.audioTimeline.length; ci++) {
-          const cue = scriptRef.audioTimeline[ci];
+          const cue = scriptRef.audioTimeline[ci]!;
           if (timeMs >= cue.startMs && !triggeredCuesRef.current.has(ci)) {
             triggeredCuesRef.current.add(ci);
             cleanupAudio();
@@ -105,7 +105,7 @@ export function useRandomizerPlayback(
         // Segment mode: always cleanup on segment change, then play new audio if present
         if (segIdx !== currentSegRef.current && segIdx >= 0) {
           cleanupAudio();
-          const seg = scriptRef.segments[segIdx];
+          const seg = scriptRef.segments[segIdx]!;
           if (seg.audioFile) {
             const audio = new Audio(mediaApi.streamUrl(seg.audioFile));
             audio.play().catch(() => {});

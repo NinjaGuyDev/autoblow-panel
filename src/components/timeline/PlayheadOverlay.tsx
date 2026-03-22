@@ -21,25 +21,25 @@ export function findClosestAction(
 
   let left = 0;
   let right = actions.length - 1;
-  let closest = actions[0];
-  let minDiff = Math.abs(actions[0].at - timeMs);
+  let closest = actions[0]!;
+  let minDiff = Math.abs(actions[0]!.at - timeMs);
 
   while (left <= right) {
     const mid = Math.floor((left + right) / 2);
-    const diff = Math.abs(actions[mid].at - timeMs);
+    const diff = Math.abs(actions[mid]!.at - timeMs);
 
     if (diff < minDiff) {
       minDiff = diff;
-      closest = actions[mid];
+      closest = actions[mid]!;
     }
 
-    if (actions[mid].at < timeMs) {
+    if (actions[mid]!.at < timeMs) {
       left = mid + 1;
-    } else if (actions[mid].at > timeMs) {
+    } else if (actions[mid]!.at > timeMs) {
       right = mid - 1;
     } else {
       // Exact match
-      return actions[mid];
+      return actions[mid] ?? null;
     }
   }
 

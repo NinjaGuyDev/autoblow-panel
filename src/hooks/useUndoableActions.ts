@@ -34,7 +34,7 @@ function undoableReducer(state: UndoableState, action: UndoableAction): Undoable
     case 'UNDO': {
       if (state.past.length === 0) return state;
 
-      const previous = state.past[state.past.length - 1];
+      const previous = state.past[state.past.length - 1]!;
       const newPast = state.past.slice(0, -1);
 
       return {
@@ -47,7 +47,7 @@ function undoableReducer(state: UndoableState, action: UndoableAction): Undoable
     case 'REDO': {
       if (state.future.length === 0) return state;
 
-      const next = state.future[0];
+      const next = state.future[0]!;
       const newFuture = state.future.slice(1);
 
       return {

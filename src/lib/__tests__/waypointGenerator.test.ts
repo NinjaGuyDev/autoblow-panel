@@ -37,7 +37,7 @@ describe('waypointsToActions', () => {
       expect(result[result.length - 1]).toEqual({ pos: 0, at: 2000 });
       // Actions should be sorted by time
       for (let i = 1; i < result.length; i++) {
-        expect(result[i].at).toBeGreaterThan(result[i - 1].at);
+        expect(result[i]!.at).toBeGreaterThan(result[i - 1]!.at);
       }
     });
   });
@@ -99,8 +99,8 @@ describe('waypointsToActions', () => {
       const result = waypointsToActions(waypoints);
 
       // Last action must match last waypoint
-      const lastAction = result[result.length - 1];
-      const lastWaypoint = waypoints[waypoints.length - 1];
+      const lastAction = result[result.length - 1]!;
+      const lastWaypoint = waypoints[waypoints.length - 1]!;
       expect(lastAction.pos).toBe(lastWaypoint.pos);
       expect(lastAction.at).toBe(lastWaypoint.timeMs);
     });
@@ -157,7 +157,7 @@ describe('waypointsToActions', () => {
 
       // Verify sorted
       for (let i = 1; i < result.length; i++) {
-        expect(result[i].at).toBeGreaterThanOrEqual(result[i - 1].at);
+        expect(result[i]!.at).toBeGreaterThanOrEqual(result[i - 1]!.at);
       }
     });
   });

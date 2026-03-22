@@ -143,7 +143,7 @@ export function PatternEditorDialog({
     const tr = computeTimeRange(pattern.actions.map((a) => a.at));
 
     for (let i = 0; i < pattern.actions.length; i++) {
-      const pt = dataToPixel(pattern.actions[i].at, pattern.actions[i].pos, tr, canvas.width);
+      const pt = dataToPixel(pattern.actions[i]!.at, pattern.actions[i]!.pos, tr, canvas.width);
       if (pointDistance(x, y, pt.x, pt.y) <= HIT_RADIUS) {
         setDraggedIndex(i);
         canvas.setPointerCapture(e.pointerId);

@@ -41,25 +41,22 @@ export function useHumanizer({
     const options = intensityToHumanizerOptions(intensity);
 
     let result: FunscriptAction[];
-    let targetActions: FunscriptAction[];
 
     if (selectedIndices.size > 0) {
       const selectedList = [...selectedIndices].sort((a, b) => a - b);
       const isContiguous = selectedList.every(
-        (idx, i) => i === 0 || idx === selectedList[i - 1] + 1
+        (idx, i) => i === 0 || idx === selectedList[i - 1]! + 1
       );
 
       if (!isContiguous) {
-        targetActions = actions;
         result = humanizeFunscript(actions, options);
       } else {
-        const firstIdx = selectedList[0];
-        const lastIdx = selectedList[selectedList.length - 1];
+        const firstIdx = selectedList[0]!;
+        const lastIdx = selectedList[selectedList.length - 1]!;
         const startIdx = Math.max(0, firstIdx - 2);
         const endIdx = Math.min(actions.length - 1, lastIdx + 2);
 
         const region = actions.slice(startIdx, endIdx + 1);
-        targetActions = region;
         const humanizedRegion = humanizeFunscript(region, options);
 
         result = [
@@ -69,16 +66,8 @@ export function useHumanizer({
         ];
       }
     } else {
-      targetActions = actions;
       result = humanizeFunscript(actions, options);
     }
-
-    // Count how many actions were actually changed
-    const affectedCount = result.filter((a, i) => {
-      const orig = targetActions === actions ? actions[i] : targetActions[i - (result.length - targetActions.length > 0 ? result.length - targetActions.length : 0)];
-      if (!orig) return false;
-      return a.pos !== orig.pos || a.at !== orig.at;
-    }).length;
 
     setPreviewActions(result);
     setStats({

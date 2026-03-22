@@ -110,7 +110,7 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
     if (scripts.length === 0) return null;
 
     if (mode === 'full-random') {
-      return scripts[pickRandomIndex(scripts.length)].id;
+      return scripts[pickRandomIndex(scripts.length)]!.id;
     }
 
     if (mode === 'play-all') {

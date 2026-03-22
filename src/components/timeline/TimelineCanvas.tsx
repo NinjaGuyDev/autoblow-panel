@@ -22,7 +22,7 @@ export const TimelineCanvas = React.memo<TimelineCanvasProps>(
 
       // Calculate buffer - one action spacing on each side
       const avgSpacing = actions.length > 1
-        ? (actions[actions.length - 1].at - actions[0].at) / (actions.length - 1)
+        ? (actions[actions.length - 1]!.at - actions[0]!.at) / (actions.length - 1)
         : 1000;
       const buffer = avgSpacing * 2;
 
@@ -105,7 +105,7 @@ export const TimelineCanvas = React.memo<TimelineCanvasProps>(
       ctx.beginPath();
 
       // Start at bottom of first action
-      const firstX = timeToX(visibleActions[0].at, viewStart, viewEnd, width);
+      const firstX = timeToX(visibleActions[0]!.at, viewStart, viewEnd, width);
       ctx.moveTo(firstX, posToY(0, height));
 
       // Trace through all actions
@@ -116,7 +116,7 @@ export const TimelineCanvas = React.memo<TimelineCanvasProps>(
       });
 
       // Close path at bottom of last action
-      const lastX = timeToX(visibleActions[visibleActions.length - 1].at, viewStart, viewEnd, width);
+      const lastX = timeToX(visibleActions[visibleActions.length - 1]!.at, viewStart, viewEnd, width);
       ctx.lineTo(lastX, posToY(0, height));
       ctx.closePath();
       ctx.fill();

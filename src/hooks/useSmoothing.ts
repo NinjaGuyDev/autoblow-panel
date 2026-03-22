@@ -48,7 +48,8 @@ export function useSmoothing({
       // Region-aware smoothing: extract selected actions, smooth them, merge back
       const selectedActionsList: Array<{ index: number; action: FunscriptAction }> = [];
       selectedIndices.forEach((index) => {
-        selectedActionsList.push({ index, action: actions[index] });
+        const action = actions[index];
+        if (action) selectedActionsList.push({ index, action });
       });
 
       // Sort by index to ensure contiguous region
@@ -57,7 +58,7 @@ export function useSmoothing({
       // Check if selection is contiguous
       const isContiguous = selectedActionsList.every((item, i) => {
         if (i === 0) return true;
-        return item.index === selectedActionsList[i - 1].index + 1;
+        return item.index === selectedActionsList[i - 1]!.index + 1;
       });
 
       if (!isContiguous) {
@@ -67,8 +68,8 @@ export function useSmoothing({
         originalCount = actions.length;
       } else {
         // Extract selected actions with buffer points for algorithm context
-        const firstSelectedIndex = selectedActionsList[0].index;
-        const lastSelectedIndex = selectedActionsList[selectedActionsList.length - 1].index;
+        const firstSelectedIndex = selectedActionsList[0]!.index;
+        const lastSelectedIndex = selectedActionsList[selectedActionsList.length - 1]!.index;
 
         // Include 2 buffer points on each side for algorithm context
         const startIndex = Math.max(0, firstSelectedIndex - 2);

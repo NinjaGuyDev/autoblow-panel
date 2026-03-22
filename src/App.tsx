@@ -313,12 +313,12 @@ function AppContent() {
 
     // Load video files
     if (videoFiles.length > 0) {
-      handleVideoLoad(videoFiles[0]); // Use first video
+      handleVideoLoad(videoFiles[0]!); // Use first video
     }
 
     // Load funscript files
     if (funscriptFiles.length > 0) {
-      handleFunscriptLoad(funscriptFiles[0]); // Use first funscript
+      handleFunscriptLoad(funscriptFiles[0]!); // Use first funscript
     }
   };
 
@@ -551,7 +551,7 @@ function AppContent() {
                       playback.activeDuration > 0
                         ? playback.activeDuration * 1000
                         : editableActions.length > 0
-                          ? editableActions[editableActions.length - 1].at
+                          ? editableActions[editableActions.length - 1]!.at
                           : 0
                     }
                     isPlaying={playback.activeIsPlaying}

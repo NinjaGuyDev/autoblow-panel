@@ -8,7 +8,7 @@ function makePattern(id: string, name: string, actions: FunscriptAction[], audio
     name,
     intensity: 'medium' as const,
     tags: [] as any[],
-    durationMs: actions[actions.length - 1].at,
+    durationMs: actions[actions.length - 1]!.at,
     actions,
     isCustom: true as const,
     originalPatternId: 'test',
@@ -51,17 +51,17 @@ describe('generateRandomizedScript', () => {
   it('actions are sorted by at ascending', () => {
     const result = generateRandomizedScript([patternA, patternB, patternC], 10000);
     for (let i = 1; i < result.actions.length; i++) {
-      expect(result.actions[i].at).toBeGreaterThanOrEqual(result.actions[i - 1].at);
+      expect(result.actions[i]!.at).toBeGreaterThanOrEqual(result.actions[i - 1]!.at);
     }
   });
 
   it('segments cover the full duration without gaps', () => {
     const result = generateRandomizedScript([patternA, patternB], 5000);
-    expect(result.segments[0].startMs).toBe(0);
+    expect(result.segments[0]!.startMs).toBe(0);
     for (let i = 1; i < result.segments.length; i++) {
-      expect(result.segments[i].startMs).toBeGreaterThanOrEqual(result.segments[i - 1].endMs);
+      expect(result.segments[i]!.startMs).toBeGreaterThanOrEqual(result.segments[i - 1]!.endMs);
     }
-    const lastSeg = result.segments[result.segments.length - 1];
+    const lastSeg = result.segments[result.segments.length - 1]!;
     expect(lastSeg.endMs).toBe(result.totalDurationMs);
   });
 

@@ -32,10 +32,10 @@ export function generateRandomizedScript(
 
     // Insert smooth transition if needed
     if (allActions.length > 0) {
-      const lastPos = allActions[allActions.length - 1].pos;
-      const firstPos = patternActions[0].pos;
+      const lastPos = allActions[allActions.length - 1]!.pos;
+      const firstPos = patternActions[0]!.pos;
       if (lastPos !== firstPos) {
-        const lastTime = allActions[allActions.length - 1].at;
+        const lastTime = allActions[allActions.length - 1]!.at;
         for (let i = 1; i <= TRANSITION_STEPS; i++) {
           const t = i / TRANSITION_STEPS;
           allActions.push({
@@ -43,7 +43,7 @@ export function generateRandomizedScript(
             at: lastTime + Math.round(TRANSITION_DURATION_MS * t),
           });
         }
-        currentTimeMs = allActions[allActions.length - 1].at;
+        currentTimeMs = allActions[allActions.length - 1]!.at;
       }
     }
 
@@ -55,7 +55,7 @@ export function generateRandomizedScript(
         at: currentTimeMs + action.at,
       });
     }
-    const segmentEndMs = allActions[allActions.length - 1].at;
+    const segmentEndMs = allActions[allActions.length - 1]!.at;
     currentTimeMs = segmentEndMs;
 
     const audioFile = isCustomPattern(picked) ? picked.audioFile : undefined;
@@ -93,9 +93,9 @@ function weightedRandomPick(patterns: AnyPattern[], usageCount: Map<string, numb
   let random = Math.random() * totalWeight;
 
   for (let i = 0; i < patterns.length; i++) {
-    random -= weights[i];
-    if (random <= 0) return patterns[i];
+    random -= weights[i]!;
+    if (random <= 0) return patterns[i]!;
   }
 
-  return patterns[patterns.length - 1];
+  return patterns[patterns.length - 1]!;
 }

@@ -64,7 +64,7 @@ export async function parseFunscriptFile(file: File): Promise<ZodFunscript> {
       throw new Error('Invalid funscript: must have either "version" field (original format) or "metadata" field (new format)');
     }
 
-    const firstIssue = issues[0];
+    const firstIssue = issues[0]!;
     throw new Error(`Invalid funscript: ${firstIssue.path.join('.')} - ${firstIssue.message}`);
   }
   return result.data;

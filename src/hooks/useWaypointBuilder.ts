@@ -93,7 +93,7 @@ export function useWaypointBuilder() {
 
       // Apply updates
       const updated = [...prev];
-      updated[index] = { ...updated[index], ...updates };
+      updated[index] = { ...updated[index]!, ...updates };
 
       // If timeMs changed, validate and clamp
       if (updates.timeMs !== undefined) {
@@ -112,7 +112,7 @@ export function useWaypointBuilder() {
           newTimeMs = Math.min(newTimeMs, nextWaypoint.timeMs - 50);
         }
 
-        updated[index].timeMs = Math.round(newTimeMs);
+        updated[index]!.timeMs = Math.round(newTimeMs);
 
         // Re-sort by timeMs
         updated.sort((a, b) => a.timeMs - b.timeMs);
@@ -120,7 +120,7 @@ export function useWaypointBuilder() {
 
       // Clamp position to 0-100
       if (updates.pos !== undefined) {
-        updated[index].pos = Math.max(0, Math.min(100, Math.round(updated[index].pos)));
+        updated[index]!.pos = Math.max(0, Math.min(100, Math.round(updated[index]!.pos)));
       }
 
       return updated;
@@ -179,7 +179,7 @@ export function useWaypointBuilder() {
 
       // Track ultra ref and script duration for loop detection
       ultraRef.current = ultra;
-      setScriptDurationMs(loopActions[loopActions.length - 1].at);
+      setScriptDurationMs(loopActions[loopActions.length - 1]!.at);
 
       // Create funscript object and upload to device
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

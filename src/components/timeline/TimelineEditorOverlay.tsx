@@ -162,13 +162,13 @@ export const TimelineEditorOverlay = React.memo<TimelineEditorOverlayProps>(
         ctx.beginPath();
 
         // Draw connected line through all points
-        const firstPoint = drawPoints[0];
+        const firstPoint = drawPoints[0]!;
         const firstX = timeToX(firstPoint.timeMs, viewStart, viewEnd, width);
         const firstY = posToY(firstPoint.pos, height);
         ctx.moveTo(firstX, firstY);
 
         for (let i = 1; i < drawPoints.length; i++) {
-          const point = drawPoints[i];
+          const point = drawPoints[i]!;
           const x = timeToX(point.timeMs, viewStart, viewEnd, width);
           const y = posToY(point.pos, height);
           ctx.lineTo(x, y);

@@ -84,7 +84,7 @@ export function usePlaylistPlayback({
     transitioningRef.current = true;
 
     try {
-      const item = activeItems[index];
+      const item = activeItems[index]!;
 
       // Fetch full library item to get funscriptData
       const libraryItem = await libraryApi.getById(item.libraryItemId);
