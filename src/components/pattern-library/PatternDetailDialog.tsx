@@ -6,7 +6,7 @@ import { createSmoothTransition } from '@/lib/patternInsertion';
 import { buildFunscript } from '@/lib/funscriptConverter';
 import { cn } from '@/lib/utils';
 import { getErrorMessage } from '@/lib/getErrorMessage';
-import { useDemoLoop } from '@/hooks/useDemoLoop';
+import { useScriptLoop } from '@/hooks/useScriptLoop';
 import { mediaApi } from '@/lib/apiClient';
 
 interface PatternDetailDialogProps {
@@ -45,7 +45,11 @@ export function PatternDetailDialog({
   const [scriptDurationMs, setScriptDurationMs] = useState(0);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  useDemoLoop(ultra, isDemoPlaying, scriptDurationMs);
+  const onLoopEnd = useCallback(() => {
+    ultra?.syncScriptStart(0);
+  }, [ultra]);
+
+  useScriptLoop(ultra, isDemoPlaying, scriptDurationMs, onLoopEnd);
 
   // Draw pattern with animated playhead
   const drawAnimated = (currentTime: number) => {

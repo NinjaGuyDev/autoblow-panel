@@ -5,7 +5,7 @@ import { createSmoothTransition } from '@/lib/patternInsertion';
 import { buildFunscript } from '@/lib/funscriptConverter';
 import { getErrorMessage } from '@/lib/getErrorMessage';
 import { libraryApi } from '@/lib/apiClient';
-import { useDemoLoop } from '@/hooks/useDemoLoop';
+import { useScriptLoop } from '@/hooks/useScriptLoop';
 import { cn } from '@/lib/utils';
 
 interface CreationFooterProps {
@@ -39,7 +39,11 @@ export function CreationFooter({
   const [isSaving, setIsSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saved' | 'error'>('idle');
 
-  useDemoLoop(ultra, isDemoPlaying, scriptDurationMs);
+  const onLoopEnd = useCallback(() => {
+    ultra?.syncScriptStart(0);
+  }, [ultra]);
+
+  useScriptLoop(ultra, isDemoPlaying, scriptDurationMs, onLoopEnd);
 
   // Draw mini timeline
   useEffect(() => {
