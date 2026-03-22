@@ -485,53 +485,63 @@ function AppContent() {
               />
             )}
             <VideoSyncPage
-              videoFile={videoFile}
-              videoUrl={videoUrl}
-              videoName={videoName}
-              onVideoLoad={handleVideoLoad}
-              onVideoClear={handleVideoClear}
-              videoError={videoError}
-              videoRef={videoRef}
-              isPlaying={playback.activeIsPlaying}
-              currentTime={playback.activeCurrentTime}
-              duration={playback.activeDuration}
-              playbackError={playback.activePlaybackError}
-              onTogglePlayPause={playback.activeTogglePlayPause}
-              onSeek={playback.activeSeek}
-              funscriptFile={funscriptFile}
-              funscriptData={funscriptData}
-              funscriptName={funscriptName}
-              onFunscriptLoad={handleFunscriptLoad}
-              onFunscriptClear={handleFunscriptClear}
-              funscriptError={funscriptError}
-              isLoading={isLoading}
-              syncStatus={syncStatus}
-              scriptUploaded={scriptUploaded}
-              driftMs={driftMs}
-              syncError={syncError}
-              hasFunscript={funscriptData !== null}
+              video={{
+                videoFile,
+                videoUrl,
+                videoName,
+                onVideoLoad: handleVideoLoad,
+                onVideoClear: handleVideoClear,
+                videoError,
+                videoRef,
+                isPlaying: playback.activeIsPlaying,
+                currentTime: playback.activeCurrentTime,
+                duration: playback.activeDuration,
+                playbackError: playback.activePlaybackError,
+                onTogglePlayPause: playback.activeTogglePlayPause,
+                onSeek: playback.activeSeek,
+              }}
+              funscript={{
+                funscriptFile,
+                funscriptData,
+                funscriptName,
+                onFunscriptLoad: handleFunscriptLoad,
+                onFunscriptClear: handleFunscriptClear,
+                funscriptError,
+                isLoading,
+              }}
+              sync={{
+                syncStatus,
+                scriptUploaded,
+                driftMs,
+                syncError,
+                hasFunscript: funscriptData !== null,
+              }}
+              embed={{
+                isEmbed: playback.isEmbed,
+                iframeEmbed: playback.iframeEmbed,
+                platformConfig: playback.platformConfig,
+                onEmbedUrlSubmit: handleEmbedUrlLoad,
+                embedPlayerRef,
+                embedPlaying: playback.embedPlayback.isPlaying,
+                onEmbedReady: playback.embedPlayback.onReady,
+                onEmbedPlay: playback.embedPlayback.onPlay,
+                onEmbedPause: playback.embedPlayback.onPause,
+                onEmbedProgress: playback.embedPlayback.onProgress,
+                onEmbedDuration: playback.embedPlayback.onDuration,
+                onEmbedError: playback.embedPlayback.onError,
+                onEmbedEnded: playback.embedPlayback.onEnded,
+              }}
+              manualSync={{
+                manualSyncOffset: playback.manualSync.offsetMs,
+                onManualSyncOffsetChange: playback.manualSync.setOffsetMs,
+                onManualSyncReset: playback.manualSync.resetOffset,
+                manualSyncStepMs: playback.manualSync.OFFSET_STEP_MS,
+                isScriptPlaying: playback.embedPlayback.isPlaying,
+                onToggleScript: playback.embedPlayback.togglePlayPause,
+              }}
               showTimeline={showTimeline}
               onToggleTimeline={() => setShowTimeline(!showTimeline)}
               videoLoadHint={videoLoadHint}
-              isEmbed={playback.isEmbed}
-              iframeEmbed={playback.iframeEmbed}
-              platformConfig={playback.platformConfig}
-              onEmbedUrlSubmit={handleEmbedUrlLoad}
-              embedPlayerRef={embedPlayerRef}
-              embedPlaying={playback.embedPlayback.isPlaying}
-              onEmbedReady={playback.embedPlayback.onReady}
-              onEmbedPlay={playback.embedPlayback.onPlay}
-              onEmbedPause={playback.embedPlayback.onPause}
-              onEmbedProgress={playback.embedPlayback.onProgress}
-              onEmbedDuration={playback.embedPlayback.onDuration}
-              onEmbedError={playback.embedPlayback.onError}
-              onEmbedEnded={playback.embedPlayback.onEnded}
-              manualSyncOffset={playback.manualSync.offsetMs}
-              onManualSyncOffsetChange={playback.manualSync.setOffsetMs}
-              onManualSyncReset={playback.manualSync.resetOffset}
-              manualSyncStepMs={playback.manualSync.OFFSET_STEP_MS}
-              isScriptPlaying={playback.embedPlayback.isPlaying}
-              onToggleScript={playback.embedPlayback.togglePlayPause}
               timelineElement={
                 showTimeline && (videoUrl || funscriptData) ? (
                   <Timeline
