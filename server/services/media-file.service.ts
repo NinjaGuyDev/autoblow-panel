@@ -16,9 +16,7 @@ export class MediaFileService {
   deleteVideoFile(filename: string): void {
     const sanitized = path.basename(filename);
     const videoPath = path.join(this.mediaDir, sanitized);
-    if (fs.existsSync(videoPath)) {
-      fs.unlinkSync(videoPath);
-    }
+    this.unlinkIfExists(videoPath);
   }
 
   /**
@@ -29,9 +27,7 @@ export class MediaFileService {
     const sanitized = path.basename(filename);
     const base = path.basename(sanitized, path.extname(sanitized));
     const thumbPath = path.join(this.mediaDir, 'thumbnails', `${base}.jpg`);
-    if (fs.existsSync(thumbPath)) {
-      fs.unlinkSync(thumbPath);
-    }
+    this.unlinkIfExists(thumbPath);
   }
 
   /**
@@ -44,8 +40,20 @@ export class MediaFileService {
     if (!filePath.startsWith(path.resolve(this.mediaDir))) {
       return;
     }
-    if (fs.existsSync(filePath)) {
+    this.unlinkIfExists(filePath);
+  }
+
+  /**
+   * Attempt to unlink a file, ignoring ENOENT (file already gone).
+   * Avoids existsSync+unlinkSync race condition.
+   */
+  private unlinkIfExists(filePath: string): void {
+    try {
       fs.unlinkSync(filePath);
+    } catch (err: unknown) {
+      if (err instanceof Error && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
+        throw err;
+      }
     }
   }
 }

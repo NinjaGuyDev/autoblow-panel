@@ -92,13 +92,19 @@ export class LibraryService {
     }
 
     if (item.patternMetadata) {
+      let metadata: { audioFile?: string } | null = null;
       try {
-        const metadata = JSON.parse(item.patternMetadata);
-        if (metadata.audioFile) {
-          this.mediaFileService.deleteAudioFile(metadata.audioFile);
-        }
+        metadata = JSON.parse(item.patternMetadata);
       } catch {
-        // Malformed metadata — skip audio cleanup
+        console.warn(`Malformed patternMetadata for item ${id} — skipping audio cleanup`);
+      }
+
+      if (metadata?.audioFile) {
+        try {
+          this.mediaFileService.deleteAudioFile(metadata.audioFile);
+        } catch (err) {
+          console.warn(`Failed to delete audio file ${metadata.audioFile} for item ${id}:`, err);
+        }
       }
     }
   }

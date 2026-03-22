@@ -27,7 +27,7 @@ export class DeviceService {
     private libraryService: LibraryService,
     private createPlaybackLoop: PlaybackLoopFactory,
   ) {
-    this.playbackLoop = createPlaybackLoop();
+    this.playbackLoop = this.createPlaybackLoop();
   }
 
   async connect(deviceKey: string): Promise<DeviceConnectResponse> {
@@ -55,7 +55,8 @@ export class DeviceService {
     this.connectionState = 'connected';
     this.lastError = null;
 
-    // Fresh PlaybackLoop for the new connection (previous may have been destroyed)
+    // Destroy previous loop before creating a fresh one for the new connection
+    this.playbackLoop.destroy();
     this.playbackLoop = this.createPlaybackLoop();
 
     let latencyMs: number;
