@@ -1,5 +1,7 @@
 import { Router } from 'express';
 import type { LibraryController } from '../controllers/library.controller.js';
+import { validateBody } from '../middleware/validate-body.js';
+import { CreateLibraryItemSchema, UpdateLibraryItemSchema, MigrationSchema } from '../schemas/library.schemas.js';
 
 export function createLibraryRouter(controller: LibraryController): Router {
   const router = Router();
@@ -20,19 +22,19 @@ export function createLibraryRouter(controller: LibraryController): Router {
   router.get('/:id', controller.getById);
 
   // Create new library item
-  router.post('/', controller.create);
+  router.post('/', validateBody(CreateLibraryItemSchema), controller.create);
 
   // Migrate from IndexedDB
-  router.post('/migrate', controller.migrate);
+  router.post('/migrate', validateBody(MigrationSchema), controller.migrate);
 
   // Save or update library item
-  router.put('/', controller.save);
+  router.put('/', validateBody(CreateLibraryItemSchema), controller.save);
 
   // Update any library item by id (funscriptData, funscriptName, duration)
-  router.put('/:id', controller.updateById);
+  router.put('/:id', validateBody(UpdateLibraryItemSchema), controller.updateById);
 
   // Update custom pattern
-  router.patch('/:id', controller.updateCustomPattern);
+  router.patch('/:id', validateBody(UpdateLibraryItemSchema), controller.updateCustomPattern);
 
   // Soft-delete custom pattern (preserves record for stats references)
   router.delete('/custom-patterns/:id', controller.softDeleteCustomPattern);

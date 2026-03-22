@@ -1,6 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { PlaylistService } from '../services/playlist.service.js';
-import type { CreatePlaylistRequest, UpdatePlaylistRequest, AddPlaylistItemRequest, ReorderPlaylistItemsRequest } from '../types/shared.js';
 import { parseIdParam } from '../middleware/validation.js';
 
 export class PlaylistController {
@@ -39,8 +38,7 @@ export class PlaylistController {
 
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const data = req.body as CreatePlaylistRequest;
-      const playlist = this.service.createPlaylist(data);
+      const playlist = this.service.createPlaylist(req.body);
       res.status(201).json(playlist);
     } catch (error) {
       next(error);
@@ -51,8 +49,7 @@ export class PlaylistController {
     try {
       const id = parseIdParam(req, res);
       if (id === null) return;
-      const data = req.body as UpdatePlaylistRequest;
-      const playlist = this.service.updatePlaylist(id, data);
+      const playlist = this.service.updatePlaylist(id, req.body);
       res.json(playlist);
     } catch (error) {
       next(error);
@@ -74,7 +71,7 @@ export class PlaylistController {
     try {
       const id = parseIdParam(req, res);
       if (id === null) return;
-      const { libraryItemId } = req.body as AddPlaylistItemRequest;
+      const { libraryItemId } = req.body;
       const item = this.service.addItem(id, libraryItemId);
       res.status(201).json(item);
     } catch (error) {
@@ -97,7 +94,7 @@ export class PlaylistController {
     try {
       const id = parseIdParam(req, res);
       if (id === null) return;
-      const { itemIds } = req.body as ReorderPlaylistItemsRequest;
+      const { itemIds } = req.body;
       this.service.reorderItems(id, itemIds);
       res.status(204).send();
     } catch (error) {

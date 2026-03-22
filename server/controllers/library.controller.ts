@@ -1,6 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { LibraryService } from '../services/library.service.js';
-import type { CreateLibraryItemRequest, SearchQuery, MigrationRequest } from '../types/shared.js';
+import type { SearchQuery } from '../types/shared.js';
 import { parseIdParam } from '../middleware/validation.js';
 
 export class LibraryController {
@@ -49,8 +49,7 @@ export class LibraryController {
     try {
       const id = parseIdParam(req, res);
       if (id === null) return;
-      const data = req.body as Partial<CreateLibraryItemRequest>;
-      const item = this.service.updateItemById(id, data);
+      const item = this.service.updateItemById(id, req.body);
       res.json(item);
     } catch (error) {
       next(error);
@@ -61,8 +60,7 @@ export class LibraryController {
     try {
       const id = parseIdParam(req, res);
       if (id === null) return;
-      const data = req.body as Partial<CreateLibraryItemRequest>;
-      const item = this.service.updateCustomPattern(id, data);
+      const item = this.service.updateCustomPattern(id, req.body);
       res.json(item);
     } catch (error) {
       next(error);
@@ -82,8 +80,7 @@ export class LibraryController {
 
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const data = req.body as CreateLibraryItemRequest;
-      const item = this.service.createItem(data);
+      const item = this.service.createItem(req.body);
       res.status(201).json(item);
     } catch (error) {
       next(error);
@@ -103,8 +100,7 @@ export class LibraryController {
 
   save = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const data = req.body as CreateLibraryItemRequest;
-      const item = this.service.saveOrUpdateItem(data);
+      const item = this.service.saveOrUpdateItem(req.body);
       res.json(item);
     } catch (error) {
       next(error);
@@ -122,7 +118,7 @@ export class LibraryController {
 
   migrate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const { data } = req.body as MigrationRequest;
+      const { data } = req.body;
       const count = this.service.migrateFromIndexedDB(data);
       res.json({ success: true, count });
     } catch (error) {

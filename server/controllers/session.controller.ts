@@ -1,6 +1,5 @@
 import type { Request, Response, NextFunction } from 'express';
 import type { SessionService } from '../services/session.service.js';
-import type { CreateSessionRequest, UpdateSessionRequest } from '../types/shared.js';
 import { parseIdParam, parseQueryParamInt, requireStringQueryParam } from '../middleware/validation.js';
 
 export class SessionController {
@@ -28,8 +27,7 @@ export class SessionController {
 
   create = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
-      const data = req.body as CreateSessionRequest;
-      const session = this.service.createSession(data);
+      const session = this.service.createSession(req.body);
       res.status(201).json(session);
     } catch (error) {
       next(error);
@@ -40,8 +38,7 @@ export class SessionController {
     try {
       const id = parseIdParam(req, res);
       if (id === null) return;
-      const data = req.body as UpdateSessionRequest;
-      const session = this.service.updateSession(id, data);
+      const session = this.service.updateSession(id, req.body);
       res.json(session);
     } catch (error) {
       next(error);
@@ -52,7 +49,7 @@ export class SessionController {
     try {
       const id = parseIdParam(req, res);
       if (id === null) return;
-      const { libraryItemId, timestamp } = req.body as { libraryItemId: number; timestamp: string };
+      const { libraryItemId, timestamp } = req.body;
       const session = this.service.appendScriptToSession(id, libraryItemId, timestamp);
       res.json(session);
     } catch (error) {
@@ -64,7 +61,7 @@ export class SessionController {
     try {
       const id = parseIdParam(req, res);
       if (id === null) return;
-      const { endedAt } = req.body as { endedAt?: string };
+      const { endedAt } = req.body;
       const finalEndedAt = endedAt ?? new Date().toISOString();
       const session = this.service.endSession(id, finalEndedAt);
       res.json(session);
