@@ -14,21 +14,21 @@ export const FunscriptMetadataSchema = z.object({
   duration: z.number().optional(),
   average_speed: z.number().optional(),
   creator: z.string().optional(),
-}).passthrough();
+});
 
 // Original format: {version, inverted, range, actions}
 export const OriginalFunscriptSchema = z.object({
   version: z.string(),
-  inverted: z.boolean(),
-  range: z.number().min(0).max(100),
+  inverted: z.boolean().optional(),
+  range: z.number().min(0).max(100).optional(),
   actions: z.array(FunscriptActionSchema).min(1, 'Funscript must have at least one action'),
-}).passthrough();
+});
 
 // New format: {metadata, actions}
 export const MetadataFunscriptSchema = z.object({
   metadata: FunscriptMetadataSchema,
   actions: z.array(FunscriptActionSchema).min(1, 'Funscript must have at least one action'),
-}).passthrough();
+});
 
 // Union schema that accepts either format
 export const FunscriptSchema = z.union([OriginalFunscriptSchema, MetadataFunscriptSchema]);
