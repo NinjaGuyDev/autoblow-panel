@@ -76,8 +76,8 @@ export function usePatternEditor() {
    * Changes pattern duration by scaling actions proportionally
    */
   const changeDuration = useCallback((newDurationSeconds: number) => {
-    // Validate bounds
-    if (newDurationSeconds < 0.5 || newDurationSeconds > 300) {
+    // Validate bounds (up to 1 hour)
+    if (newDurationSeconds < 0.5 || newDurationSeconds > 3600) {
       return;
     }
 

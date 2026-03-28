@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+
 interface RandomizerToolbarProps {
   selectedCount: number;
   durationMinutes: number;
@@ -13,6 +15,21 @@ export function RandomizerToolbar({
   onGenerate,
   onCancel,
 }: RandomizerToolbarProps) {
+  const [durationInput, setDurationInput] = useState(() => String(durationMinutes));
+
+  useEffect(() => {
+    setDurationInput(String(durationMinutes));
+  }, [durationMinutes]);
+
+  const commitDuration = () => {
+    const val = parseInt(durationInput);
+    if (!isNaN(val) && val >= 1 && val <= 60) {
+      onDurationChange(val);
+    } else {
+      setDurationInput(String(durationMinutes));
+    }
+  };
+
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-stone-900 border-t border-stone-700 px-6 py-3 flex items-center justify-between z-50">
       <div className="flex items-center gap-4">
@@ -25,11 +42,10 @@ export function RandomizerToolbar({
             type="number"
             min={1}
             max={60}
-            value={durationMinutes}
-            onChange={(e) => {
-              const val = Math.max(1, Math.min(60, parseInt(e.target.value) || 1));
-              onDurationChange(val);
-            }}
+            value={durationInput}
+            onChange={(e) => setDurationInput(e.target.value)}
+            onBlur={commitDuration}
+            onKeyDown={(e) => { if (e.key === 'Enter') commitDuration(); }}
             className="w-16 px-2 py-1 rounded bg-stone-800 border border-stone-700 text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-700/40"
           />
           <span className="text-stone-400 text-sm">min</span>
