@@ -179,9 +179,24 @@ export function PatternEditorDialog({
     }
   };
 
-  const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
-    if (!isNaN(value)) onDurationChange(value);
+  // Local string state prevents controlled-input snap-back while typing multi-digit values
+  const [durationInput, setDurationInput] = useState(() => (pattern?.durationMs ? (pattern.durationMs / 1000).toFixed(1) : ''));
+
+  // Sync local state when pattern changes externally (e.g., loading a different pattern)
+  useEffect(() => {
+    if (pattern?.durationMs !== undefined) {
+      setDurationInput((pattern.durationMs / 1000).toFixed(1));
+    }
+  }, [pattern?.durationMs]);
+
+  const commitDuration = () => {
+    const value = parseFloat(durationInput);
+    if (!isNaN(value) && value >= 0.5 && value <= 3600) {
+      onDurationChange(value);
+    } else {
+      // Reset to current valid value
+      setDurationInput((pattern!.durationMs / 1000).toFixed(1));
+    }
   };
 
   if (!isOpen || !pattern) return null;
@@ -229,9 +244,11 @@ export function PatternEditorDialog({
             type="number"
             step="0.1"
             min="0.5"
-            max="300"
-            value={(pattern.durationMs / 1000).toFixed(1)}
-            onChange={handleDurationChange}
+            max="3600"
+            value={durationInput}
+            onChange={(e) => setDurationInput(e.target.value)}
+            onBlur={commitDuration}
+            onKeyDown={(e) => { if (e.key === 'Enter') commitDuration(); }}
             className="w-full px-3 py-2 rounded bg-stone-800 border border-stone-700 text-white focus:outline-none focus:ring-2 focus:ring-amber-700/40"
           />
         </div>
