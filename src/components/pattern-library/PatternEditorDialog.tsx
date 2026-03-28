@@ -182,12 +182,12 @@ export function PatternEditorDialog({
   // Local string state prevents controlled-input snap-back while typing multi-digit values
   const [durationInput, setDurationInput] = useState(() => (pattern?.durationMs ? (pattern.durationMs / 1000).toFixed(1) : ''));
 
-  // Sync local state when pattern changes externally (e.g., loading a different pattern)
+  // Sync local state when pattern changes (including switching to a different pattern with same duration)
   useEffect(() => {
     if (pattern?.durationMs !== undefined) {
       setDurationInput((pattern.durationMs / 1000).toFixed(1));
     }
-  }, [pattern?.durationMs]);
+  }, [pattern?.id, pattern?.durationMs]);
 
   const commitDuration = () => {
     const value = parseFloat(durationInput);
