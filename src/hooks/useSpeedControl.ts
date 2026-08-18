@@ -9,7 +9,7 @@
  * deliberate press, and it anchors to the playhead at the moment it fires.
  */
 
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useDebouncedCallback } from 'use-debounce';
 import { isTypingInInput } from '@/lib/keyboardUtils';
 import { isEdgeModeKey, speedFactorFromKey } from '@/lib/speedControlKeys';
@@ -27,12 +27,21 @@ interface UseSpeedControlParams {
   onEdgeMode: () => void;
 }
 
+interface UseSpeedControlReturn {
+  /**
+   * Drop a factor upload still waiting in the debounce window. Callers that
+   * start a different warp operation — clearing the warp, applying a mod — must
+   * call this first, or the queued factor lands afterwards and overwrites them.
+   */
+  cancelPendingFactor: () => void;
+}
+
 export function useSpeedControl({
   enabled,
   onFactorPreview,
   onFactorCommit,
   onEdgeMode,
-}: UseSpeedControlParams): void {
+}: UseSpeedControlParams): UseSpeedControlReturn {
   const commitFactor = useDebouncedCallback(onFactorCommit, UPLOAD_DEBOUNCE_MS);
 
   useEffect(() => {
@@ -46,6 +55,9 @@ export function useSpeedControl({
       if (isTypingInInput(event)) return;
 
       if (isEdgeModeKey(event.code)) {
+        // Holding `e` repeats keydown, and edge mode is a one-shot action —
+        // each repeat would start another overlapping upload
+        if (event.repeat) return;
         event.preventDefault();
         // A pending factor would land after the edge upload and undo it
         commitFactor.cancel();
@@ -67,4 +79,10 @@ export function useSpeedControl({
       commitFactor.cancel();
     };
   }, [enabled, commitFactor, onFactorPreview, onEdgeMode]);
+
+  const cancelPendingFactor = useCallback(() => {
+    commitFactor.cancel();
+  }, [commitFactor]);
+
+  return { cancelPendingFactor };
 }
