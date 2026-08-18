@@ -140,16 +140,28 @@ export function ScriptLibraryPage({
     startEdgeMode().catch(err => console.error('Failed to start edge mode:', err));
   }, [startEdgeMode]);
 
-  useSpeedControl({
+  const { cancelPendingFactor } = useSpeedControl({
     enabled: isPlaying && !isPaused,
     onFactorPreview: previewSpeedFactor,
     onFactorCommit: handleSpeedCommit,
     onEdgeMode: handleEdgeMode,
   });
 
+  // A factor still inside the debounce window would upload after either of
+  // these and overwrite them, so it is dropped before the new warp goes out
+  const clearWarpNow = useCallback(async () => {
+    cancelPendingFactor();
+    await clearWarp();
+  }, [cancelPendingFactor, clearWarp]);
+
+  const applyModNow = useCallback(async (mod: ScriptMod) => {
+    cancelPendingFactor();
+    await applyMod(mod);
+  }, [cancelPendingFactor, applyMod]);
+
   const handleClearWarp = useCallback(() => {
-    clearWarp().catch(err => console.error('Failed to clear speed change:', err));
-  }, [clearWarp]);
+    clearWarpNow().catch(err => console.error('Failed to clear speed change:', err));
+  }, [clearWarpNow]);
 
   const handleTimelineToggle = useCallback((checked: boolean) => {
     setShowTimeline(checked);
@@ -392,8 +404,8 @@ export function ScriptLibraryPage({
         isPlaying={isPlaying}
         isDeviceConnected={isDeviceConnected}
         scriptDurationMs={scriptDurationMs}
-        onApply={applyMod}
-        onClear={clearWarp}
+        onApply={applyModNow}
+        onClear={clearWarpNow}
       />
 
       {/* Playback error */}
