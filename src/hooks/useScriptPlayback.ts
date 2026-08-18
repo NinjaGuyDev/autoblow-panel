@@ -108,6 +108,8 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
   const warpRef = useRef<TimeWarp | null>(null);
   const warpedDurationRef = useRef(0);
   const warpSourceRef = useRef<WarpSource>(NO_WARP);
+  /** Serializes reloadWarpedScript so only the newest upload publishes state. */
+  const reloadSeqRef = useRef(0);
   /** Original time at which an edge program hands playback back at 1x. */
   const edgeEndOriginalRef = useRef(0);
   const isPausedRef = useRef(false);
@@ -221,6 +223,12 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
    * Hot-swap the device script: re-derive the warped funscript from the
    * pristine actions and restart at the mapped position. Deriving from the
    * pristine source is what keeps successive changes from compounding.
+   *
+   * Calls are serialized by sequence number: a speed change, a mod, an edge
+   * program and a loop re-roll can all land while an upload is in flight, and
+   * only the newest one may publish `warpRef`. Without that, stale bookkeeping
+   * could describe a funscript the device is no longer playing, which would
+   * make `warpedToOriginal` and `seek` disagree with the device.
    */
   const reloadWarpedScript = useCallback(async (
     source: WarpSource,
@@ -228,6 +236,9 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
   ): Promise<void> => {
     const original = currentActionsRef.current;
     if (!ultra || original.length === 0) return;
+
+    const seq = ++reloadSeqRef.current;
+    const isStale = () => reloadSeqRef.current !== seq;
 
     const warp = buildActiveWarp(original, source);
     const warpedActions = warp ? applyWarp(original, warp) : original;
@@ -246,11 +257,16 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
       await ultra.syncScriptUploadFunscriptFile(funscript as any);
     }
 
+    // A newer call has taken over — it will upload and start its own program
+    if (isStale()) return;
+
     // Mirrors seek(): stopping first keeps a paused session paused
     if (isPausedRef.current) {
       await ultra.syncScriptStop();
     }
     await ultra.syncScriptStart(startAtMs);
+
+    if (isStale()) return;
 
     warpRef.current = warp;
     warpedDurationRef.current = durationMs;
@@ -458,7 +474,16 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
       // The UI timeline and seek() work in original time; the device does not
       const { durationMs: originalDurationMs } = prepareLoopedScript(actions);
 
-      const warp = buildActiveWarp(actions, warpSourceRef.current);
+      // An edge program is anchored to the previous script's playhead, so it
+      // cannot carry over — hand the new script back to whatever it displaced
+      const source = resumeAfterEdge(warpSourceRef.current);
+      warpSourceRef.current = source;
+      edgeEndOriginalRef.current = 0;
+      setEdgeModeActive(false);
+      setSuspendedMod(null);
+      setActiveMod(activeModOf(source));
+
+      const warp = buildActiveWarp(actions, source);
       const { durationMs: deviceDurationMs } = await uploadAndPlay(
         warp ? applyWarp(actions, warp) : actions,
         true,
