@@ -158,12 +158,26 @@ export function initializeSchema(db: Database.Database): void {
       name TEXT NOT NULL,
       description TEXT,
       definition TEXT NOT NULL,
-      createdAt TEXT NOT NULL DEFAULT (datetime('now')),
-      updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+      createdAt TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+      updatedAt TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
     );
   `);
 
   db.exec(`
     CREATE INDEX IF NOT EXISTS idx_script_mods_updated ON script_mods(updatedAt DESC);
+  `);
+
+  // Databases created before the ISO 8601 defaults above hold SQLite
+  // `datetime('now')` text ("YYYY-MM-DD HH:MM:SS"), which sorts below the ISO
+  // values `update()` writes because "T" > " ". Rewriting them keeps
+  // `updatedAt DESC` chronological across rows written by either format.
+  db.exec(`
+    UPDATE script_mods
+    SET createdAt = replace(createdAt, ' ', 'T') || '.000Z'
+    WHERE createdAt NOT LIKE '%T%';
+
+    UPDATE script_mods
+    SET updatedAt = replace(updatedAt, ' ', 'T') || '.000Z'
+    WHERE updatedAt NOT LIKE '%T%';
   `);
 }

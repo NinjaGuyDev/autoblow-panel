@@ -64,6 +64,19 @@ describe('ScriptModService', () => {
     expect(updated.definition).toEqual(CONTINUOUS);
   });
 
+  it('keeps the stored description when the update omits it', () => {
+    const created = service.createMod({ name: 'Chaos', description: 'loud', definition: CONTINUOUS });
+
+    expect(service.updateMod(created.id, { name: 'Calm' }).description).toBe('loud');
+  });
+
+  it('clears the description when the update supplies null', () => {
+    const created = service.createMod({ name: 'Chaos', description: 'loud', definition: CONTINUOUS });
+
+    expect(service.updateMod(created.id, { description: null }).description).toBeNull();
+    expect(service.getModById(created.id).description).toBeNull();
+  });
+
   it('deletes a mod', () => {
     const created = service.createMod({ name: 'Temp', definition: CONTINUOUS });
     service.deleteMod(created.id);
@@ -76,5 +89,46 @@ describe('ScriptModService', () => {
     expect(() => service.getModById(4_242)).toThrow(NotFoundError);
     expect(() => service.updateMod(4_242, { name: 'x' })).toThrow(NotFoundError);
     expect(() => service.deleteMod(4_242)).toThrow(NotFoundError);
+  });
+});
+
+describe('script_mods timestamps', () => {
+  const ISO_8601 = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
+
+  it('writes created and updated timestamps in the same ISO 8601 format', () => {
+    const db = new Database(':memory:');
+    initializeSchema(db);
+    const service = new ScriptModService(new ScriptModRepository(db));
+
+    const created = service.createMod({ name: 'Fresh', definition: CONTINUOUS });
+    const updated = service.updateMod(created.id, { name: 'Fresher' });
+
+    expect(created.createdAt).toMatch(ISO_8601);
+    expect(created.updatedAt).toMatch(ISO_8601);
+    expect(updated.updatedAt).toMatch(ISO_8601);
+  });
+
+  it('normalizes legacy datetime() rows so updatedAt DESC stays chronological', () => {
+    const db = new Database(':memory:');
+    initializeSchema(db);
+
+    // A row left by an older build alongside one written in ISO 8601. Sorted as
+    // raw text the ISO row wins on "T" > " " despite being four hours older.
+    db.prepare(`
+      INSERT INTO script_mods (name, description, definition, createdAt, updatedAt)
+      VALUES (?, NULL, ?, ?, ?)
+    `).run('Legacy', JSON.stringify(CONTINUOUS), '2026-01-01 12:00:00', '2026-01-01 12:00:00');
+    db.prepare(`
+      INSERT INTO script_mods (name, description, definition, createdAt, updatedAt)
+      VALUES (?, NULL, ?, ?, ?)
+    `).run('Modern', JSON.stringify(CONTINUOUS), '2026-01-01T08:00:00.000Z', '2026-01-01T08:00:00.000Z');
+
+    // Restarting the server re-runs the schema, which carries the migration
+    initializeSchema(db);
+    const mods = new ScriptModService(new ScriptModRepository(db)).getAllMods();
+
+    expect(mods.map(mod => mod.name)).toEqual(['Legacy', 'Modern']);
+    expect(mods[0]!.updatedAt).toBe('2026-01-01T12:00:00.000Z');
+    expect(mods[0]!.createdAt).toBe('2026-01-01T12:00:00.000Z');
   });
 });

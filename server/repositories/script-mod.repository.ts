@@ -32,16 +32,22 @@ export class ScriptModRepository {
       SELECT * FROM script_mods WHERE id = ?
     `);
 
+    // Timestamps are written explicitly rather than left to the column
+    // defaults: databases created before the defaults became ISO 8601 still
+    // carry the old `datetime('now')` default, and mixing the two text formats
+    // breaks `updatedAt DESC` ordering.
     this.createStmt = db.prepare(`
-      INSERT INTO script_mods (name, description, definition)
-      VALUES (?, ?, ?)
+      INSERT INTO script_mods (name, description, definition, createdAt, updatedAt)
+      VALUES (?, ?, ?, ?, ?)
       RETURNING *
     `);
 
+    // `setsDescription` distinguishes an omitted description from an explicit
+    // null, which COALESCE alone cannot express.
     this.updateStmt = db.prepare(`
       UPDATE script_mods
       SET name = COALESCE(?, name),
-          description = COALESCE(?, description),
+          description = CASE WHEN ? = 1 THEN ? ELSE description END,
           definition = COALESCE(?, definition),
           updatedAt = ?
       WHERE id = ?
@@ -62,13 +68,25 @@ export class ScriptModRepository {
   }
 
   create(data: ScriptModWrite): ScriptModRow {
-    return this.createStmt.get(data.name, data.description, data.definition) as ScriptModRow;
+    const now = new Date().toISOString();
+    return this.createStmt.get(
+      data.name,
+      data.description,
+      data.definition,
+      now,
+      now,
+    ) as ScriptModRow;
   }
 
-  /** Fields left `null` keep their current value. */
+  /**
+   * Fields omitted from `data` keep their current value. `description` is the
+   * one field a caller can clear, by supplying it explicitly as `null`.
+   */
   update(id: number, data: Partial<ScriptModWrite>): ScriptModRow | undefined {
+    const setsDescription = 'description' in data;
     return this.updateStmt.get(
       data.name ?? null,
+      setsDescription ? 1 : 0,
       data.description ?? null,
       data.definition ?? null,
       new Date().toISOString(),
