@@ -14,7 +14,18 @@ const MODEL = 'claude-opus-5';
 const MAX_TOKENS = 16_000;
 const SERVER_SIDE_FALLBACK_BETA = 'server-side-fallback-2026-07-01';
 
+/**
+ * The SDK defaults to a multi-minute timeout and several retries. A user is
+ * sitting in front of the "Create from text" dialog while this runs, so the
+ * request is bounded to one generation attempt plus a single retry.
+ */
+const REQUEST_TIMEOUT_MS = 90_000;
+const MAX_RETRIES = 1;
+
 const AUTH_HINT = 'Mod generation needs Claude credentials — run `ant auth login` and restart the server.';
+
+/** Message prefix the SDK throws from `validateHeaders` when no credentials resolve. */
+const UNRESOLVED_CREDENTIALS_PREFIX = 'Could not resolve authentication method';
 
 const SYSTEM_PROMPT = `You design "script mods" for a haptic device playback app. A mod is a time-axis program that speeds up, slows down, and pauses an existing motion script. Mods never change positions, only timing.
 
@@ -105,7 +116,7 @@ export class ModGenerationService {
           format: { type: 'json_schema', schema: GENERATE_SCRIPT_MOD_JSON_SCHEMA },
         },
         messages: [{ role: 'user', content: `${request.instruction}${durationHint}` }],
-      });
+      }, { timeout: REQUEST_TIMEOUT_MS, maxRetries: MAX_RETRIES });
     } catch (error) {
       throw this.toDomainError(error);
     }
@@ -130,13 +141,29 @@ export class ModGenerationService {
     return parsed as GeneratedPayload;
   }
 
-  /** Map SDK error classes onto domain errors — never string-match messages. */
+  /**
+   * Map SDK error classes onto domain errors.
+   *
+   * Classes are the primary signal. The one exception is the SDK's
+   * credential-resolution failure: `new Anthropic()` resolves credentials
+   * lazily and the request path then throws a plain `Error` with no dedicated
+   * class, so it is recognised by its message prefix. If that wording ever
+   * changes the check simply stops matching and the error falls through to the
+   * generic branch — it cannot misclassify anything else.
+   */
   private toDomainError(error: unknown): Error {
     if (
       error instanceof Anthropic.AuthenticationError ||
       error instanceof Anthropic.PermissionDeniedError
     ) {
       return new ServiceUnavailableError(AUTH_HINT);
+    }
+
+    // Checked before APIConnectionError, which it extends
+    if (error instanceof Anthropic.APIConnectionTimeoutError) {
+      return new ServiceUnavailableError(
+        'Claude took too long to generate this mod — try again with a shorter instruction.',
+      );
     }
 
     if (error instanceof Anthropic.APIConnectionError) {
@@ -151,6 +178,16 @@ export class ModGenerationService {
       return new UpstreamError(`Claude rejected the mod generation request (HTTP ${error.status ?? 'unknown'}).`);
     }
 
+    // A missing or unresolvable `ant auth login` profile surfaces either as a
+    // bare AnthropicError or as the plain Error below — both mean no credentials
+    if (error instanceof Anthropic.AnthropicError || this.isMissingCredentials(error)) {
+      return new ServiceUnavailableError(AUTH_HINT);
+    }
+
     return error instanceof Error ? error : new Error('Mod generation failed');
+  }
+
+  private isMissingCredentials(error: unknown): boolean {
+    return error instanceof Error && error.message.startsWith(UNRESOLVED_CREDENTIALS_PREFIX);
   }
 }
