@@ -150,4 +150,20 @@ export function initializeSchema(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_climax_created ON climax_records(createdAt);
     CREATE INDEX IF NOT EXISTS idx_pause_session ON pause_events(sessionId);
   `);
+
+  // Create script_mods table for saved speed/pause programs
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS script_mods (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      description TEXT,
+      definition TEXT NOT NULL,
+      createdAt TEXT NOT NULL DEFAULT (datetime('now')),
+      updatedAt TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+
+  db.exec(`
+    CREATE INDEX IF NOT EXISTS idx_script_mods_updated ON script_mods(updatedAt DESC);
+  `);
 }

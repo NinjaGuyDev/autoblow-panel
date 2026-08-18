@@ -31,6 +31,12 @@ import { DeviceService } from './services/device.service.js';
 import { PlaybackLoop } from './services/playback-loop.js';
 import { DeviceController } from './controllers/device.controller.js';
 import { createDeviceRouter } from './routes/device.routes.js';
+import Anthropic from '@anthropic-ai/sdk';
+import { ScriptModRepository } from './repositories/script-mod.repository.js';
+import { ScriptModService } from './services/script-mod.service.js';
+import { ModGenerationService } from './services/mod-generation.service.js';
+import { ScriptModController } from './controllers/script-mod.controller.js';
+import { createScriptModRouter } from './routes/script-mod.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 // Initialize database schema
@@ -79,6 +85,15 @@ const deviceService = new DeviceService(service, () => new PlaybackLoop());
 const deviceController = new DeviceController(deviceService);
 const deviceRouter = createDeviceRouter(deviceController);
 
+// Wire up script mod dependency chain.
+// Credentials resolve from the `ant auth login` OAuth profile, so the client is
+// built per request — a login performed after startup takes effect immediately.
+const scriptModRepository = new ScriptModRepository(db);
+const scriptModService = new ScriptModService(scriptModRepository);
+const modGenerationService = new ModGenerationService(() => new Anthropic());
+const scriptModController = new ScriptModController(scriptModService, modGenerationService);
+const scriptModRouter = createScriptModRouter(scriptModController);
+
 // Create Express app
 const app = express();
 
@@ -111,6 +126,7 @@ app.use('/api/sessions', sessionRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/media', mediaRouter);
 app.use('/api/device', deviceRouter);
+app.use('/api/mods', scriptModRouter);
 
 // Error handler (must be last)
 app.use(errorHandler);

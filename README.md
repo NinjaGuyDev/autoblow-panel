@@ -36,7 +36,26 @@ npm run dev
 
 Frontend runs on `http://localhost:5173`, backend API on port 3001.
 
+### Optional: Claude credentials for mod authoring
+
+Generating a script mod from natural language calls Claude from the backend. It
+reads the OAuth profile created by:
+
+```bash
+ant auth login
+```
+
+No API key or `.env` entry is needed, and every other feature — including
+applying mods you have already saved — works without it. Without a login, the
+"Create from text" dialog reports a 503 telling you to run the command above.
+
 ## Features
+
+### Live Speed Control & Script Mods
+- Numpad `1`-`9` speeds playback up 10%-90%, `Shift`+`1`-`9` slows it down, `0` restores original speed
+- Saved "mods": reusable speed and pause programs applied to any script with one press
+- Mods are authored from plain English via Claude, then run as pure local computation — no model call at playback time
+- Speed and mod changes hot-swap the device script mid-playback
 
 ### Video Synchronization
 - Real-time video-to-device sync with automatic drift correction
