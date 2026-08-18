@@ -10,6 +10,7 @@ import { useState, useCallback } from 'react';
 import { X, Sparkles, RefreshCw, Save, ChevronDown, ChevronRight } from 'lucide-react';
 import type { GenerateScriptModResponse, ScriptMod } from '@server/types/shared';
 import { scriptModApi } from '@/lib/apiClient';
+import { useModalDialog } from '@/hooks/useModalDialog';
 import { describeMod } from '@/lib/modSummary';
 
 interface ModGenerateDialogProps {
@@ -32,6 +33,7 @@ export function ModGenerateDialog({ scriptDurationMs, onClose, onSave }: ModGene
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showJson, setShowJson] = useState(false);
+  const dialogRef = useModalDialog<HTMLDivElement>(onClose);
 
   const handleGenerate = useCallback(async () => {
     if (instruction.trim() === '') return;
@@ -68,12 +70,19 @@ export function ModGenerateDialog({ scriptDurationMs, onClose, onSave }: ModGene
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-stone-950/80 backdrop-blur-sm p-4">
-      <div className="w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-stone-900 border border-stone-800 rounded-xl shadow-2xl">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="mod-generate-title"
+        tabIndex={-1}
+        className="w-full max-w-2xl max-h-[85vh] overflow-y-auto bg-stone-900 border border-stone-800 rounded-xl shadow-2xl"
+      >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-stone-800">
           <div className="flex items-center gap-2">
             <Sparkles className="w-5 h-5 text-violet-400" />
-            <h2 className="text-lg font-semibold text-stone-200" style={{ fontFamily: 'var(--font-display)' }}>
+            <h2 id="mod-generate-title" className="text-lg font-semibold text-stone-200" style={{ fontFamily: 'var(--font-display)' }}>
               Create Mod from Text
             </h2>
           </div>
@@ -81,6 +90,7 @@ export function ModGenerateDialog({ scriptDurationMs, onClose, onSave }: ModGene
             onClick={onClose}
             className="p-1.5 text-stone-500 hover:text-stone-200 hover:bg-stone-800 rounded-lg transition-colors"
             title="Close"
+            aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
