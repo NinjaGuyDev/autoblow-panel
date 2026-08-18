@@ -130,6 +130,64 @@ describe('ModGenerationService', () => {
     expect((error as Error).message).toContain('ant auth login');
   });
 
+  it('bounds the request with an explicit timeout and retry cap', async () => {
+    const { service, create } = makeService({
+      resolve: textResponse({ definition: VALID_DEFINITION, notes: null }),
+    });
+
+    await service.generate({ instruction: 'go faster' });
+
+    const options = create.mock.calls[create.mock.calls.length - 1]![1] as Record<string, unknown>;
+    expect(options.timeout).toBe(90_000);
+    expect(options.maxRetries).toBe(1);
+  });
+
+  it('maps an unresolved OAuth profile to 503 with the login hint', async () => {
+    // What the SDK throws when `ant auth login` was never run: a plain Error
+    // raised from validateHeaders, with no dedicated error class
+    const { service } = makeService({
+      reject: new Error(
+        'Could not resolve authentication method. Expected one of apiKey, authToken, credentials, config, or profile to be set.',
+      ),
+    });
+
+    const error = await service.generate({ instruction: 'x' }).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ServiceUnavailableError);
+    expect((error as Error).message).toContain('ant auth login');
+  });
+
+  it('maps a missing named profile to 503 with the login hint', async () => {
+    const { service } = makeService({
+      reject: new Anthropic.AnthropicError('Profile "work" could not be resolved'),
+    });
+
+    const error = await service.generate({ instruction: 'x' }).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ServiceUnavailableError);
+    expect((error as Error).message).toContain('ant auth login');
+  });
+
+  it('maps a request timeout to 503 without blaming credentials', async () => {
+    const { service } = makeService({
+      reject: new Anthropic.APIConnectionTimeoutError({ message: 'timed out' }),
+    });
+
+    const error = await service.generate({ instruction: 'x' }).catch((e: unknown) => e);
+
+    expect(error).toBeInstanceOf(ServiceUnavailableError);
+    expect((error as Error).message).toContain('too long');
+  });
+
+  it('leaves an unrelated failure unmapped', async () => {
+    const { service } = makeService({ reject: new Error('socket exploded') });
+
+    const error = await service.generate({ instruction: 'x' }).catch((e: unknown) => e);
+
+    expect(error).not.toBeInstanceOf(ServiceUnavailableError);
+    expect((error as Error).message).toBe('socket exploded');
+  });
+
   it('maps a connection failure to 503', async () => {
     const { service } = makeService({
       reject: new Anthropic.APIConnectionError({ message: 'offline' }),
