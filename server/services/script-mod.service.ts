@@ -51,7 +51,9 @@ export class ScriptModService {
 
     const updated = this.repository.update(id, {
       name,
-      description: data.description ?? null,
+      // Forwarded only when the caller supplied it: an omitted description
+      // keeps the stored value, an explicit null clears it.
+      ...(data.description !== undefined ? { description: data.description } : {}),
       definition: data.definition
         ? JSON.stringify(this.validateDefinition(data.definition))
         : undefined,
