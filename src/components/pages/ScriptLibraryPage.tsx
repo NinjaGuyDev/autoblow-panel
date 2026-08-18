@@ -5,13 +5,16 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, RefreshCw, Trash2, Play, Square, FileText, Shuffle, ListOrdered, Zap, Pause, Pencil, CopyPlus, Flag } from 'lucide-react';
-import type { LibraryItem } from '@server/types/shared';
+import type { LibraryItem, ScriptMod } from '@server/types/shared';
 import type { FunscriptAction } from '@/types/funscript';
 import type { RandomizeMode } from '@/hooks/useScriptPlayback';
 import { Timeline } from '@/components/timeline/Timeline';
 import { ScriptEditorDialog } from '@/components/script-library/ScriptEditorDialog';
 import { ClimaxPromptOverlay } from '@/components/script-library/ClimaxPromptOverlay';
 import { ClimaxEditorDialog } from '@/components/script-library/ClimaxEditorDialog';
+import { ModsPanel } from '@/components/script-library/ModsPanel';
+import { SpeedBadge } from '@/components/script-library/SpeedBadge';
+import { useSpeedControl } from '@/hooks/useSpeedControl';
 import { useUndoableActions } from '@/hooks/useUndoableActions';
 import { exportFunscript } from '@/lib/funscriptExport';
 import { libraryApi, analyticsApi } from '@/lib/apiClient';
@@ -41,6 +44,15 @@ interface ScriptLibraryPageProps {
   currentTimeMs: number;
   scriptDurationMs: number;
   onSeek: (timeMs: number) => Promise<void>;
+  speedFactor: number;
+  activeMod: ScriptMod | null;
+  edgeModeActive: boolean;
+  suspendedMod: ScriptMod | null;
+  previewSpeedFactor: (factor: number) => void;
+  setSpeedFactor: (factor: number) => Promise<void>;
+  applyMod: (mod: ScriptMod) => Promise<void>;
+  startEdgeMode: () => Promise<void>;
+  clearWarp: () => Promise<void>;
 }
 
 /**
@@ -93,6 +105,15 @@ export function ScriptLibraryPage({
   currentTimeMs,
   scriptDurationMs,
   onSeek,
+  speedFactor,
+  activeMod,
+  edgeModeActive,
+  suspendedMod,
+  previewSpeedFactor,
+  setSpeedFactor,
+  applyMod,
+  startEdgeMode,
+  clearWarp,
 }: ScriptLibraryPageProps) {
   const [deletingId, setDeletingId] = useState<number | null>(null);
   const [copyingId, setCopyingId] = useState<number | null>(null);
@@ -109,6 +130,26 @@ export function ScriptLibraryPage({
   useEffect(() => {
     resetEditable(currentActions);
   }, [currentScriptId]);
+
+  // Keyboard speed control — live only while a script is actually playing
+  const handleSpeedCommit = useCallback((factor: number) => {
+    setSpeedFactor(factor).catch(err => console.error('Failed to change speed:', err));
+  }, [setSpeedFactor]);
+
+  const handleEdgeMode = useCallback(() => {
+    startEdgeMode().catch(err => console.error('Failed to start edge mode:', err));
+  }, [startEdgeMode]);
+
+  useSpeedControl({
+    enabled: isPlaying && !isPaused,
+    onFactorPreview: previewSpeedFactor,
+    onFactorCommit: handleSpeedCommit,
+    onEdgeMode: handleEdgeMode,
+  });
+
+  const handleClearWarp = useCallback(() => {
+    clearWarp().catch(err => console.error('Failed to clear speed change:', err));
+  }, [clearWarp]);
 
   const handleTimelineToggle = useCallback((checked: boolean) => {
     setShowTimeline(checked);
@@ -310,6 +351,15 @@ export function ScriptLibraryPage({
           </button>
         )}
 
+        {/* Speed / mod indicator */}
+        <SpeedBadge
+          speedFactor={speedFactor}
+          activeMod={activeMod}
+          edgeModeActive={edgeModeActive}
+          suspendedMod={suspendedMod}
+          onClear={handleClearWarp}
+        />
+
         {/* Now Playing / Up Next indicators */}
         {isPlaying && (
           <div className="flex items-center gap-3 ml-auto text-xs">
@@ -335,6 +385,16 @@ export function ScriptLibraryPage({
           </div>
         )}
       </div>
+
+      {/* Saved mods */}
+      <ModsPanel
+        activeMod={activeMod}
+        isPlaying={isPlaying}
+        isDeviceConnected={isDeviceConnected}
+        scriptDurationMs={scriptDurationMs}
+        onApply={applyMod}
+        onClear={clearWarp}
+      />
 
       {/* Playback error */}
       {playbackError && (

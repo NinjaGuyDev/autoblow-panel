@@ -188,3 +188,95 @@ export interface DeviceStopResponse {
 export interface DeviceDisconnectResponse {
   status: 'disconnected';
 }
+
+// === Script Mod Types (Live Speed Control & Script Mods) ===
+
+/**
+ * How a mod's ops are laid out over a script.
+ * - `continuous` — ops fill the whole script, cycling in order.
+ * - `sequence-burst` — the op list runs as one burst, repeated at trigger points.
+ */
+export type ScriptModKind = 'sequence-burst' | 'continuous';
+
+/**
+ * A duration is either exact (`fixed`) or drawn uniformly from `[min, max]`.
+ * Exactly one of those two forms must be supplied.
+ */
+export interface ModDurationSpec {
+  fixed?: number | null;
+  min?: number | null;
+  max?: number | null;
+}
+
+/** Hold a constant speed factor for a duration. */
+export interface ModSpeedOp {
+  op: 'speed';
+  factor: number;
+  durationMs: ModDurationSpec;
+}
+
+/** Hold a speed drawn uniformly from `range` for a duration, then redraw. */
+export interface ModRandomSpeedOp {
+  op: 'randomSpeed';
+  range: number[]; // [min, max] — tuple validated by schema, array for JSON portability
+  holdMs: ModDurationSpec;
+}
+
+/**
+ * Freeze the device at its current position.
+ * In `continuous` mods a pause is offered once every `minGapMs` and taken with
+ * `probabilityPerWindow`; in `sequence-burst` mods it fires wherever it sits
+ * in the op list and both fields are ignored.
+ */
+export interface ModPauseOp {
+  op: 'pause';
+  durationMs: ModDurationSpec;
+  minGapMs: number;
+  probabilityPerWindow: number;
+}
+
+export type ScriptModOp = ModSpeedOp | ModRandomSpeedOp | ModPauseOp;
+
+/** Placement rule for `sequence-burst` mods. */
+export interface ScriptModTrigger {
+  type: 'random';
+  minGapMs: number;
+}
+
+export interface ScriptModDefinition {
+  version: number;
+  kind: ScriptModKind;
+  ops: ScriptModOp[];
+  trigger?: ScriptModTrigger | null;
+}
+
+export interface ScriptMod {
+  id: number;
+  name: string;
+  description: string | null;
+  definition: ScriptModDefinition;
+  createdAt: string;  // ISO 8601
+  updatedAt: string;  // ISO 8601
+}
+
+export interface CreateScriptModRequest {
+  name: string;
+  description?: string | null;
+  definition: ScriptModDefinition;
+}
+
+export interface UpdateScriptModRequest {
+  name?: string;
+  description?: string | null;
+  definition?: ScriptModDefinition;
+}
+
+export interface GenerateScriptModRequest {
+  instruction: string;
+  scriptDurationMs?: number | null;
+}
+
+export interface GenerateScriptModResponse {
+  definition: ScriptModDefinition;
+  modelNotes: string | null;
+}

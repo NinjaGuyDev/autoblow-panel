@@ -33,3 +33,24 @@ export class ConflictError extends DomainError {
     super(message, 409);
   }
 }
+
+/** Request was well-formed but could not be fulfilled (HTTP 422). */
+export class UnprocessableEntityError extends DomainError {
+  constructor(message: string) {
+    super(message, 422);
+  }
+}
+
+/** An upstream service returned something unusable (HTTP 502). */
+export class UpstreamError extends DomainError {
+  constructor(message: string) {
+    super(message, 502);
+  }
+}
+
+/** An upstream service is unreachable or unauthenticated (HTTP 503). */
+export class ServiceUnavailableError extends DomainError {
+  constructor(message: string) {
+    super(message, 503);
+  }
+}

@@ -17,6 +17,11 @@ import type {
   CreateSessionRequest,
   ClimaxRecord,
   CreateClimaxRecordRequest,
+  ScriptMod,
+  CreateScriptModRequest,
+  UpdateScriptModRequest,
+  GenerateScriptModRequest,
+  GenerateScriptModResponse,
 } from '@server/types/shared';
 
 const API_BASE = '/api/library';
@@ -42,6 +47,20 @@ async function fetchVoid(url: string, options?: RequestInit): Promise<void> {
 
 function jsonBody(method: string, data: unknown): RequestInit {
   return { method, headers: JSON_HEADERS, body: JSON.stringify(data) };
+}
+
+/** Pull the backend's `{ error }` message off a failed response, with a status fallback. */
+async function readErrorMessage(response: Response): Promise<string> {
+  try {
+    const body: unknown = await response.json();
+    if (body !== null && typeof body === 'object' && 'error' in body) {
+      const message = (body as { error: unknown }).error;
+      if (typeof message === 'string' && message !== '') return message;
+    }
+  } catch {
+    // Non-JSON body — fall through to the status text
+  }
+  return `HTTP ${response.status}: ${response.statusText}`;
 }
 
 /**
@@ -241,5 +260,43 @@ export const sessionApi = {
       libraryItemId,
       timestamp: new Date().toISOString()
     }));
+  },
+};
+
+/**
+ * Script Mod API client
+ * Saved speed/pause programs plus the Claude authoring endpoint
+ */
+const MOD_BASE = '/api/mods';
+
+export const scriptModApi = {
+  async getAll(): Promise<ScriptMod[]> {
+    return fetchJson(MOD_BASE);
+  },
+
+  async getById(id: number): Promise<ScriptMod> {
+    return fetchJson(`${MOD_BASE}/${id}`);
+  },
+
+  async create(data: CreateScriptModRequest): Promise<ScriptMod> {
+    return fetchJson(MOD_BASE, jsonBody('POST', data));
+  },
+
+  async update(id: number, data: UpdateScriptModRequest): Promise<ScriptMod> {
+    return fetchJson(`${MOD_BASE}/${id}`, jsonBody('PUT', data));
+  },
+
+  async deleteMod(id: number): Promise<void> {
+    return fetchVoid(`${MOD_BASE}/${id}`, { method: 'DELETE' });
+  },
+
+  /** Authoring only — the result is previewed client-side and saved via create(). */
+  async generate(data: GenerateScriptModRequest): Promise<GenerateScriptModResponse> {
+    const response = await fetch(`${MOD_BASE}/generate`, jsonBody('POST', data));
+    if (!response.ok) {
+      // Refusals and the `ant auth login` hint arrive in the body — surface them
+      throw new Error(await readErrorMessage(response));
+    }
+    return response.json();
   },
 };
