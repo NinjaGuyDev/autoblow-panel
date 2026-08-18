@@ -3,6 +3,7 @@ import cors from 'cors';
 import path from 'path';
 import db from './db/connection.js';
 import { initializeSchema } from './db/schema.js';
+import { seedBuiltInScriptMods } from './db/built-in-script-mods.js';
 import { LibraryRepository } from './repositories/library.repository.js';
 import { LibraryService } from './services/library.service.js';
 import { LibraryController } from './controllers/library.controller.js';
@@ -41,6 +42,9 @@ import { errorHandler } from './middleware/errorHandler.js';
 
 // Initialize database schema
 initializeSchema(db);
+
+// Ship the built-in script mods so the Mods panel is populated on first run
+seedBuiltInScriptMods(db);
 
 // Media directory — configurable for Docker volume mounts
 const MEDIA_DIR = path.resolve(process.env.MEDIA_DIR || './media');
