@@ -25,7 +25,7 @@ The two volumes persist your library database and uploaded media across containe
 
 ### npm (Development)
 
-Requires [Node.js](https://nodejs.org/) v18+ and npm.
+Requires [Node.js](https://nodejs.org/) 24.x and npm — the version pinned in `.nvmrc` and enforced by the `engines` field in `package.json`.
 
 ```bash
 git clone git@github.com:NinjaGuyDev/autoblow-panel.git
