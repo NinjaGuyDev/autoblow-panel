@@ -31,6 +31,8 @@ export function ModsPanel({
   const { mods, loading, error, createMod, renameMod, deleteMod } = useScriptMods();
   const [showGenerateDialog, setShowGenerateDialog] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
+  /** Failures from applying or clearing a mod, which the mods list owns. */
+  const [playbackError, setPlaybackError] = useState<string | null>(null);
 
   const handleSaveGenerated = useCallback(async (
     name: string,
@@ -40,12 +42,24 @@ export function ModsPanel({
 
   const handleApply = useCallback(async (mod: ScriptMod) => {
     setBusyId(mod.id);
+    setPlaybackError(null);
     try {
       await onApply(mod);
+    } catch (err) {
+      setPlaybackError(err instanceof Error ? err.message : `Could not apply "${mod.name}"`);
     } finally {
       setBusyId(null);
     }
   }, [onApply]);
+
+  const handleClear = useCallback(async () => {
+    setPlaybackError(null);
+    try {
+      await onClear();
+    } catch (err) {
+      setPlaybackError(err instanceof Error ? err.message : 'Could not clear the active mod');
+    }
+  }, [onClear]);
 
   const handleRename = useCallback(async (mod: ScriptMod) => {
     const name = window.prompt('Rename mod', mod.name);
@@ -86,7 +100,7 @@ export function ModsPanel({
         <div className="flex items-center gap-2">
           {activeMod && (
             <button
-              onClick={onClear}
+              onClick={() => { void handleClear(); }}
               className="flex items-center gap-1.5 px-3 py-1.5 text-xs bg-stone-800 text-stone-300 rounded-lg hover:bg-stone-700 transition-colors"
             >
               <Square className="w-3 h-3" />
@@ -103,9 +117,9 @@ export function ModsPanel({
         </div>
       </div>
 
-      {error && (
+      {(error ?? playbackError) && (
         <div className="mb-3 bg-orange-700/10 border border-orange-700 text-orange-400 px-3 py-2 rounded-lg text-sm">
-          {error}
+          {error ?? playbackError}
         </div>
       )}
 
@@ -153,7 +167,7 @@ export function ModsPanel({
 
                 <div className="flex shrink-0 gap-1">
                   <button
-                    onClick={() => handleApply(mod)}
+                    onClick={() => { void handleApply(mod); }}
                     disabled={busyId === mod.id || !isDeviceConnected}
                     className={`p-2 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
                       isActive
