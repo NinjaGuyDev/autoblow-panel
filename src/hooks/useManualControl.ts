@@ -38,6 +38,14 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
   // Track if we're currently uploading a funscript
   const isUploadingRef = useRef(false);
 
+  /**
+   * True from the moment a start command is issued rather than from when it
+   * resolves. `isRunning` only flips after the device round trip — which for a
+   * custom pattern includes a whole funscript upload — so an unmount inside
+   * that window would otherwise skip the stop and leave the device moving.
+   */
+  const isRunningRef = useRef(false);
+
   // Debounced SDK oscillateSet for real-time parameter updates
   const debouncedOscillateSet = useDebouncedCallback(
     async (speed: number, minY: number, maxY: number) => {
@@ -87,12 +95,14 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
       // Upload funscript to device
       await ultra.syncScriptUploadFunscriptFile(funscript);
 
+      isRunningRef.current = true;
       // Start playback from beginning
       await ultra.syncScriptStart(0);
 
       setIsRunning(true);
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to upload funscript'));
+      isRunningRef.current = false;
       setIsRunning(false);
     } finally {
       isUploadingRef.current = false;
@@ -114,6 +124,7 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
       if (patternType === 'oscillation') {
         // SDK oscillation mode
         await ultra.oscillateSet(speed, minY, maxY);
+        isRunningRef.current = true;
         await ultra.oscillateStart();
         setIsRunning(true);
       } else {
@@ -121,6 +132,7 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
         await uploadAndStartFunscript();
       }
     } catch (err) {
+      isRunningRef.current = false;
       setError(getErrorMessage(err, 'Failed to start manual control'));
     }
   }, [ultra, patternType, speed, minY, maxY, uploadAndStartFunscript]);
@@ -142,6 +154,7 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to stop manual control'));
     } finally {
+      isRunningRef.current = false;
       setIsRunning(false);
     }
   }, [ultra, patternType]);
@@ -207,9 +220,7 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
   // A mount-only cleanup captures the values from that first render, so the
   // teardown path reads refs — otherwise it saw isRunning === false forever and
   // left the device oscillating after the component went away
-  const isRunningRef = useRef(isRunning);
   const stopRef = useRef(stop);
-  useEffect(() => { isRunningRef.current = isRunning; }, [isRunning]);
   useEffect(() => { stopRef.current = stop; }, [stop]);
 
   // Cleanup on unmount
