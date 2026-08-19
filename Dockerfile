@@ -1,5 +1,5 @@
 # Stage 1: Build frontend (Vite SPA)
-FROM node:20-alpine AS frontend-builder
+FROM node:24-alpine AS frontend-builder
 
 WORKDIR /app
 
@@ -15,7 +15,7 @@ RUN npx vite build
 
 
 # Stage 2: Compile backend TypeScript
-FROM node:20-alpine AS backend-builder
+FROM node:24-alpine AS backend-builder
 
 WORKDIR /app
 
@@ -29,7 +29,7 @@ RUN npx tsc --project tsconfig.server.json --outDir dist/server --noEmit false
 
 
 # Stage 3: Production dependencies (with native better-sqlite3)
-FROM node:20-alpine AS deps
+FROM node:24-alpine AS deps
 
 WORKDIR /app
 
@@ -40,7 +40,7 @@ RUN npm ci --omit=dev
 
 
 # Stage 4: Runtime
-FROM node:20-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 

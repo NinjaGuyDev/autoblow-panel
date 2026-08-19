@@ -1,5 +1,10 @@
 name: Build and Publish Docker Image
 
+# Nothing here needs write access: checkout only reads, Docker Hub auth uses the
+# DOCKERHUB_* secrets, and the buildx gha cache uses the Actions runtime token
+permissions:
+  contents: read
+
 on:
   push:
     tags:
