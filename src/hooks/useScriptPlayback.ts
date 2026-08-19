@@ -178,7 +178,9 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
       // new position is only recorded below. togglePause() resumes from
       // pausedAtRef, which puts the device at the seeked position.
       if (isPaused) {
-        await ultra.syncScriptStop();
+        // Already stopped when paused — this is a safety net, so a failure here
+        // must not discard a reposition that is otherwise purely local
+        try { await ultra.syncScriptStop(); } catch { /* already stopped */ }
       } else {
         await ultra.syncScriptStart(deviceTime);
       }
