@@ -39,9 +39,9 @@ export default tseslint.config(
     },
   },
 
-  // Backend — Node globals, no React rules
+  // Backend, Electron main process and repo scripts — Node globals, no React rules
   {
-    files: ['server/**/*.ts'],
+    files: ['server/**/*.ts', 'electron/**/*.ts', 'scripts/**/*.ts'],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     languageOptions: {
       ecmaVersion: 2023,

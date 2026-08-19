@@ -4,7 +4,9 @@ FROM node:24-alpine AS frontend-builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+# --ignore-scripts: this stage only builds the SPA, so better-sqlite3's native
+# compile is dead weight (and has no musl prebuild to fall back on)
+RUN npm ci --ignore-scripts
 
 COPY tsconfig.json tsconfig.app.json tsconfig.node.json vite.config.ts index.html ./
 COPY src/ ./src/
@@ -20,12 +22,13 @@ FROM node:24-alpine AS backend-builder
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci
+# Compiling TypeScript only — same reasoning as the frontend stage
+RUN npm ci --ignore-scripts
 
-COPY tsconfig.server.json ./
+COPY tsconfig.server.json tsconfig.server.build.json ./
 COPY server/ ./server/
 
-RUN npx tsc --project tsconfig.server.json --outDir dist/server --noEmit false
+RUN npx tsc --project tsconfig.server.build.json --outDir dist/server --noEmit false
 
 
 # Stage 3: Production dependencies (with native better-sqlite3)
