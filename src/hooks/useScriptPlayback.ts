@@ -260,11 +260,15 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
     // A newer call has taken over — it will upload and start its own program
     if (isStale()) return;
 
-    // Mirrors seek(): stopping first keeps a paused session paused
+    // The device has no reposition-without-play operation — syncScriptStart
+    // plays from the given time — so a paused session is left stopped and the
+    // new position is only recorded locally. togglePause() resumes the swapped
+    // script from pausedAtRef, which is set below.
     if (isPausedRef.current) {
       await ultra.syncScriptStop();
+    } else {
+      await ultra.syncScriptStart(startAtMs);
     }
-    await ultra.syncScriptStart(startAtMs);
 
     if (isStale()) return;
 
