@@ -6,7 +6,35 @@ on:
       - 'v*'
 
 jobs:
+  # Gate the release on the same checks a developer runs locally. Without this a
+  # tag push shipped whatever was in the tree straight to :latest.
+  verify:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc -b && npx tsc -p tsconfig.server.json
+
+      - name: Test
+        run: npx vitest run
+
+      - name: Build
+        run: npx vite build
+
   build-and-push:
+    needs: verify
     runs-on: ubuntu-latest
 
     steps:
