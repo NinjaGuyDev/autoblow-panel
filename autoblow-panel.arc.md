@@ -84,7 +84,7 @@ autoblow-panel/
 │   ├── middleware/          # 4 middleware (security, localhost, error, validation)
 │   ├── db/                 # Connection + schema initialization
 │   └── types/              # Shared frontend-backend types
-├── docker/                 # Docker Compose + Dockerfiles + nginx.conf
+├── docker/                 # nginx config + entrypoint for the container image
 ├── data/                   # SQLite database (runtime, git-ignored)
 ├── media/                  # Video/media files (runtime, git-ignored)
 └── public/                 # Static assets
@@ -105,7 +105,7 @@ autoblow-panel/
 ```bash
 npm run dev              # Run frontend (Vite:5173) + backend (Express:3001) concurrently
 npm run build            # TypeScript compile + Vite bundle → dist/
-docker-compose -f docker/docker-compose.yml up  # Production deployment
+docker build -t autoblow-panel .               # Production image (single container)
 ```
 
 ### Testing Setup
@@ -620,36 +620,43 @@ Embedded via `<iframe>` with CSP `frame-src` restrictions. No direct API calls t
 
 ### Docker Deployment
 
+A single container runs both nginx and the Express backend. This is the only
+supported deployment, and it is what CI builds and publishes to Docker Hub.
+
 **Files:**
-- `docker/Dockerfile` — Frontend: Node 20 Alpine (build) → nginx 1.25 Alpine (serve)
-- `docker/Dockerfile.backend` — Backend: Node 20 Alpine (build) → Node 20 Alpine (runtime)
-- `docker/docker-compose.yml` — Service orchestration
-- `docker/nginx.conf` — Reverse proxy configuration
+- `Dockerfile` (repo root) — builds the SPA and the backend, then serves both from one Alpine image
+- `docker/nginx.production.conf` — nginx config baked into that image
+- `docker/entrypoint.sh` — starts nginx and the backend in the container
 
-**Services:**
+**Run:**
 
-| Service | Image | Port | Purpose |
-|---------|-------|------|---------|
-| frontend | nginx:1.25-alpine | 80 | Static SPA + reverse proxy |
-| backend | node:20-alpine | 3001 (localhost only) | API + media streaming |
+```bash
+docker run -d -p 8080:80 -v ab-data:/app/data -v ab-media:/app/media ninjaguydev/autoblow-panel
+```
+
+| Port | Purpose |
+|------|---------|
+| 80 (published as 8080) | nginx: static SPA + `/api` reverse proxy |
+| 3001 (in-container only) | Express: API + media streaming |
 
 **Volumes:**
-- `sqlite-data:/app/data` — Persistent SQLite database
-- `media-data:/app/media` — Persistent video/thumbnail files
-
-**Network:** Bridge network `app-network` for inter-service communication
+- `/app/data` — Persistent SQLite database
+- `/app/media` — Persistent video/thumbnail files
 
 ### Nginx Configuration
 
 - Gzip compression (level 6) for text/CSS/JS/JSON
 - Long-lived cache (1 year, immutable) for hashed static assets
-- `/api` routes proxied to backend:3001
+- `/api` routes proxied to the backend on `127.0.0.1:3001`
+- `client_max_body_size 11g` with request buffering off, sized above the 10 GB multer upload limit
 - SPA fallback: `try_files $uri $uri/ /index.html`
 - Security headers: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, CSP
 
 ### CI/CD
 
-**Status:** No automated CI/CD pipelines configured. Manual deployment via Docker Compose.
+`.github/workflows/docker-publish.yml` builds the root `Dockerfile` for
+linux/amd64 and linux/arm64 on `v*` tag pushes and publishes it to Docker Hub as
+`ninjaguydev/autoblow-panel`.
 
 ### Environment Variables
 
