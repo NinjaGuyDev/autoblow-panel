@@ -2,11 +2,40 @@
 
 > **Disclaimer:** This project is not affiliated with, endorsed by, or associated with Autoblow or its parent company in any way. This is an independent, community-built tool. Use at your own risk. The authors are not responsible for any damage to devices, data loss, or other issues arising from the use of this software.
 
-A local-first web application for controlling the Autoblow AI Ultra device. Create and edit funscript motion scripts, synchronize playback with local or embedded video, manage a content library, and build playlists — all running on your machine with no uploads, tracking, or analytics.
+A local-first application for controlling the Autoblow AI Ultra device. Create and edit funscript motion scripts, synchronize playback with local or embedded video, manage a content library, and build playlists — all running on your machine with no uploads, tracking, or analytics.
+
+It ships two ways, from the same code: a **desktop app** you install, and a
+**Docker container** you self-host and open in a browser. They behave
+identically; pick whichever suits you.
 
 ## Installation
 
-### Docker (Recommended)
+### Desktop app (Recommended)
+
+Download the installer for your platform from the
+[latest desktop release](https://github.com/NinjaGuyDev/autoblow-panel/releases?q=desktop&expanded=true):
+
+| Platform | File | Notes |
+|----------|------|-------|
+| Linux | `.AppImage` | `chmod +x` it and run — no installation |
+| Linux (Debian/Ubuntu) | `.deb` | `sudo apt install ./Autoblow-Panel-*.deb` |
+| Windows | `.exe` (NSIS) | Unsigned, so SmartScreen shows a warning — choose *More info* → *Run anyway* |
+| macOS | `.dmg` | Unsigned, so Gatekeeper blocks the first launch — right-click the app → *Open*, or `xattr -dr com.apple.quarantine "/Applications/Autoblow Panel.app"` |
+
+Your library database and uploaded media are stored per user, outside the
+application itself, so updating or reinstalling never touches them:
+
+| Platform | Location |
+|----------|----------|
+| Linux | `~/.config/autoblow-panel/` |
+| Windows | `%APPDATA%\autoblow-panel\` |
+| macOS | `~/Library/Application Support/autoblow-panel/` |
+
+The desktop app is self-contained: it starts its own backend on a free local
+port and talks to nothing on the network except the Autoblow cloud API the
+device SDK requires.
+
+### Docker
 
 Run a single container from Docker Hub — no cloning required:
 
@@ -35,6 +64,20 @@ npm run dev
 ```
 
 Frontend runs on `http://localhost:5173`, backend API on port 3001.
+
+To run the desktop shell against that same dev server, with hot reload:
+
+```bash
+npm run dev:desktop
+```
+
+To build installers locally:
+
+```bash
+npx electron-builder install-app-deps   # rebuild better-sqlite3 for Electron's ABI
+npm run dist                            # installers land in release/
+npm run dist:dir                        # or an unpacked build, without installers
+```
 
 ### Optional: Claude credentials for mod authoring
 
@@ -107,6 +150,12 @@ applying mods you have already saved — works without it. Without a login, the
 | v1.3 | In Progress | Session analytics, climax tracking, script chapters, usage dashboard |
 | v1.4 | Planned | Intensity profiles, remote control, script blending, theater mode |
 
+Desktop releases version separately from the web app:
+
+| Version | Status | Highlights |
+|---------|--------|------------|
+| desktop-v1.0 | Shipped | Electron app, installers for Linux/Windows/macOS, per-user data directories |
+
 ## Tech Stack
 
 | Layer | Technology |
@@ -114,7 +163,8 @@ applying mods you have already saved — works without it. Without a login, the
 | Frontend | React 19, TypeScript 5.9, Vite 7, Tailwind CSS 4 |
 | Backend | Express 5, SQLite (better-sqlite3) |
 | Device SDK | @xsense/autoblow-sdk |
-| Deployment | Docker (nginx + Node.js single container) |
+| Desktop | Electron 43, electron-builder |
+| Deployment | Docker (nginx + Node.js single container), desktop installers |
 
 ## Usage
 
@@ -124,6 +174,25 @@ applying mods you have already saved — works without it. Without a login, the
 4. **Create** -- Click "New Script" to start from scratch, add patterns from the library
 5. **Sync** -- Press play to synchronize video playback with your device
 6. **Export** -- Save your work as a `.funscript` file or to your library
+
+## Releasing
+
+Two independent release lines, each driven by a tag:
+
+| Tag | Workflow | Produces |
+|-----|----------|----------|
+| `v1.2.3` | `docker-publish.yml` | `ninjaguydev/autoblow-panel` image on Docker Hub |
+| `desktop-v1.0.0` | `release-desktop.yml` | Installers attached to a GitHub release |
+
+Both gate on `ci.yml` — typecheck, tests and build — before anything is
+published. To cut a desktop release:
+
+1. Add the version's section to [`CHANGELOG.md`](CHANGELOG.md).
+2. Tag and push: `git tag desktop-v1.0.0 && git push origin desktop-v1.0.0`.
+
+The workflow opens a draft release, builds all three platforms in parallel,
+attaches their installers, fills the release notes from the changelog section
+matching the tag, then publishes it.
 
 ## Contributing
 
