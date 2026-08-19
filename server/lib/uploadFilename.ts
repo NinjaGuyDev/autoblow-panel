@@ -20,9 +20,20 @@ export function sanitizeUploadFilename(originalName: string, fallback: string): 
   );
   const base = path.basename(originalName.slice(lastSeparator + 1));
 
-  // Anything outside the allowlist goes, then leading dots, which would
-  // otherwise leave traversal segments ("..") or dotfiles (".bashrc")
-  const safe = base.replace(/[^a-zA-Z0-9._-]/g, '').replace(/^\.+/, '');
+  // Stem and extension are sanitized separately: stripping the whole name at
+  // once lets a fully non-ASCII stem ("видео.mp4") collapse to a bare "mp4",
+  // which stores an extensionless file that the media listing filters out and
+  // that every other such upload then overwrites.
+  const ext = path.extname(base);
+  const stem = base.slice(0, base.length - ext.length);
+  const safeStem = stem.replace(/[^a-zA-Z0-9._-]/g, '').replace(/^\.+/, '');
+  const safeExt = ext.replace(/[^a-zA-Z0-9]/g, '');
 
-  return safe === '' ? fallback : safe;
+  if (safeStem === '') {
+    // Keep the real container extension so the stored file still lists and
+    // serves with the right content type
+    const fallbackStem = path.basename(fallback, path.extname(fallback));
+    return safeExt === '' ? fallback : `${fallbackStem}.${safeExt}`;
+  }
+  return safeExt === '' ? safeStem : `${safeStem}.${safeExt}`;
 }

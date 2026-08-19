@@ -160,7 +160,7 @@ export class MediaController {
         this.deleteAudioFileFromDisk(replaceFilename);
       }
       res.json({
-        name: file.originalname,
+        name: file.filename,
         size: file.size,
         stored: file.filename,
       });
