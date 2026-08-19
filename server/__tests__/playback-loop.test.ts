@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import type { Ultra } from '@xsense/autoblow-sdk';
 import { PlaybackLoop } from '../services/playback-loop.js';
 
 describe('PlaybackLoop', () => {
@@ -53,7 +54,7 @@ describe('PlaybackLoop', () => {
   });
 
   describe('start', () => {
-    function mockUltra(overrides: Partial<Record<string, any>> = {}) {
+    function mockUltra(overrides: Partial<Record<string, unknown>> = {}) {
       return {
         syncScriptUploadFunscriptFile: vi.fn().mockResolvedValue(undefined),
         syncScriptStart: vi.fn().mockResolvedValue(undefined),
@@ -63,7 +64,7 @@ describe('PlaybackLoop', () => {
           syncScriptCurrentTime: 0,
         }),
         ...overrides,
-      } as any;
+      } as unknown as Ultra;
     }
 
     it('sets isPlaying and durationMs after successful start', async () => {
@@ -122,7 +123,7 @@ describe('PlaybackLoop', () => {
           }
           return Promise.resolve({ operationalMode: 'IDLE', syncScriptCurrentTime: 0 });
         }),
-      } as any;
+      } as unknown as Ultra;
 
       await loop.start(ultra, [{ pos: 0, at: 0 }, { pos: 100, at: 5000 }]);
       expect(loop.getState().isPlaying).toBe(true);
@@ -145,7 +146,7 @@ describe('PlaybackLoop', () => {
           operationalMode: 'SYNC_SCRIPT_PLAYING',
           syncScriptCurrentTime: 0,
         }),
-      } as any;
+      } as unknown as Ultra;
 
       await loop.start(ultra, [{ pos: 0, at: 0 }, { pos: 100, at: 10000 }]);
       expect(loop.getState().isPlaying).toBe(true);

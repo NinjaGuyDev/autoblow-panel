@@ -5,7 +5,9 @@ export function errorHandler(
   err: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  // Express only treats a middleware as an error handler when it takes four
+  // parameters, so this one has to stay in the signature
+  _next: NextFunction
 ): void {
   // Log error stack to console
   console.error('Error:', err.stack);

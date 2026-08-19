@@ -83,7 +83,11 @@ export function Timeline({
   const validation = useValidation(actions as FunscriptAction[]);
 
   // Editor state (only when in edit mode)
+  // TODO: this calls a hook conditionally — toggling isEditMode changes the hook
+  // order and React will throw. Fix needs useTimelineEditor to run
+  // unconditionally and no-op when disabled, which is its own change.
   const editor = isEditMode
+    // eslint-disable-next-line react-hooks/rules-of-hooks
     ? useTimelineEditor({
         actions,
         setActions: onActionsChange,

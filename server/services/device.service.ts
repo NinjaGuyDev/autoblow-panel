@@ -140,7 +140,7 @@ export class DeviceService {
     // funscriptData may be { actions: [...], version } or raw array
     const actions: FunscriptActionDto[] = Array.isArray(parsed)
       ? parsed
-      : (parsed as any).actions;
+      : (parsed as { actions?: FunscriptActionDto[] }).actions;
 
     if (!actions || actions.length === 0) {
       throw new ValidationError('Library item has no funscript actions');
