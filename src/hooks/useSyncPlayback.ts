@@ -162,15 +162,23 @@ export function useSyncPlayback(
       return;
     }
 
+    // An upload orphaned by a device or script change still settles, and its
+    // late write would clobber the current run's state — a stale rejection
+    // setting scriptUploaded back to false is exactly what re-deadens the
+    // cleanup below
+    let cancelled = false;
+
     const uploadFunscript = async () => {
       try {
         setSyncStatus('uploading');
         const sdkFunscript = convertToSDKFunscript(funscriptData);
         await ultra.syncScriptUploadFunscriptFile(sdkFunscript);
+        if (cancelled) return;
         setScriptUploaded(true);
         setSyncStatus('ready');
         setError(null);
       } catch (err) {
+        if (cancelled) return;
         console.error('Failed to upload funscript:', err);
         setSyncStatus('error');
         setError(getErrorMessage(err, 'Failed to upload funscript'));
@@ -184,6 +192,7 @@ export function useSyncPlayback(
     // read from this effect's own closure on purpose — it is the device the
     // script was uploaded to, which is what has to be stopped.
     return () => {
+      cancelled = true;
       if (scriptUploadedRef.current && ultra) {
         ultra.syncScriptStop().catch(err => {
           console.error('Failed to stop sync script on cleanup:', err);
