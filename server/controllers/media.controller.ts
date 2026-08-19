@@ -118,8 +118,10 @@ export class MediaController {
         return;
       }
 
+      // filename is the sanitized name actually written to disk, which is what
+      // the client must record and later stream by
       res.json({
-        name: file.originalname,
+        name: file.filename,
         size: file.size,
         stored: true,
       });
@@ -140,7 +142,7 @@ export class MediaController {
         return;
       }
 
-      res.json({ name: file.originalname, stored: true });
+      res.json({ name: file.filename, stored: true });
     } catch (err) {
       next(err);
     }

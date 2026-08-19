@@ -3,6 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import type { MediaController } from '../controllers/media.controller.js';
+import { sanitizeUploadFilename } from '../lib/uploadFilename.js';
 
 export function createMediaRouter(controller: MediaController, mediaDir: string): Router {
   const router = Router();
@@ -15,7 +16,7 @@ export function createMediaRouter(controller: MediaController, mediaDir: string)
   // Configure multer for video uploads
   const storage = multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, mediaDir),
-    filename: (_req, file, cb) => cb(null, file.originalname),
+    filename: (_req, file, cb) => cb(null, sanitizeUploadFilename(file.originalname, 'video.mp4')),
   });
 
   const upload = multer({
@@ -45,14 +46,17 @@ export function createMediaRouter(controller: MediaController, mediaDir: string)
     destination: (_req, _file, cb) => cb(null, thumbDir),
     filename: (_req, file, cb) => {
       // Store as {videoname}.jpg — originalname comes as "videoname.jpg"
-      cb(null, file.originalname);
+      cb(null, sanitizeUploadFilename(file.originalname, 'thumbnail.jpg'));
     },
   });
 
   const thumbUpload = multer({
     storage: thumbStorage,
     fileFilter: (_req, file, cb) => {
-      cb(null, file.mimetype === 'image/jpeg');
+      // mimetype is client-supplied and trivially spoofed, so the extension is
+      // what decides where the bytes may land
+      const ext = path.extname(file.originalname).toLowerCase();
+      cb(null, file.mimetype === 'image/jpeg' && (ext === '.jpg' || ext === '.jpeg'));
     },
     limits: { fileSize: 5 * 1024 * 1024 }, // 5 MB max
   });
@@ -66,8 +70,7 @@ export function createMediaRouter(controller: MediaController, mediaDir: string)
   const audioStorage = multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, mediaDir),
     filename: (_req, file, cb) => {
-      const sanitized = file.originalname.replace(/[^a-zA-Z0-9._-]/g, '');
-      cb(null, `audio-${Date.now()}-${sanitized}`);
+      cb(null, `audio-${Date.now()}-${sanitizeUploadFilename(file.originalname, 'audio')}`);
     },
   });
 
