@@ -158,7 +158,7 @@ describe('PlaybackLoop', () => {
       expect(ultra.syncScriptStop).toHaveBeenCalled();
 
       // Advancing timers should not cause any callbacks to fire
-      ultra.getState.mockClear();
+      vi.mocked(ultra.getState).mockClear();
       await vi.advanceTimersByTimeAsync(20000);
       expect(ultra.getState).not.toHaveBeenCalled();
     });
