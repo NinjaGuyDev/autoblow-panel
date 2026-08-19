@@ -138,7 +138,7 @@ export class DeviceService {
     }
 
     // funscriptData may be { actions: [...], version } or raw array
-    const actions: FunscriptActionDto[] = Array.isArray(parsed)
+    const actions: FunscriptActionDto[] | undefined = Array.isArray(parsed)
       ? parsed
       : (parsed as { actions?: FunscriptActionDto[] }).actions;
 
