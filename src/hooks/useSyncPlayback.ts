@@ -46,6 +46,12 @@ export function useSyncPlayback(
     currentTime: number;      // seconds, from useEmbedPlayback
     isPlaying: boolean;        // from useEmbedPlayback
     manualOffsetMs: number;    // from useManualSync
+    /**
+     * Whether `currentTime` actually advances. False for iframe embeds, which
+     * have no onTimeUpdate feed — drift correction is impossible there and the
+     * user drives sync by hand instead.
+     */
+    hasLivePlayhead: boolean;
   }
 ): SyncPlaybackState {
   // State
@@ -296,7 +302,12 @@ export function useSyncPlayback(
           if (generation !== generationRef.current) return;
 
           setSyncStatus('playing');
-          startDriftLoop();
+          // An iframe embed reports no position, so the loop would measure
+          // drift against a playhead frozen at 0 and correct the device
+          // backwards, eroding the offset the user dialed in by hand
+          if (embedOptions.hasLivePlayhead) {
+            startDriftLoop();
+          }
         } catch (err) {
           if (generation !== generationRef.current) return;
           console.error('Failed to start embed sync:', err);
@@ -320,6 +331,13 @@ export function useSyncPlayback(
     };
 
     handleEmbedPlaybackChange();
+
+    // Without this the loop outlives the embed: switching to a local video
+    // early-returns the next run, leaving checkDrift rescheduling itself with a
+    // stale isEmbed closure and correcting a script that should be stopped
+    return () => {
+      stopDriftLoop();
+    };
   }, [embedOptions?.isEmbed, embedOptions?.isPlaying, ultra, scriptUploaded, estimatedLatencyMs]);
 
   // Final cleanup on unmount

@@ -142,6 +142,7 @@ function AppContent() {
     currentTime: playback.embedPlayback.currentTime,
     isPlaying: playback.embedPlayback.isPlaying,
     manualOffsetMs: playback.manualSync.offsetMs,
+    hasLivePlayhead: !playback.iframeEmbed,
   } : undefined);
 
   // Playlist playback state
