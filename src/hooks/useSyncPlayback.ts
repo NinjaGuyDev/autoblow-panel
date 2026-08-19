@@ -78,6 +78,17 @@ export function useSyncPlayback(
     embedCurrentTimeRef.current = embedOptions?.currentTime ?? 0;
   }, [embedOptions?.currentTime]);
 
+  /**
+   * Whether the script currently on the device was uploaded successfully.
+   *
+   * `scriptUploaded` flips to `true` inside an async upload that resolves long
+   * after the effect body returned, and the effect never re-runs on that state
+   * change, so a cleanup reading the captured value always saw `false` and
+   * skipped `syncScriptStop()`.
+   */
+  const scriptUploadedRef = useRef(false);
+  useEffect(() => { scriptUploadedRef.current = scriptUploaded; }, [scriptUploaded]);
+
   // Internal functions for drift detection loop
   const stopDriftLoop = () => {
     if (driftLoopRef.current !== null) {
@@ -169,9 +180,11 @@ export function useSyncPlayback(
 
     uploadFunscript();
 
-    // Cleanup: stop script on unmount or when data/device changes
+    // Cleanup: stop script on unmount or when data/device changes. `ultra` is
+    // read from this effect's own closure on purpose — it is the device the
+    // script was uploaded to, which is what has to be stopped.
     return () => {
-      if (scriptUploaded && ultra) {
+      if (scriptUploadedRef.current && ultra) {
         ultra.syncScriptStop().catch(err => {
           console.error('Failed to stop sync script on cleanup:', err);
         });
@@ -340,15 +353,12 @@ export function useSyncPlayback(
     };
   }, [embedOptions?.isEmbed, embedOptions?.isPlaying, ultra, scriptUploaded, estimatedLatencyMs]);
 
-  // Final cleanup on unmount
+  // Final cleanup on unmount. Stopping the script belongs to the upload
+  // effect's cleanup, which also runs on unmount and knows which device the
+  // script went to, so this only has to kill the RAF loop.
   useEffect(() => {
     return () => {
       stopDriftLoop();
-      if (scriptUploaded && ultra) {
-        ultra.syncScriptStop().catch(err => {
-          console.error('Failed to stop sync script on unmount:', err);
-        });
-      }
     };
   }, []);
 

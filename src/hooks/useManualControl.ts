@@ -204,14 +204,22 @@ export function useManualControl(ultra: Ultra | null): UseManualControlReturn {
     }
   }, [ultra, isRunning, stop]);
 
+  // A mount-only cleanup captures the values from that first render, so the
+  // teardown path reads refs — otherwise it saw isRunning === false forever and
+  // left the device oscillating after the component went away
+  const isRunningRef = useRef(isRunning);
+  const stopRef = useRef(stop);
+  useEffect(() => { isRunningRef.current = isRunning; }, [isRunning]);
+  useEffect(() => { stopRef.current = stop; }, [stop]);
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (isRunning) {
-        stop();
+      if (isRunningRef.current) {
+        void stopRef.current();
       }
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     isRunning,
