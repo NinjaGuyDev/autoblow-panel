@@ -25,6 +25,20 @@ describe('sanitizeUploadFilename', () => {
     expect(sanitizeUploadFilename('...', 'video.mp4')).toBe('video.mp4');
   });
 
+  it('keeps the extension when the stem is entirely non-ascii', () => {
+    // Collapsing the whole name would store an extensionless "mp4", which the
+    // media listing filters out and the next such upload overwrites
+    expect(sanitizeUploadFilename('видео.mp4', 'video.mp4')).toBe('video.mp4');
+    expect(sanitizeUploadFilename('ファイル.jpg', 'thumbnail.jpg')).toBe('thumbnail.jpg');
+    expect(sanitizeUploadFilename('视频.mkv', 'video.mp4')).toBe('video.mkv');
+  });
+
+  it('always leaves an extension on a name that had one', () => {
+    for (const name of ['видео.mp4', '视频.mkv', 'ファイル.jpg', 'ok.webm']) {
+      expect(sanitizeUploadFilename(name, 'video.mp4')).toMatch(/\.[a-z0-9]+$/);
+    }
+  });
+
   it('falls back when nothing usable survives', () => {
     expect(sanitizeUploadFilename('../', 'video.mp4')).toBe('video.mp4');
     expect(sanitizeUploadFilename('', 'thumbnail.jpg')).toBe('thumbnail.jpg');
