@@ -20,7 +20,7 @@ const VALID_DEFINITION: ScriptModDefinition = {
 
 /** Build a service whose Anthropic client resolves or rejects as instructed. */
 function makeService(behaviour: { resolve?: unknown; reject?: unknown }) {
-  const create = vi.fn(() =>
+  const create = vi.fn((..._args: unknown[]) =>
     behaviour.reject !== undefined
       ? Promise.reject(behaviour.reject)
       : Promise.resolve(behaviour.resolve),

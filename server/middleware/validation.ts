@@ -23,8 +23,10 @@ export function requireStringQueryParam(
  * Returns the parsed number, or null if the response was already sent.
  */
 export function parseIdParam(req: Request, res: Response, paramName: string = 'id'): number | null {
+  // Express types a route param as `string | string[]`, and a repeated segment
+  // really can produce an array — reject anything that is not a plain string
   const raw = req.params[paramName];
-  if (!STRICT_INTEGER_RE.test(raw)) {
+  if (typeof raw !== 'string' || !STRICT_INTEGER_RE.test(raw)) {
     res.status(400).json({ error: `Invalid ${paramName} parameter — must be a number` });
     return null;
   }
