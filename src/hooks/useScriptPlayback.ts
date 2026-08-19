@@ -173,11 +173,15 @@ export function useScriptPlayback({ ultra, scripts }: UseScriptPlaybackParams): 
     const deviceTime = Math.max(0, Math.round(warpedTarget));
 
     try {
-      // Stop the device first when paused so syncScriptStart doesn't resume playback
+      // The device has no reposition-without-play operation — syncScriptStart
+      // plays from the given time — so a paused session is left stopped and the
+      // new position is only recorded below. togglePause() resumes from
+      // pausedAtRef, which puts the device at the seeked position.
       if (isPaused) {
         await ultra.syncScriptStop();
+      } else {
+        await ultra.syncScriptStart(deviceTime);
       }
-      await ultra.syncScriptStart(deviceTime);
     } catch (err) {
       setPlaybackError(err instanceof Error ? err.message : 'Seek failed');
       return;
