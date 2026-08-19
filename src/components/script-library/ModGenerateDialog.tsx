@@ -33,7 +33,14 @@ export function ModGenerateDialog({ scriptDurationMs, onClose, onSave }: ModGene
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showJson, setShowJson] = useState(false);
-  const dialogRef = useModalDialog<HTMLDivElement>(onClose);
+
+  // Closing during a save would abandon a request the user still needs the
+  // result of: a success would land after unmount, a failure could not report
+  const requestClose = useCallback(() => {
+    if (!isSaving) onClose();
+  }, [isSaving, onClose]);
+
+  const dialogRef = useModalDialog<HTMLDivElement>(requestClose);
 
   const handleGenerate = useCallback(async () => {
     if (instruction.trim() === '') return;
@@ -87,8 +94,9 @@ export function ModGenerateDialog({ scriptDurationMs, onClose, onSave }: ModGene
             </h2>
           </div>
           <button
-            onClick={onClose}
-            className="p-1.5 text-stone-500 hover:text-stone-200 hover:bg-stone-800 rounded-lg transition-colors"
+            onClick={requestClose}
+            disabled={isSaving}
+            className="p-1.5 text-stone-500 hover:text-stone-200 hover:bg-stone-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             title="Close"
             aria-label="Close"
           >
@@ -187,8 +195,9 @@ export function ModGenerateDialog({ scriptDurationMs, onClose, onSave }: ModGene
         {/* Footer */}
         <div className="flex justify-end gap-2 px-5 py-4 border-t border-stone-800">
           <button
-            onClick={onClose}
-            className="px-4 py-2 text-stone-400 hover:text-stone-200 hover:bg-stone-800 rounded-lg transition-colors"
+            onClick={requestClose}
+            disabled={isSaving}
+            className="px-4 py-2 text-stone-400 hover:text-stone-200 hover:bg-stone-800 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             Cancel
           </button>
