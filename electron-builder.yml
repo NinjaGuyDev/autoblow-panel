@@ -1,0 +1,45 @@
+appId: dev.ninjaguy.autoblow-panel
+productName: Autoblow Panel
+copyright: Copyright © NinjaGuyDev
+
+directories:
+  output: release
+  buildResources: build
+
+# Only what the app runs: the built SPA, the compiled backend, the Electron entry
+files:
+  - dist/**/*
+  - dist-electron/**/*
+  - package.json
+
+# better-sqlite3 ships a .node binary, which cannot be loaded from inside the
+# asar archive — it has to sit on disk as a real file
+asarUnpack:
+  - '**/node_modules/better-sqlite3/**'
+
+linux:
+  category: AudioVideo
+  target:
+    - AppImage
+    - deb
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+
+mac:
+  category: public.app-category.video
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+
+publish:
+  provider: github
+  owner: NinjaGuyDev
+  repo: autoblow-panel

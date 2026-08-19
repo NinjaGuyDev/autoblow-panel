@@ -46,8 +46,17 @@ initializeSchema(db);
 // Ship the built-in script mods so the Mods panel is populated on first run
 seedBuiltInScriptMods(db);
 
-// Media directory — configurable for Docker volume mounts
+// Media directory — configurable for Docker volume mounts and the desktop build
 const MEDIA_DIR = path.resolve(process.env.MEDIA_DIR || './media');
+
+/**
+ * Directory holding the built SPA, served by Express itself.
+ *
+ * Only the desktop build sets this: Electron loads the app over HTTP from this
+ * process, so the bundle and the API have to be same-origin. The Docker image
+ * leaves it unset because nginx serves the bundle there.
+ */
+const STATIC_DIR = process.env.STATIC_DIR ? path.resolve(process.env.STATIC_DIR) : null;
 
 // Wire up media file service (shared by MediaController and LibraryService)
 const mediaFileService = new MediaFileService(MEDIA_DIR);
@@ -120,6 +129,11 @@ if (process.env.NODE_ENV !== 'production') {
 // Configure JSON body parser with large limit for funscript data
 app.use(express.json({ limit: '50mb' }));
 
+// Static assets of the built SPA, when this process is also the web server
+if (STATIC_DIR !== null) {
+  app.use(express.static(STATIC_DIR));
+}
+
 // Health check endpoint
 app.use('/health', healthRouter);
 
@@ -132,12 +146,31 @@ app.use('/api/media', mediaRouter);
 app.use('/api/device', deviceRouter);
 app.use('/api/mods', scriptModRouter);
 
+// SPA fallback for client-side routes. Anchored past the API and health prefixes
+// so an unknown endpoint still returns JSON rather than the index document.
+if (STATIC_DIR !== null) {
+  app.get(/^(?!\/api\/|\/health).*/, (_req, res) => {
+    res.sendFile(path.join(STATIC_DIR, 'index.html'));
+  });
+}
+
 // Error handler (must be last)
 app.use(errorHandler);
 
-// Start server
+// Start server. Bound to loopback by default: this is a local-only backend, and
+// in the Docker image nginx reaches it over 127.0.0.1 inside the same container.
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+const HOST = process.env.HOST || '127.0.0.1';
+const server = app.listen(Number(PORT), HOST, () => {
+  console.log(`Server listening on ${HOST}:${PORT}`);
   console.log(`Media directory: ${MEDIA_DIR}`);
+  if (STATIC_DIR !== null) console.log(`Serving app bundle from: ${STATIC_DIR}`);
 });
+
+// The desktop build kills this process when the window closes; close the
+// listener first so an in-flight upload is not truncated mid-write
+for (const signal of ['SIGTERM', 'SIGINT'] as const) {
+  process.on(signal, () => {
+    server.close(() => process.exit(0));
+  });
+}
