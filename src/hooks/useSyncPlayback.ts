@@ -60,6 +60,18 @@ export function useSyncPlayback(
   const driftLoopRef = useRef<number | null>(null);
   const lastDriftCheckRef = useRef<number>(0);
 
+  /**
+   * Live embed playhead in seconds.
+   *
+   * The drift loop is created once when playback starts and closes over the
+   * `embedOptions` object from that single render, so an embed's position can
+   * only reach it through a ref that a lightweight effect keeps current.
+   */
+  const embedCurrentTimeRef = useRef(0);
+  useEffect(() => {
+    embedCurrentTimeRef.current = embedOptions?.currentTime ?? 0;
+  }, [embedOptions?.currentTime]);
+
   // Internal functions for drift detection loop
   const stopDriftLoop = () => {
     if (driftLoopRef.current !== null) {
@@ -96,7 +108,7 @@ export function useSyncPlayback(
 
         // Get video time - either from embed options or video element
         const videoTimeMs = embedOptions?.isEmbed
-          ? embedOptions.currentTime * 1000
+          ? embedCurrentTimeRef.current * 1000
           : videoRef.current.currentTime * 1000;
 
         const drift = videoTimeMs - deviceTimeMs;
