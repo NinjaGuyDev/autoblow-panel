@@ -192,7 +192,7 @@ function capSpeed(
 ): FunscriptAction[] {
   if (actions.length < 3) return [...actions];
 
-  let result = actions.map(a => ({ ...a })); // Deep copy
+  const result = actions.map(a => ({ ...a })); // Deep copy
 
   for (let iteration = 0; iteration < options.maxIterations; iteration++) {
     let violationCount = 0;

@@ -7,7 +7,7 @@ function makePattern(id: string, name: string, actions: FunscriptAction[], audio
     id,
     name,
     intensity: 'medium' as const,
-    tags: [] as any[],
+    tags: [],
     durationMs: actions[actions.length - 1]!.at,
     actions,
     isCustom: true as const,
