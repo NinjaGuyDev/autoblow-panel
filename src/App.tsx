@@ -10,6 +10,7 @@ import { VideoSyncPage } from '@/components/pages/VideoSyncPage';
 import { ManualControlPage } from '@/components/pages/ManualControlPage';
 import { DeviceLogPage } from '@/components/pages/DeviceLogPage';
 import { PatternLibraryPage } from '@/components/pages/PatternLibraryPage';
+import { TrainerPage } from '@/components/pages/TrainerPage';
 import { LibraryPage } from '@/components/pages/LibraryPage';
 import { PlaylistPage } from '@/components/pages/PlaylistPage';
 import { PlaylistControls } from '@/components/playlist/PlaylistControls';
@@ -608,6 +609,10 @@ function AppContent() {
             onInsert={handlePatternInsert}
             isCreationMode={isCreationMode}
           />
+        )}
+
+        {activeTab === 'trainer' && (
+          <TrainerPage />
         )}
       </Layout>
 

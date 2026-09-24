@@ -4,7 +4,8 @@ import { cn } from '@/lib/utils';
 
 interface PatternCardProps {
   pattern: AnyPattern;
-  onClick: () => void;
+  /** Omit for a display-only card. */
+  onClick?: () => void;
   isCreationMode?: boolean;
   onQuickAdd?: () => void;
   isRandomizeMode?: boolean;
@@ -160,7 +161,7 @@ export const PatternCard = memo(function PatternCard({
     if (isRandomizeMode) {
       onToggleSelect?.();
     } else {
-      onClick();
+      onClick?.();
     }
   };
 
@@ -181,7 +182,8 @@ export const PatternCard = memo(function PatternCard({
   return (
     <div
       className={cn(
-        'border border-stone-800 rounded-lg p-4 bg-stone-900/50 cursor-pointer transition-colors relative',
+        'border border-stone-800 rounded-lg p-4 bg-stone-900/50 transition-colors relative',
+        (onClick || isRandomizeMode) && 'cursor-pointer',
         'hover:border-stone-600 hover:bg-stone-900/80',
         isSelected ? 'ring-2 ring-amber-500' : ''
       )}

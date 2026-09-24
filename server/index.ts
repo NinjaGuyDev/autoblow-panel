@@ -38,6 +38,11 @@ import { ScriptModService } from './services/script-mod.service.js';
 import { ModGenerationService } from './services/mod-generation.service.js';
 import { ScriptModController } from './controllers/script-mod.controller.js';
 import { createScriptModRouter } from './routes/script-mod.routes.js';
+import { TrainerPatternRepository } from './repositories/trainer-pattern.repository.js';
+import { TrainerRankingRepository } from './repositories/trainer-ranking.repository.js';
+import { TrainerService } from './services/trainer.service.js';
+import { TrainerController } from './controllers/trainer.controller.js';
+import { createTrainerRouter } from './routes/trainer.routes.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
 // Initialize database schema
@@ -98,6 +103,11 @@ const modGenerationService = new ModGenerationService(() => new Anthropic());
 const scriptModController = new ScriptModController(scriptModService, modGenerationService);
 const scriptModRouter = createScriptModRouter(scriptModController);
 
+// Wire up pattern trainer dependency chain
+const trainerService = new TrainerService(new TrainerPatternRepository(db), new TrainerRankingRepository(db));
+const trainerController = new TrainerController(trainerService);
+const trainerRouter = createTrainerRouter(trainerController);
+
 // Create Express app
 const app = express();
 
@@ -131,6 +141,7 @@ app.use('/api/analytics', analyticsRouter);
 app.use('/api/media', mediaRouter);
 app.use('/api/device', deviceRouter);
 app.use('/api/mods', scriptModRouter);
+app.use('/api/trainer', trainerRouter);
 
 // Error handler (must be last)
 app.use(errorHandler);

@@ -22,6 +22,8 @@ import type {
   UpdateScriptModRequest,
   GenerateScriptModRequest,
   GenerateScriptModResponse,
+  TrainerPattern,
+  CreateTrainerRankingRequest,
 } from '@server/types/shared';
 
 const API_BASE = '/api/library';
@@ -298,5 +300,23 @@ export const scriptModApi = {
       throw new Error(await readErrorMessage(response));
     }
     return response.json();
+  },
+};
+
+/**
+ * Trainer API client
+ * Trainer patterns and the ranks recorded for them
+ */
+const TRAINER_BASE = '/api/trainer';
+
+export const trainerApi = {
+  async getPatterns(): Promise<TrainerPattern[]> {
+    return fetchJson(`${TRAINER_BASE}/patterns`);
+  },
+
+  /** Returns the pattern with its average rank and rank count refreshed. */
+  async rankPattern(patternId: number, rank: number): Promise<TrainerPattern> {
+    const body: CreateTrainerRankingRequest = { rank };
+    return fetchJson(`${TRAINER_BASE}/patterns/${patternId}/rankings`, jsonBody('POST', body));
   },
 };

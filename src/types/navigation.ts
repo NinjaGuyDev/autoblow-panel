@@ -2,7 +2,7 @@
  * Navigation types for tab-based UI
  */
 
-export type TabId = 'library' | 'playlists' | 'script-library' | 'video-sync' | 'manual-control' | 'device-log' | 'pattern-library';
+export type TabId = 'library' | 'playlists' | 'script-library' | 'video-sync' | 'manual-control' | 'device-log' | 'pattern-library' | 'trainer';
 
 export interface Tab {
   id: TabId;
@@ -17,4 +17,5 @@ export const TABS: readonly Tab[] = [
   { id: 'manual-control', label: 'Manual Control' },
   { id: 'device-log', label: 'Device Log' },
   { id: 'pattern-library', label: 'Patterns' },
+  { id: 'trainer', label: 'Trainer' },
 ] as const;

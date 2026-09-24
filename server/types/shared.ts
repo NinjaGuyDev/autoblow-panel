@@ -280,3 +280,43 @@ export interface GenerateScriptModResponse {
   definition: ScriptModDefinition;
   modelNotes: string | null;
 }
+
+// === Pattern Trainer Types ===
+
+/** Lowest and highest rank a trainer pattern can receive (the 0-9 keys). */
+export const TRAINER_RANK_MIN = 0;
+export const TRAINER_RANK_MAX = 9;
+
+/** Fastest a trainer pattern may move, in position units per second. */
+export const TRAINER_MAX_SPEED = 130;
+
+export type TrainerIntensity = 'low' | 'medium' | 'high';
+
+/** A short sample extracted from a source script, ranked on the Trainer page. */
+export interface TrainerPattern {
+  id: number;
+  /** Stable identity of the sample (source + start offset) — makes imports idempotent. */
+  patternKey: string;
+  name: string;
+  /** The script the sample was cut from. */
+  sourceLabel: string;
+  /** Groups the variations of one distinct pattern. */
+  familyKey: string;
+  /** 1-based variation number within the family. */
+  variation: number;
+  actions: FunscriptActionDto[];
+  durationMs: number;
+  intensity: TrainerIntensity;
+  tags: string[];
+  /** Mean of every rank recorded for this pattern, or null when never ranked. */
+  averageRank: number | null;
+  rankCount: number;
+  createdAt: string; // ISO 8601
+}
+
+/** A trainer pattern before it is stored. */
+export type NewTrainerPattern = Omit<TrainerPattern, 'id' | 'averageRank' | 'rankCount' | 'createdAt'>;
+
+export interface CreateTrainerRankingRequest {
+  rank: number;
+}

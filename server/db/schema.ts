@@ -167,6 +167,35 @@ export function initializeSchema(db: Database.Database): void {
     CREATE INDEX IF NOT EXISTS idx_script_mods_updated ON script_mods(updatedAt DESC);
   `);
 
+  // Trainer patterns live apart from library_items so they never surface on
+  // the Patterns page; rankings are append-only so a pattern's rank is the
+  // mean of every rank it has received
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS trainer_patterns (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      patternKey TEXT NOT NULL UNIQUE,
+      name TEXT NOT NULL,
+      sourceLabel TEXT NOT NULL,
+      familyKey TEXT NOT NULL,
+      variation INTEGER NOT NULL,
+      actions TEXT NOT NULL,
+      durationMs INTEGER NOT NULL,
+      intensity TEXT NOT NULL,
+      tags TEXT NOT NULL DEFAULT '[]',
+      createdAt TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
+    );
+
+    CREATE TABLE IF NOT EXISTS trainer_rankings (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      patternId INTEGER NOT NULL,
+      rank INTEGER NOT NULL CHECK (rank BETWEEN 0 AND 9),
+      createdAt TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now')),
+      FOREIGN KEY (patternId) REFERENCES trainer_patterns(id) ON DELETE CASCADE
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_trainer_rankings_pattern ON trainer_rankings(patternId);
+  `);
+
   // Databases created before the ISO 8601 defaults above hold SQLite
   // `datetime('now')` text ("YYYY-MM-DD HH:MM:SS"), which sorts below the ISO
   // values `update()` writes because "T" > " ". Rewriting them keeps
