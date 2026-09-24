@@ -205,6 +205,19 @@ interface LibraryItem {
 
 **File Restrictions:** `.mp4`, `.webm`, `.ogg`, `.mkv`, `.avi` | Thumbnails: JPEG only
 
+### Trainer API (`/api/trainer`)
+
+| Method | Path | Handler | Description |
+|--------|------|---------|-------------|
+| GET | `/api/trainer/patterns` | `TrainerController.getPatterns` | List trainer patterns with `averageRank` and `rankCount` |
+| POST | `/api/trainer/patterns/:id/rankings` | `TrainerController.rankPattern` | Record one rank (`{ rank: 0-9 }`); returns the pattern with refreshed stats |
+
+Trainer patterns are ~10 second samples cut from source funscripts by
+`npx tsx server/scripts/extract-trainer-patterns.ts [--dry-run] <file.funscript>...`
+(pure extraction logic in `server/lib/trainer/`). Samples keep their original
+timing, never exceed 130 units/s, and hold still for at most 3 s. They live in
+their own table, so they never appear on the Patterns page.
+
 ### Health API
 
 | Method | Path | Handler | Description |
@@ -315,6 +328,13 @@ CREATE TABLE IF NOT EXISTS playlist_items (
 ```
 
 **Indexes:** `(playlist_id, position)` composite, `library_item_id`
+
+#### `trainer_patterns` / `trainer_rankings`
+
+`trainer_patterns` holds extracted samples (`patternKey` UNIQUE = source + start
+offset, so re-importing the same files is idempotent; `actions` and `tags` are
+JSON). `trainer_rankings` is append-only (`patternId` FK ON DELETE CASCADE,
+`rank` 0-9); a pattern's rank is `AVG(rank)` over all its rows.
 
 #### `migration_status`
 
@@ -445,7 +465,7 @@ FunscriptSchema = union([
 
 ### Navigation (`src/types/navigation.ts`)
 
-6 tabs: `library`, `playlists`, `video-sync`, `manual-control`, `device-log`, `pattern-library`
+8 tabs: `library`, `playlists`, `script-library`, `video-sync`, `manual-control`, `device-log`, `pattern-library`, `trainer`
 
 ---
 
