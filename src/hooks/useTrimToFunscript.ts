@@ -12,10 +12,13 @@ interface UseTrimToFunscriptReturn {
 }
 
 /**
- * Runs "Trim to funscript" and hands the new library item to onTrimmed.
- * Failures land in `error` rather than being thrown.
+ * Runs "Trim to funscript" and hands the new library item to onTrimmed,
+ * along with the request it answers so the caller can tell whether the
+ * same video is still loaded. Failures land in `error` rather than being thrown.
  */
-export function useTrimToFunscript(onTrimmed: (result: TrimToFunscriptResult) => void): UseTrimToFunscriptReturn {
+export function useTrimToFunscript(
+  onTrimmed: (result: TrimToFunscriptResult, request: TrimToFunscriptRequest) => void,
+): UseTrimToFunscriptReturn {
   const { loading, error, run, clearError } = useAsyncOperation();
 
   const trim = useCallback(async (request: TrimToFunscriptRequest) => {
@@ -26,7 +29,7 @@ export function useTrimToFunscript(onTrimmed: (result: TrimToFunscriptResult) =>
       // run() has already recorded the message in `error`
       return;
     }
-    onTrimmed(result);
+    onTrimmed(result, request);
   }, [run, onTrimmed]);
 
   return { isTrimming: loading, error, trim, clearError };

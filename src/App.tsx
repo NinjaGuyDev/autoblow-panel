@@ -41,7 +41,7 @@ import { parseFunscript } from '@/lib/scriptPlaybackUtils';
 import { isEmbedUrl } from '@/lib/videoUtils';
 import type { TabId } from '@/types/navigation';
 import type { AnyPattern } from '@/types/patterns';
-import type { LibraryItem, TrimToFunscriptResult } from '@server/types/shared';
+import type { LibraryItem, TrimToFunscriptRequest, TrimToFunscriptResult } from '@server/types/shared';
 import { useTrimToFunscript } from '@/hooks/useTrimToFunscript';
 import { trimTargetForActions } from '@/lib/trimToFunscript';
 
@@ -432,11 +432,20 @@ function AppContent() {
     }
   };
 
-  // Trim to funscript: offered for a local video whose script starts well into it
-  const handleTrimmed = ({ item, cutMs }: TrimToFunscriptResult) => {
+  // Trim to funscript: offered for a local video whose script starts well into it.
+  // A trim can finish after the user has loaded something else; read what is
+  // loaded now, not what was loaded at click time.
+  const loadedNamesRef = useRef({ videoName, funscriptName });
+  useEffect(() => {
+    loadedNamesRef.current = { videoName, funscriptName };
+  }, [videoName, funscriptName]);
+  const handleTrimmed = ({ item, cutMs }: TrimToFunscriptResult, request: TrimToFunscriptRequest) => {
     addLog('info', `Trimmed ${(cutMs / 1000).toFixed(1)} s off the start, saved as ${item.videoName}`);
     void library.refresh();
-    void handleLoadFromLibrary(item);
+    const loaded = loadedNamesRef.current;
+    if (loaded.videoName === request.videoName && loaded.funscriptName === request.funscriptName) {
+      void handleLoadFromLibrary(item);
+    }
   };
   const trimToFunscript = useTrimToFunscript(handleTrimmed);
   const { clearError: clearTrimError } = trimToFunscript;
