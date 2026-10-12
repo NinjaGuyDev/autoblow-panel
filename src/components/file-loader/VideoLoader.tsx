@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { FileDropzone } from './FileDropzone';
 import { VideoPlayer } from '../video-player/VideoPlayer';
+import { ACCEPTED_VIDEO_EXTENSIONS } from '@/lib/videoFileTypes';
 
 interface VideoLoaderProps {
   videoFile: File | null;
@@ -89,7 +90,7 @@ export function VideoLoader({
         <>
           <FileDropzone
             onFileAccepted={onVideoLoad}
-            accept={{ 'video/*': ['.mp4', '.webm', '.ogg', '.mkv'] }}
+            accept={{ 'video/*': [...ACCEPTED_VIDEO_EXTENSIONS] }}
             label="Load Video"
             description="MP4, WebM, OGG, or MKV"
             error={error}
