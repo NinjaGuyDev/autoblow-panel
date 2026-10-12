@@ -19,6 +19,28 @@ export const THUMBNAIL_FALLBACK_NAME = 'thumbnail.jpg';
  * @param fallback used when nothing usable survives sanitization.
  */
 export function sanitizeUploadFilename(originalName: string, fallback: string): string {
+  const { safeStem, safeExt } = splitSafeName(originalName);
+
+  if (safeStem === '') {
+    // Keep the real container extension so the stored file still lists and
+    // serves with the right content type
+    const fallbackStem = path.basename(fallback, path.extname(fallback));
+    return safeExt === '' ? fallback : `${fallbackStem}.${safeExt}`;
+  }
+  return joinSafeName(safeStem, safeExt);
+}
+
+/**
+ * The name sanitizeUploadFilename() stores a file under, or null when its stem
+ * sanitizes to nothing. Such uploads land on the shared fallback name, which
+ * identifies no particular upload, so lookups must not treat it as theirs.
+ */
+export function sanitizeStoredName(originalName: string): string | null {
+  const { safeStem, safeExt } = splitSafeName(originalName);
+  return safeStem === '' ? null : joinSafeName(safeStem, safeExt);
+}
+
+function splitSafeName(originalName: string): { safeStem: string; safeExt: string } {
   // Windows-style separators survive posix basename(), so strip them first
   const lastSeparator = Math.max(
     originalName.lastIndexOf('/'),
@@ -32,14 +54,12 @@ export function sanitizeUploadFilename(originalName: string, fallback: string): 
   // that every other such upload then overwrites.
   const ext = path.extname(base);
   const stem = base.slice(0, base.length - ext.length);
-  const safeStem = stem.replace(/[^a-zA-Z0-9._-]/g, '').replace(/^\.+/, '');
-  const safeExt = ext.replace(/[^a-zA-Z0-9]/g, '');
+  return {
+    safeStem: stem.replace(/[^a-zA-Z0-9._-]/g, '').replace(/^\.+/, ''),
+    safeExt: ext.replace(/[^a-zA-Z0-9]/g, ''),
+  };
+}
 
-  if (safeStem === '') {
-    // Keep the real container extension so the stored file still lists and
-    // serves with the right content type
-    const fallbackStem = path.basename(fallback, path.extname(fallback));
-    return safeExt === '' ? fallback : `${fallbackStem}.${safeExt}`;
-  }
+function joinSafeName(safeStem: string, safeExt: string): string {
   return safeExt === '' ? safeStem : `${safeStem}.${safeExt}`;
 }

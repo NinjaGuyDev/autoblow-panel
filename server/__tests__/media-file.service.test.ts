@@ -66,6 +66,37 @@ describe('MediaFileService', () => {
     });
   });
 
+  describe('names whose stem sanitizes to nothing', () => {
+    beforeEach(() => {
+      // Shared upload fallbacks, holding some other row's files
+      writeVideo('video.mp4');
+      writeThumbnail('thumbnail.jpg');
+    });
+
+    it('never resolve to the shared fallback files', () => {
+      expect(service.resolveVideoPath('видео.mp4')).toBeNull();
+      expect(service.resolveThumbnailPath('видео.mp4')).toBeNull();
+    });
+
+    it('never delete the shared fallback files', () => {
+      service.deleteVideoFile('видео.mp4');
+      service.deleteThumbnailFile('видео.mp4');
+
+      expect(fs.readdirSync(mediaDir).sort()).toEqual(['thumbnails', 'video.mp4']);
+      expect(fs.readdirSync(path.join(mediaDir, 'thumbnails'))).toEqual(['thumbnail.jpg']);
+    });
+
+    it('still resolve when stored under their exact name', () => {
+      writeVideo('видео.mp4');
+
+      expect(service.resolveVideoPath('видео.mp4')).toBe(path.join(mediaDir, 'видео.mp4'));
+    });
+
+    it('leave a genuine video.mp4 resolvable by its own name', () => {
+      expect(service.resolveVideoPath('video.mp4')).toBe(path.join(mediaDir, 'video.mp4'));
+    });
+  });
+
   describe('deleting by recorded name', () => {
     it('removes the sanitized video and thumbnail files', () => {
       writeVideo(SANITIZED_NAME);
