@@ -200,7 +200,8 @@ export function useTrainerSession({ ultra, patterns, recordRank }: UseTrainerSes
     })());
   }, [trackDeviceOp, switchPattern, repeatPattern]);
 
-  useScriptLoop(ultra, status === 'playing', loop.durationMs, handleLoopEnd);
+  // No early loop-end check: restarting before the seam finishes would skip its speed cap
+  useScriptLoop(ultra, status === 'playing', loop.durationMs, handleLoopEnd, 0);
 
   const start = useCallback(async () => {
     if (statusRef.current !== 'idle') return;

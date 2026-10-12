@@ -18,6 +18,8 @@ export function useScriptLoop(
   isPlaying: boolean,
   scriptDurationMs: number,
   onLoopEnd: () => void,
+  /** How long before the script's end to report the loop end. */
+  checkEarlyMs: number = CHECK_EARLY_MS,
 ) {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const onLoopEndRef = useRef(onLoopEnd);
@@ -48,7 +50,7 @@ export function useScriptLoop(
       try {
         const state = await ultra!.getState();
         const playing = state.operationalMode === 'SYNC_SCRIPT_PLAYING';
-        const nearEnd = state.syncScriptCurrentTime >= scriptDurationMs - CHECK_EARLY_MS;
+        const nearEnd = state.syncScriptCurrentTime >= scriptDurationMs - checkEarlyMs;
 
         if (nearEnd || !playing) {
           onLoopEndRef.current();
@@ -66,7 +68,7 @@ export function useScriptLoop(
     function scheduleCheck(cycleStart: number) {
       if (cancelled) return;
       const elapsed = Date.now() - cycleStart;
-      const waitMs = Math.max(0, scriptDurationMs - CHECK_EARLY_MS - elapsed);
+      const waitMs = Math.max(0, scriptDurationMs - checkEarlyMs - elapsed);
       timerRef.current = setTimeout(checkAndRestart, waitMs);
     }
 
@@ -76,5 +78,5 @@ export function useScriptLoop(
       cancelled = true;
       clearTimer();
     };
-  }, [ultra, isPlaying, scriptDurationMs]);
+  }, [ultra, isPlaying, scriptDurationMs, checkEarlyMs]);
 }
