@@ -320,3 +320,37 @@ export type NewTrainerPattern = Omit<TrainerPattern, 'id' | 'averageRank' | 'ran
 export interface CreateTrainerRankingRequest {
   rank: number;
 }
+
+// === Trim to Funscript Types ===
+
+/** Video kept before the first funscript action, so playback doesn't open mid-motion. */
+export const TRIM_LEAD_IN_MS = 3_000;
+
+/** Shortest leading stretch worth cutting; anything less leaves the video as is. */
+export const TRIM_MIN_CUT_MS = 1_000;
+
+/**
+ * Where the trim aims to cut, given the time of the script's first action.
+ * The server cuts at the last keyframe at or before this point, so the real
+ * cut can land earlier.
+ * @returns the target in milliseconds, or null when there is nothing worth trimming.
+ */
+export function trimCutTargetMs(firstActionMs: number): number | null {
+  const targetMs = firstActionMs - TRIM_LEAD_IN_MS;
+  return targetMs >= TRIM_MIN_CUT_MS ? targetMs : null;
+}
+
+export interface TrimToFunscriptRequest {
+  /** Name the video is recorded under in the library */
+  videoName: string;
+  funscriptName: string | null;
+  /** JSON-stringified funscript, as stored on library items */
+  funscriptData: string;
+}
+
+export interface TrimToFunscriptResult {
+  /** The new library item holding the trimmed video and shifted script */
+  item: LibraryItem;
+  /** How much was cut from the start of the video, in milliseconds */
+  cutMs: number;
+}

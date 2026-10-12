@@ -25,6 +25,10 @@ import { createAnalyticsRouter } from './routes/analytics.routes.js';
 import { MediaController } from './controllers/media.controller.js';
 import { createMediaRouter } from './routes/media.routes.js';
 import { MediaFileService } from './services/media-file.service.js';
+import { FfmpegVideoTools, runCommand } from './lib/ffmpeg-video-tools.js';
+import { TrimToFunscriptService } from './services/trim-to-funscript.service.js';
+import { TrimToFunscriptController } from './controllers/trim-to-funscript.controller.js';
+import { createTrimToFunscriptRouter } from './routes/trim-to-funscript.routes.js';
 import { localhostOnly } from './middleware/localhost-only.js';
 import { createSecurityMiddleware } from './middleware/security.js';
 import { createHealthRouter } from './routes/health.js';
@@ -95,6 +99,15 @@ const analyticsRouter = createAnalyticsRouter(analyticsController);
 const mediaController = new MediaController(MEDIA_DIR, mediaFileService);
 const mediaRouter = createMediaRouter(mediaController, MEDIA_DIR);
 
+// Wire up trim-to-funscript; the executables default to whatever is on PATH
+const videoTools = new FfmpegVideoTools(
+  process.env.FFMPEG_PATH || 'ffmpeg',
+  process.env.FFPROBE_PATH || 'ffprobe',
+  runCommand,
+);
+const trimToFunscriptService = new TrimToFunscriptService(mediaFileService, videoTools, service);
+const trimToFunscriptRouter = createTrimToFunscriptRouter(new TrimToFunscriptController(trimToFunscriptService));
+
 // Wire up health service
 const healthService = new HealthService(db);
 const healthRouter = createHealthRouter(healthService);
@@ -154,6 +167,7 @@ app.use('/api/playlists', playlistRouter);
 app.use('/api/sessions', sessionRouter);
 app.use('/api/analytics', analyticsRouter);
 app.use('/api/media', mediaRouter);
+app.use('/api/media', trimToFunscriptRouter);
 app.use('/api/device', deviceRouter);
 app.use('/api/mods', scriptModRouter);
 app.use('/api/trainer', trainerRouter);
