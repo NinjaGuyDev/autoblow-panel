@@ -43,3 +43,6 @@ publish:
   provider: github
   owner: NinjaGuyDev
   repo: autoblow-panel
+  # Desktop releases live under desktop-v*; without this electron-builder
+  # targets v<version>, which is the Docker image's tag namespace
+  tagNamePrefix: desktop-v
