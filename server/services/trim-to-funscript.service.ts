@@ -8,7 +8,12 @@ import {
 } from '../types/shared.js';
 import { FunscriptDocumentSchema, type FunscriptDocument } from '../schemas/media.schemas.js';
 import { earliestActionMs, shiftFunscriptStart } from '../lib/funscript-shift.js';
-import { latestKeyframeAtOrBefore, measureCutOffsetSeconds, type KeyframePacket } from '../lib/keyframe-cut.js';
+import {
+  latestDistinctKeyframeAtOrBefore,
+  measureCutOffset,
+  type CutMeasurement,
+  type KeyframePacket,
+} from '../lib/keyframe-cut.js';
 import type { VideoTools } from '../lib/ffmpeg-video-tools.js';
 import { NotFoundError, UnprocessableEntityError, UpstreamError, ValidationError } from '../errors/domain-errors.js';
 import type { MediaFileService } from './media-file.service.js';
@@ -129,22 +134,17 @@ export class TrimToFunscriptService {
       throw new UpstreamError('The trimmed video has no keyframe to verify the cut against');
     }
 
-    const offsetSeconds =
-      measureCutOffsetSeconds(keyframes, outputFirst, startKeyframe.ptsSeconds) ??
+    let measurement = measureCutOffset(keyframes, outputFirst, startKeyframe.ptsSeconds);
+    if (measurement.status === 'unmatched') {
       // The demuxer landed before the search window; look from the start
-      measureCutOffsetSeconds(
-        await this.videoTools.listKeyframes(sourcePath, 0, startKeyframe.ptsSeconds),
-        outputFirst,
-        startKeyframe.ptsSeconds,
-      );
-    if (offsetSeconds === null) {
-      throw new UpstreamError('Could not match the trimmed video back to the original to verify the cut');
+      const allKeyframes = await this.videoTools.listKeyframes(sourcePath, 0, startKeyframe.ptsSeconds);
+      measurement = measureCutOffset(allKeyframes, outputFirst, startKeyframe.ptsSeconds);
     }
-    return Math.round(offsetSeconds * 1000);
+    return Math.round(requireMatched(measurement) * 1000);
   }
 
   private requireCutKeyframe(keyframes: KeyframePacket[], targetSeconds: number): KeyframePacket {
-    const keyframe = latestKeyframeAtOrBefore(keyframes, targetSeconds);
+    const keyframe = latestDistinctKeyframeAtOrBefore(keyframes, targetSeconds);
     if (keyframe === null) {
       throw noUsableKeyframeError();
     }
@@ -188,6 +188,18 @@ function trimmedFunscriptName(funscriptName: string | null, outputVideoName: str
   return funscriptName
     ? `${path.parse(funscriptName).name} (trimmed).funscript`
     : `${path.parse(outputVideoName).name}.funscript`;
+}
+
+/** @throws UpstreamError when the cut could not be pinned to one source keyframe */
+function requireMatched(measurement: CutMeasurement): number {
+  switch (measurement.status) {
+    case 'matched':
+      return measurement.offsetSeconds;
+    case 'ambiguous':
+      throw new UpstreamError('The trimmed video starts on a frame that repeats in the original, so the cut could not be verified');
+    case 'unmatched':
+      throw new UpstreamError('Could not match the trimmed video back to the original to verify the cut');
+  }
 }
 
 function noUsableKeyframeError(): UnprocessableEntityError {

@@ -143,6 +143,28 @@ describe('TrimToFunscriptService', () => {
     expect(fs.readdirSync(mediaDir).sort()).toEqual(['MyClip-trimmed.mkv', 'MyClip.mp4', 'thumbnails']);
   });
 
+  it('cuts at the last keyframe that does not repeat, stepping back past a title card', async () => {
+    const tools = fakeVideoTools({ ptsSeconds: 0, dataHash: 'hash-4' });
+    vi.mocked(tools.listKeyframes).mockResolvedValueOnce(
+      [keyframe(0), keyframe(2), keyframe(4), { ptsSeconds: 6, dataHash: 'card' }, { ptsSeconds: 8, dataHash: 'card' }]);
+
+    const result = await trimmer(tools).trim(request(12_500));
+
+    expect(tools.copyFromKeyframe).toHaveBeenCalledWith(expect.any(String), 4, expect.any(String));
+    expect(result.cutMs).toBe(4_000);
+  });
+
+  it('fails rather than guess when the output starts on a repeated keyframe', async () => {
+    // The demuxer landed on a card frame that also appears just before it
+    const tools = fakeVideoTools({ ptsSeconds: 0, dataHash: 'card' });
+    vi.mocked(tools.listKeyframes).mockResolvedValueOnce(
+      [{ ptsSeconds: 4, dataHash: 'card' }, { ptsSeconds: 6, dataHash: 'card' }, keyframe(8)]);
+
+    await expect(trimmer(tools).trim(request(12_500))).rejects.toThrow(/repeats in the original/);
+
+    expect(fs.readdirSync(mediaDir).sort()).toEqual(['MyClip.mp4', 'thumbnails']);
+  });
+
   it('removes the partial video and thumbnail when the copy fails', async () => {
     const tools = fakeVideoTools();
     vi.mocked(tools.copyFromKeyframe).mockRejectedValueOnce(new UpstreamError('ffmpeg failed: disk full'));
