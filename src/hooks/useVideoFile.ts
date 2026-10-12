@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { ACCEPTED_VIDEO_EXTENSIONS, isAcceptedVideoFile } from '@/lib/videoFileTypes';
 
 interface UseVideoFileReturn {
   videoFile: File | null;
@@ -26,9 +27,8 @@ export function useVideoFile(): UseVideoFileReturn {
   const loadVideo = (file: File) => {
     setError(null);
 
-    const acceptedTypes = ['video/mp4', 'video/webm', 'video/ogg'];
-    if (!acceptedTypes.includes(file.type)) {
-      setError(`Invalid file type. Accepted types: ${acceptedTypes.join(', ')}`);
+    if (!isAcceptedVideoFile(file)) {
+      setError(`Invalid file type. Accepted types: ${ACCEPTED_VIDEO_EXTENSIONS.join(', ')}`);
       return;
     }
 
