@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { sanitizeStoredName } from '../lib/uploadFilename.js';
+import { sanitizeStoredName, VIDEO_FALLBACK_NAME } from '../lib/uploadFilename.js';
 
 /**
  * Handles filesystem operations for media files (videos, thumbnails, audio).
@@ -37,6 +37,36 @@ export class MediaFileService {
   }
 
   /**
+   * Claim a name for a new video by creating an empty placeholder file, so two
+   * writers can never pick the same name. Tries the preferred name sanitized
+   * like an upload, then "<stem>-2<ext>", "<stem>-3<ext>", ...
+   * The caller overwrites the placeholder, and deletes it if writing fails.
+   * @returns the claimed stored name.
+   */
+  reserveVideoName(preferredName: string): string {
+    const safeName = sanitizeStoredName(preferredName) ?? VIDEO_FALLBACK_NAME;
+    const extension = path.extname(safeName);
+    const stem = safeName.slice(0, safeName.length - extension.length);
+    for (let copy = 1; ; copy++) {
+      const name = copy === 1 ? `${stem}${extension}` : `${stem}-${copy}${extension}`;
+      if (this.createExclusively(path.join(this.mediaDir, name))) {
+        return name;
+      }
+    }
+  }
+
+  /** Where a video with this stored name lives in the media directory */
+  videoPathFor(videoName: string): string {
+    return path.join(this.mediaDir, path.basename(videoName));
+  }
+
+  /** Where the thumbnail for a video with this stored name is written */
+  thumbnailPathFor(videoName: string): string {
+    const stored = path.basename(videoName);
+    return path.join(this.thumbnailDir(), `${path.basename(stored, path.extname(stored))}.jpg`);
+  }
+
+  /**
    * Delete a video file from the media directory.
    * Sanitizes the filename to prevent directory traversal.
    */
@@ -62,6 +92,19 @@ export class MediaFileService {
       return;
     }
     this.unlinkIfExists(filePath);
+  }
+
+  /** @returns false when the file already exists */
+  private createExclusively(filePath: string): boolean {
+    try {
+      fs.closeSync(fs.openSync(filePath, 'wx'));
+      return true;
+    } catch (err: unknown) {
+      if ((err as NodeJS.ErrnoException).code === 'EEXIST') {
+        return false;
+      }
+      throw err;
+    }
   }
 
   private thumbnailDir(): string {
