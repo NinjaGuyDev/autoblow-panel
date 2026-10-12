@@ -18,7 +18,7 @@ Download the installer for your platform from the
 | Platform | File | Notes |
 |----------|------|-------|
 | Linux | `.AppImage` | `chmod +x` it and run — no installation |
-| Linux (Debian/Ubuntu) | `.deb` | `sudo apt install ./Autoblow-Panel-*.deb` |
+| Linux (Debian/Ubuntu) | `.deb` | `sudo apt install ./autoblow-panel_*_amd64.deb` |
 | Windows | `.exe` (NSIS) | Unsigned, so SmartScreen shows a warning — choose *More info* → *Run anyway* |
 | macOS | `.dmg` | Unsigned, so Gatekeeper blocks the first launch — right-click the app → *Open*, or `xattr -dr com.apple.quarantine "/Applications/Autoblow Panel.app"` |
 
