@@ -177,10 +177,17 @@ const server = app.listen(Number(PORT), HOST, (err?: Error) => {
   if (STATIC_DIR !== null) console.log(`Serving app bundle from: ${STATIC_DIR}`);
 });
 
-// The desktop build kills this process when the window closes; close the
-// listener first so an in-flight upload is not truncated mid-write
+// Close the listener before exiting so an in-flight upload is not truncated mid-write
+const shutdown = () => server.close(() => process.exit(0));
+
 for (const signal of ['SIGTERM', 'SIGINT'] as const) {
-  process.on(signal, () => {
-    server.close(() => process.exit(0));
-  });
+  process.on(signal, shutdown);
 }
+
+// The desktop build asks over the fork IPC channel instead: Windows has no POSIX
+// signals, so a kill() there terminates the process without running the handlers
+// above. A lost channel means the desktop shell is gone, so shut down then too.
+process.on('message', (message: unknown) => {
+  if ((message as { type?: unknown } | null)?.type === 'shutdown') shutdown();
+});
+process.on('disconnect', shutdown);
