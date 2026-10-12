@@ -147,7 +147,10 @@ function createWindow(url: string): BrowserWindow {
 
 function stopBackend(): void {
   if (backend === null) return;
-  backend.kill();
+  // kill() is a forced termination on Windows, so ask over IPC for the same
+  // graceful close that SIGTERM gets on Linux and macOS
+  if (backend.connected) backend.send({ type: 'shutdown' });
+  else backend.kill();
   backend = null;
 }
 
