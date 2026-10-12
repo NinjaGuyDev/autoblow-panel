@@ -1,33 +1,58 @@
 import fs from 'fs';
 import path from 'path';
+import {
+  sanitizeUploadFilename,
+  THUMBNAIL_FALLBACK_NAME,
+  VIDEO_FALLBACK_NAME,
+} from '../lib/uploadFilename.js';
 
 /**
  * Handles filesystem operations for media files (videos, thumbnails, audio).
  * Extracted from MediaController to enable dependency injection into services
  * that need media cleanup without coupling to the HTTP layer.
+ *
+ * Library rows record the name the browser reported for a video, but uploads
+ * are written under their sanitized name, while files copied into the media
+ * directory by hand (or uploaded before sanitization existed) keep their
+ * original name. Every lookup therefore tries the recorded name first and the
+ * sanitized name second.
  */
 export class MediaFileService {
   constructor(private mediaDir: string) {}
+
+  /**
+   * Resolve a recorded video name to the file on disk.
+   * @returns the absolute path, or null when no matching file exists.
+   */
+  resolveVideoPath(videoName: string): string | null {
+    return this.firstExisting(this.mediaDir, this.storedNameCandidates(videoName, VIDEO_FALLBACK_NAME));
+  }
+
+  /**
+   * Resolve a recorded video name to its thumbnail JPEG on disk.
+   * The client uploads the thumbnail as "<video stem>.jpg", which multer then
+   * sanitizes like any other upload.
+   * @returns the absolute path, or null when no matching thumbnail exists.
+   */
+  resolveThumbnailPath(videoName: string): string | null {
+    const recorded = path.basename(videoName);
+    const thumbnailName = `${path.basename(recorded, path.extname(recorded))}.jpg`;
+    return this.firstExisting(this.thumbnailDir(), this.storedNameCandidates(thumbnailName, THUMBNAIL_FALLBACK_NAME));
+  }
 
   /**
    * Delete a video file from the media directory.
    * Sanitizes the filename to prevent directory traversal.
    */
   deleteVideoFile(filename: string): void {
-    const sanitized = path.basename(filename);
-    const videoPath = path.join(this.mediaDir, sanitized);
-    this.unlinkIfExists(videoPath);
+    this.unlinkIfResolved(this.resolveVideoPath(filename));
   }
 
   /**
-   * Delete a thumbnail JPEG for the given video filename.
-   * Derives the thumbnail name by replacing the video extension with .jpg.
+   * Delete the thumbnail JPEG for the given video filename.
    */
   deleteThumbnailFile(filename: string): void {
-    const sanitized = path.basename(filename);
-    const base = path.basename(sanitized, path.extname(sanitized));
-    const thumbPath = path.join(this.mediaDir, 'thumbnails', `${base}.jpg`);
-    this.unlinkIfExists(thumbPath);
+    this.unlinkIfResolved(this.resolveThumbnailPath(filename));
   }
 
   /**
@@ -41,6 +66,34 @@ export class MediaFileService {
       return;
     }
     this.unlinkIfExists(filePath);
+  }
+
+  private thumbnailDir(): string {
+    return path.join(this.mediaDir, 'thumbnails');
+  }
+
+  /** Basenames a file may be stored under, in lookup order */
+  private storedNameCandidates(recordedName: string, fallback: string): string[] {
+    const recorded = path.basename(recordedName);
+    const sanitized = sanitizeUploadFilename(recordedName, fallback);
+    return recorded === sanitized ? [recorded] : [recorded, sanitized];
+  }
+
+  private firstExisting(dir: string, names: string[]): string | null {
+    const root = path.resolve(dir);
+    for (const name of names) {
+      const filePath = path.join(root, name);
+      if (filePath.startsWith(root + path.sep) && fs.existsSync(filePath)) {
+        return filePath;
+      }
+    }
+    return null;
+  }
+
+  private unlinkIfResolved(filePath: string | null): void {
+    if (filePath) {
+      this.unlinkIfExists(filePath);
+    }
   }
 
   /**
