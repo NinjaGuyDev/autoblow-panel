@@ -16,7 +16,7 @@ import { pickNextPattern } from '@/lib/trainer/patternSelection';
 import { buildTrainerLoop, loopEndPosition, type TrainerLoop } from '@/lib/trainer/trainerLoop';
 import { getErrorMessage } from '@/lib/getErrorMessage';
 
-export type TrainerStatus = 'idle' | 'starting' | 'playing';
+export type TrainerStatus = 'idle' | 'starting' | 'playing' | 'stopping';
 
 interface UseTrainerSessionParams {
   ultra: Ultra | null;
@@ -62,6 +62,8 @@ export function useTrainerSession({ ultra, patterns, recordRank }: UseTrainerSes
   const loopRef = useRef<TrainerLoop>(EMPTY_LOOP);
   const loopStartedAtRef = useRef(0);
   const transitioningRef = useRef(false);
+  /** The device upload/start in flight, so stopping can wait for it to finish. Never rejects. */
+  const deviceOpRef = useRef<Promise<void> | null>(null);
   /** Bumped on start/stop so an in-flight transition can tell it has been cancelled. */
   const sessionRef = useRef(0);
   const ultraRef = useRef(ultra);
@@ -98,14 +100,27 @@ export function useTrainerSession({ ultra, patterns, recordRank }: UseTrainerSes
     setPassCount(1);
   }, []);
 
-  /** @throws Error when the device is missing or rejects the upload or start. */
-  const uploadAndStart = useCallback(async (next: TrainerLoop) => {
+  /**
+   * Upload a loop and start it, unless the session is cancelled before the start.
+   * Returns false when the session was cancelled; whoever cancelled it stops the device.
+   * @throws Error when the device is missing or rejects the upload or start.
+   */
+  const uploadAndStart = useCallback(async (next: TrainerLoop, session: number): Promise<boolean> => {
     if (!ultra) throw new Error('Device not connected');
     const funscript: Funscript = { actions: next.actions };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await ultra.syncScriptUploadFunscriptFile(funscript as any);
+    if (sessionRef.current !== session) return false;
     await ultra.syncScriptStart(0);
+    return sessionRef.current === session;
   }, [ultra]);
+
+  /** Record a device operation as in flight until it settles. `op` must not reject. */
+  const trackDeviceOp = useCallback(async (op: Promise<void>) => {
+    deviceOpRef.current = op;
+    await op;
+    if (deviceOpRef.current === op) deviceOpRef.current = null;
+  }, []);
 
   const stopDevice = useCallback(async () => {
     try { await ultraRef.current?.syncScriptStop(); } catch { /* already stopped */ }
@@ -139,12 +154,13 @@ export function useTrainerSession({ ultra, patterns, recordRank }: UseTrainerSes
     if (!next) return;
 
     const nextLoop = buildTrainerLoop(next.actions, loopEndPosition(loopRef.current));
-    await uploadAndStart(nextLoop);
-    if (sessionRef.current !== session) return stopDevice();
+    // A key pressed during the switch was aimed at the pattern whose rank was just saved
+    const started = await uploadAndStart(nextLoop, session).finally(() => setPendingRank(null));
+    if (!started) return;
 
     adoptLoop(nextLoop);
     showPattern(next);
-  }, [commitPendingRank, uploadAndStart, stopDevice, adoptLoop, showPattern]);
+  }, [commitPendingRank, uploadAndStart, setPendingRank, adoptLoop, showPattern]);
 
   /** Not ranked yet: play the same pattern again. */
   const repeatPattern = useCallback(async (session: number) => {
@@ -154,34 +170,35 @@ export function useTrainerSession({ ultra, patterns, recordRank }: UseTrainerSes
     if (loopRef.current.leadInMs > 0) {
       // The lead-in from the previous pattern only belongs on the first pass
       const plainLoop = buildTrainerLoop(pattern.actions, null);
-      await uploadAndStart(plainLoop);
-      if (sessionRef.current !== session) return stopDevice();
+      if (!(await uploadAndStart(plainLoop, session))) return;
       adoptLoop(plainLoop);
     } else {
       await ultra.syncScriptStart(0);
-      if (sessionRef.current !== session) return stopDevice();
+      if (sessionRef.current !== session) return;
       restartClock(0);
     }
     setPassCount(count => count + 1);
-  }, [ultra, uploadAndStart, stopDevice, adoptLoop, restartClock]);
+  }, [ultra, uploadAndStart, adoptLoop, restartClock]);
 
   const handleLoopEnd = useCallback(async () => {
     if (transitioningRef.current || statusRef.current !== 'playing') return;
 
     transitioningRef.current = true;
     const session = sessionRef.current;
-    try {
-      if (pendingRankRef.current !== null) {
-        await switchPattern(session);
-      } else {
-        await repeatPattern(session);
+    await trackDeviceOp((async () => {
+      try {
+        if (pendingRankRef.current !== null) {
+          await switchPattern(session);
+        } else {
+          await repeatPattern(session);
+        }
+      } catch (err) {
+        setError(getErrorMessage(err, 'Playback failed'));
+      } finally {
+        transitioningRef.current = false;
       }
-    } catch (err) {
-      setError(getErrorMessage(err, 'Playback failed'));
-    } finally {
-      transitioningRef.current = false;
-    }
-  }, [switchPattern, repeatPattern]);
+    })());
+  }, [trackDeviceOp, switchPattern, repeatPattern]);
 
   useScriptLoop(ultra, status === 'playing', loop.durationMs, handleLoopEnd);
 
@@ -197,23 +214,30 @@ export function useTrainerSession({ ultra, patterns, recordRank }: UseTrainerSes
     const session = ++sessionRef.current;
     setError(null);
     updateStatus('starting');
-    try {
-      const firstLoop = buildTrainerLoop(first.actions, null);
-      await uploadAndStart(firstLoop);
-      if (sessionRef.current !== session) return stopDevice();
-      adoptLoop(firstLoop);
-      showPattern(first);
-      updateStatus('playing');
-    } catch (err) {
-      setError(getErrorMessage(err, 'Could not start training'));
-      updateStatus('idle');
-    }
-  }, [uploadAndStart, stopDevice, adoptLoop, showPattern, updateStatus]);
+    await trackDeviceOp((async () => {
+      try {
+        const firstLoop = buildTrainerLoop(first.actions, null);
+        if (!(await uploadAndStart(firstLoop, session))) return;
+        adoptLoop(firstLoop);
+        showPattern(first);
+        updateStatus('playing');
+      } catch (err) {
+        // A stop already in progress owns the status
+        if (sessionRef.current !== session) return;
+        setError(getErrorMessage(err, 'Could not start training'));
+        updateStatus('idle');
+      }
+    })());
+  }, [trackDeviceOp, uploadAndStart, adoptLoop, showPattern, updateStatus]);
 
   const stop = useCallback(async () => {
-    if (statusRef.current === 'idle') return;
+    if (statusRef.current === 'idle' || statusRef.current === 'stopping') return;
 
     sessionRef.current++;
+    // Leaving 'playing' blocks new loop-end transitions; waiting out the one in
+    // flight makes this stop the last command the device receives
+    updateStatus('stopping');
+    await deviceOpRef.current;
     await commitPendingRank();
     await stopDevice();
 
@@ -265,7 +289,8 @@ export function useTrainerSession({ ultra, patterns, recordRank }: UseTrainerSes
     if (rank !== null && pattern) {
       recordRankRef.current(pattern.id, rank).catch(() => { /* page is gone; nothing to report to */ });
     }
-    void stopDevice();
+    // Stop after any device command already in flight, so the stop lands last
+    void (deviceOpRef.current ?? Promise.resolve()).then(stopDevice);
   }, [stopDevice]);
 
   return {
