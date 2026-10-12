@@ -109,6 +109,7 @@ describe('TrimToFunscriptService', () => {
     vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     await expect(trimmer(tools).trim(request(12_500))).resolves.toMatchObject({ cutMs: 8_000 });
+    expect(fs.readdirSync(path.join(mediaDir, 'thumbnails'))).toEqual([]);
   });
 
   it('numbers the copy when a trimmed video already exists', async () => {
@@ -118,6 +119,28 @@ describe('TrimToFunscriptService', () => {
 
     expect(result.item.videoName).toBe('MyClip-trimmed-2.mp4');
     expect(fs.readFileSync(path.join(mediaDir, 'MyClip-trimmed.mp4'), 'utf8')).toBe('earlier trim');
+  });
+
+  it('skips a name whose thumbnail belongs to a same-stem video in another container', async () => {
+    fs.writeFileSync(path.join(mediaDir, 'MyClip-trimmed.mkv'), 'other trim');
+    fs.writeFileSync(path.join(mediaDir, 'thumbnails', 'MyClip-trimmed.jpg'), 'other thumbnail');
+
+    const result = await trimmer(fakeVideoTools()).trim(request(12_500));
+
+    expect(result.item.videoName).toBe('MyClip-trimmed-2.mp4');
+    expect(fs.readFileSync(path.join(mediaDir, 'thumbnails', 'MyClip-trimmed.jpg'), 'utf8')).toBe('other thumbnail');
+  });
+
+  it('leaves a same-stem thumbnail in place when the trim fails', async () => {
+    fs.writeFileSync(path.join(mediaDir, 'MyClip-trimmed.mkv'), 'other trim');
+    fs.writeFileSync(path.join(mediaDir, 'thumbnails', 'MyClip-trimmed.jpg'), 'other thumbnail');
+    const tools = fakeVideoTools();
+    vi.mocked(tools.copyFromKeyframe).mockRejectedValueOnce(new UpstreamError('ffmpeg failed'));
+
+    await expect(trimmer(tools).trim(request(12_500))).rejects.toThrow(UpstreamError);
+
+    expect(fs.readFileSync(path.join(mediaDir, 'thumbnails', 'MyClip-trimmed.jpg'), 'utf8')).toBe('other thumbnail');
+    expect(fs.readdirSync(mediaDir).sort()).toEqual(['MyClip-trimmed.mkv', 'MyClip.mp4', 'thumbnails']);
   });
 
   it('removes the partial video and thumbnail when the copy fails', async () => {
