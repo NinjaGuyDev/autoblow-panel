@@ -41,7 +41,9 @@ import { parseFunscript } from '@/lib/scriptPlaybackUtils';
 import { isEmbedUrl } from '@/lib/videoUtils';
 import type { TabId } from '@/types/navigation';
 import type { AnyPattern } from '@/types/patterns';
-import type { LibraryItem } from '@server/types/shared';
+import type { LibraryItem, TrimToFunscriptResult } from '@server/types/shared';
+import { useTrimToFunscript } from '@/hooks/useTrimToFunscript';
+import { trimTargetForActions } from '@/lib/trimToFunscript';
 
 /**
  * Thin provider shell — wraps AppContent with theme and device contexts.
@@ -430,6 +432,29 @@ function AppContent() {
     }
   };
 
+  // Trim to funscript: offered for a local video whose script starts well into it
+  const handleTrimmed = ({ item, cutMs }: TrimToFunscriptResult) => {
+    addLog('info', `Trimmed ${(cutMs / 1000).toFixed(1)} s off the start, saved as ${item.videoName}`);
+    void library.refresh();
+    void handleLoadFromLibrary(item);
+  };
+  const trimToFunscript = useTrimToFunscript(handleTrimmed);
+  const { clearError: clearTrimError } = trimToFunscript;
+  useEffect(() => {
+    clearTrimError();
+  }, [videoName, funscriptName, clearTrimError]);
+
+  const isLocalVideo = videoUrl !== null && videoName !== null && !playback.isEmbed;
+  const trimTargetMs = isLocalVideo && funscriptData ? trimTargetForActions(editableActions) : null;
+  const handleTrimToFunscript = () => {
+    if (!videoName || !funscriptData) return;
+    void trimToFunscript.trim({
+      videoName,
+      funscriptName,
+      funscriptData: JSON.stringify({ ...funscriptData, actions: editableActions }),
+    });
+  };
+
   return (
     <div
       onDrop={handleFileDrop}
@@ -540,6 +565,12 @@ function AppContent() {
                 manualSyncStepMs: playback.manualSync.OFFSET_STEP_MS,
                 isScriptPlaying: playback.embedPlayback.isPlaying,
                 onToggleScript: playback.embedPlayback.togglePlayPause,
+              }}
+              trim={trimTargetMs === null ? null : {
+                targetMs: trimTargetMs,
+                isTrimming: trimToFunscript.isTrimming,
+                error: trimToFunscript.error,
+                onTrim: handleTrimToFunscript,
               }}
               showTimeline={showTimeline}
               onToggleTimeline={() => setShowTimeline(!showTimeline)}

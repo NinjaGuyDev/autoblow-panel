@@ -24,6 +24,8 @@ import type {
   GenerateScriptModResponse,
   TrainerPattern,
   CreateTrainerRankingRequest,
+  TrimToFunscriptRequest,
+  TrimToFunscriptResult,
 } from '@server/types/shared';
 
 const API_BASE = '/api/library';
@@ -175,6 +177,16 @@ export const mediaApi = {
 
   async deleteAudio(filename: string): Promise<void> {
     return fetchVoid(`${MEDIA_BASE}/audio/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+  },
+
+  /** Cut the video's lead-up to its script; the result is a new library item */
+  async trimToFunscript(data: TrimToFunscriptRequest): Promise<TrimToFunscriptResult> {
+    const response = await fetch(`${MEDIA_BASE}/trim-to-funscript`, jsonBody('POST', data));
+    if (!response.ok) {
+      // Why a video can't be trimmed (no ffmpeg, no usable keyframe) arrives in the body
+      throw new Error(await readErrorMessage(response));
+    }
+    return response.json();
   },
 };
 

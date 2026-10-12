@@ -2,6 +2,7 @@ import { VideoLoader } from '@/components/file-loader/VideoLoader';
 import { FunscriptLoader } from '@/components/file-loader/FunscriptLoader';
 import { SyncStatus } from '@/components/device-control/SyncStatus';
 import { ManualSyncControls } from '@/components/video-player/ManualSyncControls';
+import { TrimToFunscriptButton } from '@/components/video-player/TrimToFunscriptButton';
 import { useDevice } from '@/contexts/DeviceContext';
 import type { Funscript } from '@/types/funscript';
 import type { SyncStatus as SyncStatusType } from '@/types/sync';
@@ -71,12 +72,21 @@ export interface ManualSyncProps {
   onToggleScript?: () => void;
 }
 
+/** "Trim to funscript" state; null when the loaded video and script don't qualify */
+export interface TrimProps {
+  targetMs: number;
+  isTrimming: boolean;
+  error: string | null;
+  onTrim: () => void;
+}
+
 interface VideoSyncPageProps {
   video: VideoProps;
   funscript: FunscriptProps;
   sync: SyncProps;
   embed: EmbedProps;
   manualSync: ManualSyncProps;
+  trim: TrimProps | null;
   showTimeline: boolean;
   onToggleTimeline: () => void;
   timelineElement: React.ReactNode;
@@ -92,6 +102,7 @@ export function VideoSyncPage({
   sync,
   embed,
   manualSync,
+  trim,
   showTimeline,
   onToggleTimeline,
   timelineElement,
@@ -138,6 +149,16 @@ export function VideoSyncPage({
             onEmbedError={embed.onEmbedError}
             onEmbedEnded={embed.onEmbedEnded}
           />
+          {trim && (
+            <div className="mt-4">
+              <TrimToFunscriptButton
+                targetMs={trim.targetMs}
+                isTrimming={trim.isTrimming}
+                error={trim.error}
+                onTrim={trim.onTrim}
+              />
+            </div>
+          )}
         </div>
 
         {/* Platform info badge - show when embed is active */}
