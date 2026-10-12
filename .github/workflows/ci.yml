@@ -30,6 +30,10 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # The trim-to-funscript integration test cuts real video and skips without ffmpeg
+      - name: Install ffmpeg
+        run: command -v ffprobe || (sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg)
+
       # tsconfig.json references only src and vite.config.ts, so the server
       # project has to be typechecked explicitly or server/ is skipped entirely
       - name: Typecheck
