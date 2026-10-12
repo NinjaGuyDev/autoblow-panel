@@ -37,6 +37,27 @@ function mockUltra() {
 
 const PATTERNS = [trainerPattern(1), trainerPattern(2)];
 
+/** A promise the test settles by hand, to hold a device call in flight. */
+function deferred() {
+  let resolve!: () => void;
+  const promise = new Promise<void>(r => { resolve = r; });
+  return { promise, resolve };
+}
+
+/** Make the second upload (the switch to a new pattern) wait until the test releases it. */
+function holdSwitchUpload(ultra: ReturnType<typeof mockUltra>) {
+  const upload = deferred();
+  (ultra.syncScriptUploadFunscriptFile as unknown as ReturnType<typeof vi.fn>)
+    .mockResolvedValueOnce(undefined)
+    .mockReturnValueOnce(upload.promise);
+  return upload;
+}
+
+function lastCallOrder(mock: unknown): number {
+  const order = vi.mocked(mock as ReturnType<typeof vi.fn>).mock.invocationCallOrder;
+  return order[order.length - 1] ?? 0;
+}
+
 function renderSession(ultra: Ultra, recordRank = vi.fn(async (id: number) => ({ ...trainerPattern(id, 1), averageRank: 5 }))) {
   const hook = renderHook(() => useTrainerSession({ ultra, patterns: PATTERNS, recordRank }));
   return { ...hook, recordRank };
@@ -90,6 +111,66 @@ describe('useTrainerSession', () => {
     expect(ultra.syncScriptStop).toHaveBeenCalled();
     expect(result.current.status).toBe('idle');
     expect(result.current.currentPattern).toBeNull();
+  });
+
+  it('drops a rank entered while switching instead of saving it for the next pattern', async () => {
+    const ultra = mockUltra();
+    const upload = holdSwitchUpload(ultra);
+    const { result, recordRank } = renderSession(ultra);
+
+    await act(() => result.current.start());
+    const firstId = result.current.currentPattern!.id;
+    act(() => { result.current.rank(7); });
+    await waitFor(() => expect(ultra.syncScriptUploadFunscriptFile).toHaveBeenCalledTimes(2), { timeout: 3_000 });
+
+    act(() => { result.current.rank(4); });
+    await act(async () => { upload.resolve(); });
+
+    await waitFor(() => expect(result.current.currentPattern!.id).not.toBe(firstId));
+    expect(result.current.pendingRank).toBeNull();
+    // Let the new pattern finish a pass: unranked, it repeats rather than saving anything
+    await waitFor(() => expect(result.current.passCount).toBe(2), { timeout: 3_000 });
+    expect(recordRank).toHaveBeenCalledExactlyOnceWith(firstId, 7);
+  });
+
+  it('never starts the device after a stop pressed mid-switch', async () => {
+    const ultra = mockUltra();
+    const upload = holdSwitchUpload(ultra);
+    const { result } = renderSession(ultra);
+
+    await act(() => result.current.start());
+    act(() => { result.current.rank(7); });
+    await waitFor(() => expect(ultra.syncScriptUploadFunscriptFile).toHaveBeenCalledTimes(2), { timeout: 3_000 });
+
+    let stopping!: Promise<void>;
+    act(() => { stopping = result.current.stop(); });
+    await act(async () => { upload.resolve(); await stopping; });
+
+    expect(ultra.syncScriptStart).toHaveBeenCalledTimes(1);
+    expect(lastCallOrder(ultra.syncScriptStop)).toBeGreaterThan(lastCallOrder(ultra.syncScriptStart));
+    expect(result.current.status).toBe('idle');
+  });
+
+  it('keeps a session started after a mid-switch stop running', async () => {
+    const ultra = mockUltra();
+    const upload = holdSwitchUpload(ultra);
+    const { result } = renderSession(ultra);
+
+    await act(() => result.current.start());
+    act(() => { result.current.rank(7); });
+    await waitFor(() => expect(ultra.syncScriptUploadFunscriptFile).toHaveBeenCalledTimes(2), { timeout: 3_000 });
+
+    let stopping!: Promise<void>;
+    act(() => { stopping = result.current.stop(); });
+    // Start is refused until the stop has finished
+    await act(() => result.current.start());
+    expect(result.current.status).toBe('stopping');
+
+    await act(async () => { upload.resolve(); await stopping; });
+    await act(() => result.current.start());
+
+    expect(result.current.status).toBe('playing');
+    expect(lastCallOrder(ultra.syncScriptStart)).toBeGreaterThan(lastCallOrder(ultra.syncScriptStop));
   });
 
   it('ignores ranks while not training', () => {
