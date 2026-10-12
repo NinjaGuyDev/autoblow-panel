@@ -25,6 +25,8 @@ const DEV_SERVER_URL = process.env.ELECTRON_DEV_SERVER_URL;
 const APP_VERSION_ARG = '--app-version=';
 
 const BACKEND_READY_TIMEOUT_MS = 30_000;
+/** How long quitting waits for the backend to finish in-flight requests before killing it. */
+const BACKEND_SHUTDOWN_TIMEOUT_MS = 10_000;
 
 /** Sent by server/index.ts once it is bound. */
 interface BackendListeningMessage {
@@ -34,6 +36,7 @@ interface BackendListeningMessage {
 
 let backend: ChildProcess | null = null;
 let mainWindow: BrowserWindow | null = null;
+let backendStopping = false;
 
 /**
  * Start the compiled Express server as a child process.
@@ -145,13 +148,33 @@ function createWindow(url: string): BrowserWindow {
   return window;
 }
 
-function stopBackend(): void {
-  if (backend === null) return;
+function requestBackendShutdown(child: ChildProcess): void {
   // kill() is a forced termination on Windows, so ask over IPC for the same
   // graceful close that SIGTERM gets on Linux and macOS
-  if (backend.connected) backend.send({ type: 'shutdown' });
-  else backend.kill();
-  backend = null;
+  if (child.connected) child.send({ type: 'shutdown' });
+  else child.kill();
+}
+
+/**
+ * Hold the quit until the backend has exited. On Windows the forked child sits in
+ * libuv's kill-on-close job object and dies the moment Electron exits, which would
+ * cut off an in-flight upload; elsewhere it would outlive the single-instance lock.
+ */
+function holdQuitUntilBackendExits(event: Electron.Event): void {
+  const child = backend;
+  if (child === null) return;
+
+  event.preventDefault();
+  if (backendStopping) return;
+  backendStopping = true;
+
+  const forceKill = setTimeout(() => child.kill(), BACKEND_SHUTDOWN_TIMEOUT_MS);
+  // startBackend's exit handler clears `backend`, so this quit goes through
+  child.once('exit', () => {
+    clearTimeout(forceKill);
+    app.quit();
+  });
+  requestBackendShutdown(child);
 }
 
 async function bootstrap(): Promise<void> {
@@ -184,11 +207,8 @@ if (!app.requestSingleInstanceLock()) {
     app.quit();
   });
 
-  app.on('window-all-closed', () => {
-    stopBackend();
-    // macOS convention is to stay resident, but this app owns a device session
-    app.quit();
-  });
+  // macOS convention is to stay resident, but this app owns a device session
+  app.on('window-all-closed', () => app.quit());
 
-  app.on('before-quit', stopBackend);
+  app.on('before-quit', holdQuitUntilBackendExits);
 }
