@@ -8,8 +8,13 @@
 
 import { contextBridge } from 'electron';
 
+/** Passed by electron/main.ts through webPreferences.additionalArguments. */
+const APP_VERSION_ARG = '--app-version=';
+
+const appVersion = process.argv.find(arg => arg.startsWith(APP_VERSION_ARG))?.slice(APP_VERSION_ARG.length) ?? '';
+
 contextBridge.exposeInMainWorld('desktop', {
   isDesktop: true,
-  version: process.env.npm_package_version ?? '',
+  version: appVersion,
   platform: process.platform,
 });

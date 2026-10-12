@@ -22,6 +22,9 @@ const currentDir = path.dirname(fileURLToPath(import.meta.url));
 /** Set by the dev script; when present the renderer loads Vite instead of the built bundle. */
 const DEV_SERVER_URL = process.env.ELECTRON_DEV_SERVER_URL;
 
+/** Must match the flag electron/preload.ts parses out of process.argv. */
+const APP_VERSION_ARG = '--app-version=';
+
 const BACKEND_READY_TIMEOUT_MS = 30_000;
 const BACKEND_POLL_INTERVAL_MS = 250;
 
@@ -118,6 +121,9 @@ function createWindow(url: string): BrowserWindow {
       preload: path.join(currentDir, 'preload.cjs'),
       contextIsolation: true,
       nodeIntegration: false,
+      // The preload cannot read the packaged version itself; npm_package_version
+      // only exists when launched through an npm script
+      additionalArguments: [`${APP_VERSION_ARG}${app.getVersion()}`],
     },
   });
 
