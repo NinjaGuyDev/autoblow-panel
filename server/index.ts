@@ -1,6 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import type { AddressInfo } from 'net';
 import db from './db/connection.js';
 import { initializeSchema } from './db/schema.js';
 import { seedBuiltInScriptMods } from './db/built-in-script-mods.js';
@@ -161,8 +162,17 @@ app.use(errorHandler);
 // in the Docker image nginx reaches it over 127.0.0.1 inside the same container.
 const PORT = process.env.PORT || 3001;
 const HOST = process.env.HOST || '127.0.0.1';
-const server = app.listen(Number(PORT), HOST, () => {
-  console.log(`Server listening on ${HOST}:${PORT}`);
+const server = app.listen(Number(PORT), HOST, (err?: Error) => {
+  if (err) {
+    console.error(`Failed to listen on ${HOST}:${PORT}:`, err);
+    process.exit(1);
+  }
+
+  const { port } = server.address() as AddressInfo;
+  // The desktop build starts us on port 0 and learns the OS-assigned port here;
+  // process.send only exists when forked with an IPC channel
+  process.send?.({ type: 'listening', port });
+  console.log(`Server listening on ${HOST}:${port}`);
   console.log(`Media directory: ${MEDIA_DIR}`);
   if (STATIC_DIR !== null) console.log(`Serving app bundle from: ${STATIC_DIR}`);
 });

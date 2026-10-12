@@ -10,9 +10,8 @@
  * ./media, so an installed app never writes next to its own binary.
  */
 
-import { app, BrowserWindow, shell } from 'electron';
+import { app, BrowserWindow, dialog, shell } from 'electron';
 import { fork, type ChildProcess } from 'node:child_process';
-import { createServer } from 'node:net';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,27 +25,15 @@ const DEV_SERVER_URL = process.env.ELECTRON_DEV_SERVER_URL;
 const APP_VERSION_ARG = '--app-version=';
 
 const BACKEND_READY_TIMEOUT_MS = 30_000;
-const BACKEND_POLL_INTERVAL_MS = 250;
+
+/** Sent by server/index.ts once it is bound. */
+interface BackendListeningMessage {
+  type: 'listening';
+  port: number;
+}
 
 let backend: ChildProcess | null = null;
 let mainWindow: BrowserWindow | null = null;
-
-/** Ask the OS for a free port so a second app — or a running dev server — cannot collide. */
-async function findFreePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const server = createServer();
-    server.once('error', reject);
-    server.listen(0, '127.0.0.1', () => {
-      const address = server.address();
-      if (address === null || typeof address === 'string') {
-        server.close(() => reject(new Error('Could not resolve a free port')));
-        return;
-      }
-      const { port } = address;
-      server.close(() => resolve(port));
-    });
-  });
-}
 
 /**
  * Start the compiled Express server as a child process.
@@ -55,7 +42,7 @@ async function findFreePort(): Promise<number> {
  * is what lets the packaged app run the backend without shipping a second
  * runtime — and keeps better-sqlite3 on the ABI it was rebuilt for.
  */
-function startBackend(port: number): ChildProcess {
+function startBackend(): ChildProcess {
   const userData = app.getPath('userData');
   const dataDir = path.join(userData, 'data');
   const mediaDir = path.join(userData, 'media');
@@ -70,7 +57,8 @@ function startBackend(port: number): ChildProcess {
       ...process.env,
       ELECTRON_RUN_AS_NODE: '1',
       NODE_ENV: 'production',
-      PORT: String(port),
+      // Port 0 lets the OS pick a free port at bind time; the backend reports it over IPC
+      PORT: '0',
       DB_PATH: path.join(dataDir, 'autoblow.db'),
       MEDIA_DIR: mediaDir,
       // Express serves the SPA itself here; nginx does that job in the Docker build
@@ -91,21 +79,37 @@ function startBackend(port: number): ChildProcess {
   return child;
 }
 
-/** Poll /health until the backend answers, so the window never loads against a dead port. */
-async function waitForBackend(port: number): Promise<void> {
-  const deadline = Date.now() + BACKEND_READY_TIMEOUT_MS;
+/** Resolve with the port the backend bound, or reject if it exits or stalls before listening. */
+async function waitForListening(child: ChildProcess): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      cleanup();
+      reject(new Error(`Backend did not start listening within ${BACKEND_READY_TIMEOUT_MS}ms`));
+    }, BACKEND_READY_TIMEOUT_MS);
 
-  while (Date.now() < deadline) {
-    try {
-      const response = await fetch(`http://127.0.0.1:${port}/health`);
-      if (response.ok) return;
-    } catch {
-      // Not listening yet
-    }
-    await new Promise(resolve => setTimeout(resolve, BACKEND_POLL_INTERVAL_MS));
-  }
+    const onMessage = (message: unknown) => {
+      if (!isListeningMessage(message)) return;
+      cleanup();
+      resolve(message.port);
+    };
+    const onExit = (code: number | null) => {
+      cleanup();
+      reject(new Error(`Backend exited with code ${code} before it started listening`));
+    };
+    const cleanup = () => {
+      clearTimeout(timeout);
+      child.off('message', onMessage);
+      child.off('exit', onExit);
+    };
 
-  throw new Error(`Backend did not become ready within ${BACKEND_READY_TIMEOUT_MS}ms`);
+    child.on('message', onMessage);
+    child.once('exit', onExit);
+  });
+}
+
+function isListeningMessage(message: unknown): message is BackendListeningMessage {
+  const candidate = message as Partial<BackendListeningMessage> | null;
+  return candidate?.type === 'listening' && typeof candidate.port === 'number';
 }
 
 function createWindow(url: string): BrowserWindow {
@@ -155,9 +159,8 @@ async function bootstrap(): Promise<void> {
     return;
   }
 
-  const port = await findFreePort();
-  backend = startBackend(port);
-  await waitForBackend(port);
+  backend = startBackend();
+  const port = await waitForListening(backend);
   mainWindow = createWindow(`http://127.0.0.1:${port}`);
 }
 
@@ -173,6 +176,8 @@ if (!app.requestSingleInstanceLock()) {
 
   app.whenReady().then(bootstrap).catch((err: unknown) => {
     console.error('Failed to start Autoblow Panel:', err);
+    // A packaged app has no visible console, so this dialog is the only report the user gets
+    dialog.showErrorBox('Autoblow Panel failed to start', err instanceof Error ? err.message : String(err));
     app.quit();
   });
 
