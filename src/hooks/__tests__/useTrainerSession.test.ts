@@ -173,6 +173,28 @@ describe('useTrainerSession', () => {
     expect(lastCallOrder(ultra.syncScriptStart)).toBeGreaterThan(lastCallOrder(ultra.syncScriptStop));
   });
 
+  it('sends the stop only after a seek in flight has started the device', async () => {
+    const ultra = mockUltra();
+    const { result } = renderSession(ultra);
+    await act(() => result.current.start());
+
+    const seekStart = deferred();
+    (ultra.syncScriptStart as unknown as ReturnType<typeof vi.fn>).mockReturnValueOnce(seekStart.promise);
+    let seeking!: Promise<void>;
+    let stopping!: Promise<void>;
+    act(() => {
+      seeking = result.current.seek(100);
+      stopping = result.current.stop();
+    });
+    await act(async () => { await Promise.resolve(); });
+    expect(ultra.syncScriptStop).not.toHaveBeenCalled();
+
+    await act(async () => { seekStart.resolve(); await seeking; await stopping; });
+    expect(ultra.syncScriptStop).toHaveBeenCalledTimes(1);
+    expect(lastCallOrder(ultra.syncScriptStop)).toBeGreaterThan(lastCallOrder(ultra.syncScriptStart));
+    expect(result.current.status).toBe('idle');
+  });
+
   it('ignores ranks while not training', () => {
     const { result } = renderSession(mockUltra());
     act(() => { result.current.rank(5); });

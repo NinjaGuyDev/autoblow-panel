@@ -181,7 +181,8 @@ export function useTrainerSession({ ultra, patterns, recordRank }: UseTrainerSes
   }, [ultra, uploadAndStart, adoptLoop, restartClock]);
 
   const handleLoopEnd = useCallback(async () => {
-    if (transitioningRef.current || statusRef.current !== 'playing') return;
+    // A seek in flight has just restarted playback, so this loop end is stale
+    if (transitioningRef.current || deviceOpRef.current || statusRef.current !== 'playing') return;
 
     transitioningRef.current = true;
     const session = sessionRef.current;
@@ -256,15 +257,19 @@ export function useTrainerSession({ ultra, patterns, recordRank }: UseTrainerSes
   }, [setPendingRank]);
 
   const seek = useCallback(async (timeMs: number) => {
-    if (!ultra || statusRef.current !== 'playing') return;
+    // Not while a transition owns the device; tracking the seek lets stop() wait for it
+    if (!ultra || statusRef.current !== 'playing' || deviceOpRef.current) return;
+    const session = sessionRef.current;
     const target = Math.round(Math.max(0, Math.min(timeMs, loopRef.current.durationMs)));
-    try {
-      await ultra.syncScriptStart(target);
-      restartClock(target);
-    } catch (err) {
-      setError(getErrorMessage(err, 'Seek failed'));
-    }
-  }, [ultra, restartClock]);
+    await trackDeviceOp((async () => {
+      try {
+        await ultra.syncScriptStart(target);
+        if (sessionRef.current === session) restartClock(target);
+      } catch (err) {
+        setError(getErrorMessage(err, 'Seek failed'));
+      }
+    })());
+  }, [ultra, trackDeviceOp, restartClock]);
 
   // Playhead clock
   useEffect(() => {
