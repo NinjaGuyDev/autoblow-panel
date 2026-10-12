@@ -1,5 +1,11 @@
 import path from 'path';
 
+/** Stored name for a video upload whose stem sanitizes to nothing */
+export const VIDEO_FALLBACK_NAME = 'video.mp4';
+
+/** Stored name for a thumbnail upload whose stem sanitizes to nothing */
+export const THUMBNAIL_FALLBACK_NAME = 'thumbnail.jpg';
+
 /**
  * Reduce a client-supplied multipart filename to a safe basename.
  *

@@ -46,7 +46,7 @@ export class MediaController {
   check = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const filename = req.params.filename as string;
-      const filePath = this.resolveMediaPath(filename);
+      const filePath = this.mediaFileService.resolveVideoPath(filename);
 
       if (!filePath) {
         res.json({ exists: false });
@@ -66,7 +66,7 @@ export class MediaController {
   stream = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const filename = req.params.filename as string;
-      const filePath = this.resolveMediaPath(filename);
+      const filePath = this.mediaFileService.resolveVideoPath(filename);
 
       if (!filePath) {
         res.status(404).json({ error: 'File not found in media directory' });
@@ -75,8 +75,8 @@ export class MediaController {
 
       const stat = fs.statSync(filePath);
       const fileSize = stat.size;
-      const ext = path.extname(filename).toLowerCase();
-      const contentType = this.mimeType(ext, filename);
+      const storedName = path.basename(filePath);
+      const contentType = this.mimeType(path.extname(storedName).toLowerCase(), storedName);
 
       const range = req.headers.range;
       if (range) {
@@ -189,11 +189,9 @@ export class MediaController {
   getThumbnail = async (req: Request, res: Response, next: NextFunction) => {
     try {
       const filename = req.params.filename as string;
-      const thumbName = this.thumbnailName(filename);
-      const thumbDir = path.join(this.mediaDir, 'thumbnails');
-      const thumbPath = path.join(thumbDir, thumbName);
+      const thumbPath = this.mediaFileService.resolveThumbnailPath(filename);
 
-      if (!thumbPath.startsWith(path.resolve(thumbDir)) || !fs.existsSync(thumbPath)) {
+      if (!thumbPath) {
         res.status(404).json({ error: 'Thumbnail not found' });
         return;
       }
@@ -206,11 +204,6 @@ export class MediaController {
     }
   };
 
-  private thumbnailName(videoFilename: string): string {
-    const base = path.basename(videoFilename, path.extname(videoFilename));
-    return `${base}.jpg`;
-  }
-
   /**
    * Delete a video file and its thumbnail from the media directory.
    * Delegates to MediaFileService for actual disk operations.
@@ -218,25 +211,6 @@ export class MediaController {
   deleteFiles(videoName: string): void {
     this.mediaFileService.deleteVideoFile(videoName);
     this.mediaFileService.deleteThumbnailFile(videoName);
-  }
-
-  /**
-   * Resolve and validate a media file path, preventing directory traversal
-   */
-  private resolveMediaPath(filename: string): string | null {
-    const sanitized = path.basename(filename);
-    const filePath = path.join(this.mediaDir, sanitized);
-
-    // Ensure the resolved path is within the media directory
-    if (!filePath.startsWith(path.resolve(this.mediaDir))) {
-      return null;
-    }
-
-    if (!fs.existsSync(filePath)) {
-      return null;
-    }
-
-    return filePath;
   }
 
   private mimeType(ext: string, filename?: string): string {

@@ -3,7 +3,11 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import type { MediaController } from '../controllers/media.controller.js';
-import { sanitizeUploadFilename } from '../lib/uploadFilename.js';
+import {
+  sanitizeUploadFilename,
+  THUMBNAIL_FALLBACK_NAME,
+  VIDEO_FALLBACK_NAME,
+} from '../lib/uploadFilename.js';
 
 export function createMediaRouter(controller: MediaController, mediaDir: string): Router {
   const router = Router();
@@ -16,7 +20,7 @@ export function createMediaRouter(controller: MediaController, mediaDir: string)
   // Configure multer for video uploads
   const storage = multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, mediaDir),
-    filename: (_req, file, cb) => cb(null, sanitizeUploadFilename(file.originalname, 'video.mp4')),
+    filename: (_req, file, cb) => cb(null, sanitizeUploadFilename(file.originalname, VIDEO_FALLBACK_NAME)),
   });
 
   const upload = multer({
@@ -46,7 +50,7 @@ export function createMediaRouter(controller: MediaController, mediaDir: string)
     destination: (_req, _file, cb) => cb(null, thumbDir),
     filename: (_req, file, cb) => {
       // Store as {videoname}.jpg — originalname comes as "videoname.jpg"
-      cb(null, sanitizeUploadFilename(file.originalname, 'thumbnail.jpg'));
+      cb(null, sanitizeUploadFilename(file.originalname, THUMBNAIL_FALLBACK_NAME));
     },
   });
 
