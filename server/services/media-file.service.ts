@@ -1,10 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import {
-  sanitizeUploadFilename,
-  THUMBNAIL_FALLBACK_NAME,
-  VIDEO_FALLBACK_NAME,
-} from '../lib/uploadFilename.js';
+import { sanitizeStoredName } from '../lib/uploadFilename.js';
 
 /**
  * Handles filesystem operations for media files (videos, thumbnails, audio).
@@ -25,7 +21,7 @@ export class MediaFileService {
    * @returns the absolute path, or null when no matching file exists.
    */
   resolveVideoPath(videoName: string): string | null {
-    return this.firstExisting(this.mediaDir, this.storedNameCandidates(videoName, VIDEO_FALLBACK_NAME));
+    return this.firstExisting(this.mediaDir, this.storedNameCandidates(videoName));
   }
 
   /**
@@ -37,7 +33,7 @@ export class MediaFileService {
   resolveThumbnailPath(videoName: string): string | null {
     const recorded = path.basename(videoName);
     const thumbnailName = `${path.basename(recorded, path.extname(recorded))}.jpg`;
-    return this.firstExisting(this.thumbnailDir(), this.storedNameCandidates(thumbnailName, THUMBNAIL_FALLBACK_NAME));
+    return this.firstExisting(this.thumbnailDir(), this.storedNameCandidates(thumbnailName));
   }
 
   /**
@@ -72,11 +68,15 @@ export class MediaFileService {
     return path.join(this.mediaDir, 'thumbnails');
   }
 
-  /** Basenames a file may be stored under, in lookup order */
-  private storedNameCandidates(recordedName: string, fallback: string): string[] {
+  /**
+   * Basenames a file may be stored under, in lookup order. A name whose stem
+   * sanitizes to nothing was stored under the shared upload fallback, which
+   * may hold another row's file, so only its exact name is tried.
+   */
+  private storedNameCandidates(recordedName: string): string[] {
     const recorded = path.basename(recordedName);
-    const sanitized = sanitizeUploadFilename(recordedName, fallback);
-    return recorded === sanitized ? [recorded] : [recorded, sanitized];
+    const sanitized = sanitizeStoredName(recordedName);
+    return sanitized === null || sanitized === recorded ? [recorded] : [recorded, sanitized];
   }
 
   private firstExisting(dir: string, names: string[]): string | null {
