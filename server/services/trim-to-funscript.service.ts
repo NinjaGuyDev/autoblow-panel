@@ -164,6 +164,8 @@ export class TrimToFunscriptService {
       await this.videoTools.captureFrame(videoPath, atSeconds, this.mediaFiles.thumbnailPathFor(videoName), THUMBNAIL_WIDTH_PX);
     } catch (err) {
       console.warn(`Failed to capture a thumbnail for ${videoName}:`, err);
+      // Drop the reserved placeholder rather than serve an empty JPEG
+      this.mediaFiles.deleteThumbnailFile(videoName);
     }
   }
 

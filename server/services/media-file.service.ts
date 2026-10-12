@@ -37,10 +37,11 @@ export class MediaFileService {
   }
 
   /**
-   * Claim a name for a new video by creating an empty placeholder file, so two
-   * writers can never pick the same name. Tries the preferred name sanitized
-   * like an upload, then "<stem>-2<ext>", "<stem>-3<ext>", ...
-   * The caller overwrites the placeholder, and deletes it if writing fails.
+   * Claim a name for a new video, and its thumbnail, by creating empty
+   * placeholder files, so two writers can never pick the same files. Tries the
+   * preferred name sanitized like an upload, then "<stem>-2<ext>",
+   * "<stem>-3<ext>", ... until both the video and the thumbnail are free.
+   * The caller overwrites the placeholders, and deletes both if writing fails.
    * @returns the claimed stored name.
    */
   reserveVideoName(preferredName: string): string {
@@ -49,9 +50,14 @@ export class MediaFileService {
     const stem = safeName.slice(0, safeName.length - extension.length);
     for (let copy = 1; ; copy++) {
       const name = copy === 1 ? `${stem}${extension}` : `${stem}-${copy}${extension}`;
-      if (this.createExclusively(path.join(this.mediaDir, name))) {
+      const videoPath = path.join(this.mediaDir, name);
+      if (!this.createExclusively(videoPath)) continue;
+      // Thumbnails are keyed by stem, so a free video name can still share a
+      // thumbnail with a same-stem video in another container
+      if (this.createExclusively(this.thumbnailPathFor(name))) {
         return name;
       }
+      this.unlinkIfExists(videoPath);
     }
   }
 
