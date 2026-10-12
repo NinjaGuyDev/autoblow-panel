@@ -10,6 +10,18 @@ independent of the `vX.Y.Z` tags that publish the Docker image.
 
 ## [Unreleased]
 
+### Added
+
+- **Trim to funscript.** When a local video's script starts well into it, the
+  Video Sync page offers a one-click trim. It cuts the video to a few seconds
+  before the first action, saves the trimmed video and a matching shifted
+  script as a new library item, and loads it. The original stays as it was.
+  The cut is lossless (stream copy at a keyframe) and takes seconds even for
+  long videos. Where the cut really lands is measured from the output, so the
+  script stays frame-exact whichever container the video uses. Needs ffmpeg:
+  the Docker image includes it; elsewhere it is taken from `PATH`, or from
+  `FFMPEG_PATH` / `FFPROBE_PATH`.
+
 ## [1.0.0] - 2026-08-19
 
 First desktop release. The application that previously ran only as a local web

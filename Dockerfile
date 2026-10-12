@@ -47,7 +47,8 @@ FROM node:24-alpine
 
 WORKDIR /app
 
-RUN apk add --no-cache nginx
+# ffmpeg (with ffprobe) backs "Trim to funscript"
+RUN apk add --no-cache nginx ffmpeg
 
 # Production node_modules (with native better-sqlite3)
 COPY --from=deps /app/node_modules ./node_modules/

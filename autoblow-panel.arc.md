@@ -202,8 +202,11 @@ interface LibraryItem {
 | POST | `/api/media/upload` | `MediaController.upload` | Upload video (multer, 10GB max) |
 | GET | `/api/media/thumbnail/:filename` | `MediaController.getThumbnail` | Get video thumbnail |
 | POST | `/api/media/thumbnail` | `MediaController.uploadThumbnail` | Upload thumbnail JPEG (5MB max) |
+| POST | `/api/media/trim-to-funscript` | `TrimToFunscriptController.trim` | Cut a video's lead-up to its script; 201 with `{ item, cutMs }` (new library item) |
 
 **File Restrictions:** `.mp4`, `.webm`, `.ogg`, `.mkv`, `.avi` | Thumbnails: JPEG only
+
+**Trim to funscript** (`TrimToFunscriptService`, ffmpeg via `FfmpegVideoTools`): aims `TRIM_LEAD_IN_MS` before the first action, stream-copies from the last keyframe at or before that point into `<stem>-trimmed<ext>`, then measures the real cut by matching the output's first keyframe packet hash against the source's keyframes (demuxers such as Matroska can seek a GOP early). The script is shifted by the measured cut. Errors: 400 bad funscript, 404 video not in the media directory, 422 nothing to trim or no usable keyframe, 502 ffmpeg failure, 503 ffmpeg/ffprobe not installed. Executables come from `FFMPEG_PATH` / `FFPROBE_PATH`, default `PATH`.
 
 ### Trainer API (`/api/trainer`)
 
