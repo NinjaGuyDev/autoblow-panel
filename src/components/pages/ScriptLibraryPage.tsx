@@ -14,11 +14,12 @@ import { ClimaxPromptOverlay } from '@/components/script-library/ClimaxPromptOve
 import { ClimaxEditorDialog } from '@/components/script-library/ClimaxEditorDialog';
 import { ModsPanel } from '@/components/script-library/ModsPanel';
 import { SpeedBadge } from '@/components/script-library/SpeedBadge';
+import { ScriptTransport } from '@/components/script-library/ScriptTransport';
 import { useSpeedControl } from '@/hooks/useSpeedControl';
 import { useUndoableActions } from '@/hooks/useUndoableActions';
 import { exportFunscript } from '@/lib/funscriptExport';
 import { libraryApi, analyticsApi } from '@/lib/apiClient';
-import { formatRelativeTime } from '@/lib/format';
+import { formatRelativeTime, formatTime } from '@/lib/format';
 import { parseScriptActions } from '@/lib/scriptPlaybackUtils';
 
 interface ScriptLibraryPageProps {
@@ -38,6 +39,7 @@ interface ScriptLibraryPageProps {
   setRandomizeMode: (mode: RandomizeMode) => void;
   playSingle: (item: LibraryItem) => Promise<void>;
   stop: () => Promise<void>;
+  togglePause: () => Promise<void>;
   startRandomize: () => Promise<void>;
   isDeviceConnected: boolean;
   currentActions: FunscriptAction[];
@@ -66,15 +68,16 @@ function getScriptLengthSeconds(item: LibraryItem): number | null {
 }
 
 /**
- * Format script length: "Xs" for under 60s, "M:SS" for 60s+
+ * Format script length: "Xs" for under 60s, "M:SS" for 60s+, "H:MM:SS" from an hour
  */
 function formatScriptLength(seconds: number | null): string {
   if (seconds === null) return '';
   if (seconds < 60) return `${Math.round(seconds)}s`;
-  const mins = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  return `${mins}:${secs.toString().padStart(2, '0')}`;
+  return formatTime(seconds);
 }
+
+/** Climax records for one script, for the transport bar's markers. */
+const fetchClimaxRecords = (libraryItemId: number) => analyticsApi.getClimaxRecordsByLibraryItem(libraryItemId);
 
 const RANDOMIZE_OPTIONS: { mode: RandomizeMode; label: string; icon: typeof Shuffle }[] = [
   { mode: 'off', label: 'Off', icon: Square },
@@ -99,6 +102,7 @@ export function ScriptLibraryPage({
   setRandomizeMode,
   playSingle,
   stop,
+  togglePause,
   startRandomize,
   isDeviceConnected,
   currentActions,
@@ -120,6 +124,9 @@ export function ScriptLibraryPage({
   const [editingItem, setEditingItem] = useState<LibraryItem | null>(null);
   const [climaxEditorItem, setClimaxEditorItem] = useState<LibraryItem | null>(null);
   const [showClimaxPrompt, setShowClimaxPrompt] = useState(false);
+  // Bumped whenever climax records change so the transport reloads its markers
+  const [climaxRevision, setClimaxRevision] = useState(0);
+  const bumpClimaxRevision = useCallback(() => setClimaxRevision(r => r + 1), []);
   const climaxCandidateTimeMsRef = useRef<number>(0);
   const [showTimeline, setShowTimeline] = useState(() => localStorage.getItem('script-library-show-timeline') === 'true');
 
@@ -211,10 +218,11 @@ export function ScriptLibraryPage({
         timestamp: new Date().toISOString(),
         runwayData: JSON.stringify({ climaxTimeMs, actions: runwayActions }),
       });
+      bumpClimaxRevision();
     } catch (err) {
       console.error('Failed to record climax:', err);
     }
-  }, [currentScriptId, currentActions]);
+  }, [currentScriptId, currentActions, bumpClimaxRevision]);
 
   const handleClimaxNo = useCallback(() => {
     setShowClimaxPrompt(false);
@@ -261,12 +269,18 @@ export function ScriptLibraryPage({
   const currentScript = scripts.find(s => s.id === currentScriptId);
   const nextScript = scripts.find(s => s.id === nextScriptId);
 
+  const isTransportVisible = isPlaying && currentScriptId !== null;
+  const isTimelineVisible = showTimeline && editableActions.length > 0;
+  const dockClearance = isTransportVisible
+    ? (isTimelineVisible ? 'pb-[26rem]' : 'pb-44')
+    : (isTimelineVisible ? 'pb-64' : '');
+
   return (
     <div
       role="tabpanel"
       id="panel-script-library"
       aria-labelledby="tab-script-library"
-      className={`container mx-auto px-4 py-6 ${showTimeline && editableActions.length > 0 ? 'pb-64' : ''}`}
+      className={`container mx-auto px-4 py-6 ${dockClearance}`}
     >
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
@@ -593,7 +607,11 @@ export function ScriptLibraryPage({
       {climaxEditorItem && (
         <ClimaxEditorDialog
           item={climaxEditorItem}
-          onClose={() => setClimaxEditorItem(null)}
+          onClose={() => {
+            setClimaxEditorItem(null);
+            // Records may have been deleted in the dialog
+            bumpClimaxRevision();
+          }}
         />
       )}
 
@@ -605,10 +623,27 @@ export function ScriptLibraryPage({
         />
       )}
 
-      {/* Sticky timeline panel */}
-      {showTimeline && editableActions.length > 0 && (
+      {/* Bottom dock — transport bar while playing, timeline when enabled */}
+      {(isTransportVisible || isTimelineVisible) && (
         <div className="fixed bottom-0 left-0 right-0 z-40 bg-stone-950 border-t border-stone-800 shadow-2xl">
           <div className="container mx-auto px-4 py-2">
+            {isTransportVisible && (
+              <ScriptTransport
+                key={currentScriptId}
+                libraryItemId={currentScriptId}
+                climaxRevision={climaxRevision}
+                fetchClimaxRecords={fetchClimaxRecords}
+                title={currentScript?.funscriptName || 'Playing'}
+                isPaused={isPaused}
+                isDeviceConnected={isDeviceConnected}
+                currentTimeMs={currentTimeMs}
+                durationMs={timelineDurationMs}
+                onTogglePause={togglePause}
+                onSeek={onSeek}
+                onStop={stop}
+              />
+            )}
+            {isTimelineVisible && (
             <Timeline
               actions={editableActions}
               currentTimeMs={currentTimeMs}
@@ -622,6 +657,7 @@ export function ScriptLibraryPage({
               canRedo={canRedo}
               onExport={handleTimelineExport}
             />
+            )}
           </div>
         </div>
       )}

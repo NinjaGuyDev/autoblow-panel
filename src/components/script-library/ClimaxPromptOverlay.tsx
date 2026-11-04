@@ -39,7 +39,9 @@ export function ClimaxPromptOverlay({ onYes, onNo }: ClimaxPromptOverlayProps) {
   }, [onNo]);
 
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-80">
+    // Right edge, not bottom centre: the transport dock occupies the bottom of
+    // the viewport whenever a script is paused, and the prompt would cover it
+    <div className="fixed right-4 top-1/2 -translate-y-1/2 z-50 w-80 max-w-[calc(100vw-2rem)]">
       <div className="bg-stone-900 border border-stone-600 rounded-xl p-4 shadow-2xl">
         <p className="text-stone-200 text-sm font-medium mb-3 text-center">
           Did you climax?
