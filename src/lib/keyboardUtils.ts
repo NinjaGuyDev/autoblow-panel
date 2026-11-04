@@ -31,3 +31,35 @@ export function isTypingInInput(event: KeyboardEvent): boolean {
 
   return (target as HTMLElement).isContentEditable === true;
 }
+
+/** Tags whose native behaviour activates them on Space. */
+const SPACE_ACTIVATED_TAGS = new Set(['BUTTON', 'A', 'SUMMARY']);
+
+/** Input types the browser toggles or submits on Space. */
+const SPACE_ACTIVATED_INPUT_TYPES = new Set([
+  'button', 'submit', 'reset', 'checkbox', 'radio', 'file', 'color', 'image',
+]);
+
+/** ARIA roles that take Space as their activation key. */
+const SPACE_ACTIVATED_ROLES = new Set([
+  'button', 'checkbox', 'switch', 'tab', 'menuitem', 'option', 'radio', 'link',
+]);
+
+/**
+ * Returns true when Space on the event target already does something —
+ * pressing a focused button, ticking a checkbox — so a global Space shortcut
+ * must stand aside or it would fire on top of that action.
+ */
+export function isSpaceActivatedControl(event: KeyboardEvent): boolean {
+  const target = (event.target as HTMLElement | null) ?? document.activeElement;
+  if (!target) return false;
+
+  if (SPACE_ACTIVATED_TAGS.has(target.tagName)) return true;
+
+  if (target.tagName === 'INPUT') {
+    return SPACE_ACTIVATED_INPUT_TYPES.has((target as HTMLInputElement).type.toLowerCase());
+  }
+
+  const role = target.getAttribute?.('role');
+  return role !== null && role !== undefined && SPACE_ACTIVATED_ROLES.has(role);
+}

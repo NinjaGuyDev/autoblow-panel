@@ -4,44 +4,18 @@
  * Shows and manages all climax records for a specific library script.
  * Each record displays the position in the script where it occurred
  * and when it was recorded (wall-clock), plus a delete button.
- *
- * runwayData format (stored by this app):
- *   { climaxTimeMs: number, actions: FunscriptAction[] }
- * Legacy fallback: raw FunscriptAction[] array (uses max `at` as position)
  */
 
 import { useState, useEffect, useCallback } from 'react';
 import { X, Trash2, RefreshCw, Flag } from 'lucide-react';
 import type { LibraryItem, ClimaxRecord } from '@server/types/shared';
 import { analyticsApi } from '@/lib/apiClient';
-import { formatTimeMs } from '@/lib/format';
+import { formatTime } from '@/lib/format';
+import { parseClimaxTimeMs } from '@/lib/climaxMarkers';
 
 interface ClimaxEditorDialogProps {
   item: LibraryItem;
   onClose: () => void;
-}
-
-// ── runway data parsing ─────────────────────────────────────────────────────
-
-interface RunwayPayload {
-  climaxTimeMs: number;
-}
-
-function parseClimaxTimeMs(record: ClimaxRecord): number | null {
-  try {
-    const parsed: unknown = JSON.parse(record.runwayData);
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      const payload = parsed as RunwayPayload;
-      if (typeof payload.climaxTimeMs === 'number') return payload.climaxTimeMs;
-    }
-    // Legacy: raw array — use max `at` value
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return Math.max(...(parsed as Array<{ at: number }>).map(a => a.at));
-    }
-  } catch {
-    // malformed — fall through
-  }
-  return null;
 }
 
 function formatWallTime(iso: string): string {
@@ -170,7 +144,7 @@ export function ClimaxEditorDialog({ item, onClose }: ClimaxEditorDialogProps) {
                       </span>
                       <div className="min-w-0">
                         <span className="text-sm font-mono text-rose-300">
-                          {climaxTimeMs !== null ? formatTimeMs(climaxTimeMs) : '—'}
+                          {climaxTimeMs !== null ? formatTime(climaxTimeMs / 1000) : '—'}
                         </span>
                         <span className="text-xs text-stone-500 ml-2">
                           {formatWallTime(record.createdAt)}
